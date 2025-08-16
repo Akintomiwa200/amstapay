@@ -26,16 +26,50 @@ import {
   CreditCard,
   Smartphone,
   Users,
-  Settings,
-  AlertTriangle,
   Clock,
   CheckCircle,
   ExternalLink,
   Headphones,
-  Globe
+  Globe,
+  AlertTriangle
 } from 'lucide-react-native';
 
-const helpCategories = [
+// Types
+interface Article {
+  title: string;
+  views: string;
+  helpful: number;
+}
+
+interface HelpCategory {
+  id: string;
+  title: string;
+  icon: React.ComponentType<{ size: number; color: string }>;
+  color: string;
+  description: string;
+  articles: Article[];
+}
+
+interface ContactOption {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: React.ComponentType<{ size: number; color: string }>;
+  color: string;
+  availability: string;
+  action: () => void;
+}
+
+interface NavigationProp {
+  goBack: () => void;
+}
+
+interface HelpScreenProps {
+  navigation?: NavigationProp;
+}
+
+// Sample data
+const helpCategories: HelpCategory[] = [
   {
     id: '1',
     title: 'Getting Started',
@@ -103,50 +137,98 @@ const helpCategories = [
   }
 ];
 
-const contactOptions = [
-  {
-    id: '1',
-    title: 'Live Chat',
-    subtitle: 'Get instant help from our support team',
-    icon: MessageCircle,
-    color: '#16A34A',
-    availability: 'Available 24/7',
-    action: () => Alert.alert('Live Chat', 'Opening chat support...')
-  },
-  {
-    id: '2',
-    title: 'Call Support',
-    subtitle: 'Speak directly with a support agent',
-    icon: Phone,
-    color: '#0EA5E9',
-    availability: 'Mon-Fri, 9AM-6PM',
-    action: () => Linking.openURL('tel:+2341234567890')
-  },
-  {
-    id: '3',
-    title: 'Email Support',
-    subtitle: 'Send us a detailed message',
-    icon: Mail,
-    color: '#D97706',
-    availability: 'Response in 2-4 hours',
-    action: () => Linking.openURL('mailto:support@amstapay.com')
-  },
-  {
-    id: '4',
-    title: 'WhatsApp',
-    subtitle: 'Chat with us on WhatsApp',
-    icon: MessageCircle,
-    color: '#16A34A',
-    availability: 'Available 24/7',
-    action: () => Linking.openURL('whatsapp://send?phone=2341234567890')
+const HelpScreen: React.FC<HelpScreenProps> = ({ navigation }) => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  // Contact options with proper action handlers
+  const contactOptions: ContactOption[] = [
+    {
+      id: '1',
+      title: 'Live Chat',
+      subtitle: 'Get instant help from our support team',
+      icon: MessageCircle,
+      color: '#16A34A',
+      availability: 'Available 24/7',
+      action: handleLiveChat
+    },
+    {
+      id: '2',
+      title: 'Call Support',
+      subtitle: 'Speak directly with a support agent',
+      icon: Phone,
+      color: '#0EA5E9',
+      availability: 'Mon-Fri, 9AM-6PM',
+      action: handleCallSupport
+    },
+    {
+      id: '3',
+      title: 'Email Support',
+      subtitle: 'Send us a detailed message',
+      icon: Mail,
+      color: '#D97706',
+      availability: 'Response in 2-4 hours',
+      action: handleEmailSupport
+    },
+    {
+      id: '4',
+      title: 'WhatsApp',
+      subtitle: 'Chat with us on WhatsApp',
+      icon: MessageCircle,
+      color: '#16A34A',
+      availability: 'Available 24/7',
+      action: handleWhatsAppSupport
+    }
+  ];
+
+  // Event handlers
+  function handleLiveChat(): void {
+    Alert.alert('Live Chat', 'Opening chat support...');
   }
-];
 
-const HelpScreen = ({ navigation }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCategory, setExpandedCategory] = useState(null);
+  function handleCallSupport(): void {
+    Linking.openURL('tel:+2341234567890').catch(err => 
+      console.error('Error opening phone app:', err)
+    );
+  }
 
-  const toggleCategory = (categoryId) => {
+  function handleEmailSupport(): void {
+    Linking.openURL('mailto:support@amstapay.com').catch(err => 
+      console.error('Error opening email app:', err)
+    );
+  }
+
+  function handleWhatsAppSupport(): void {
+    Linking.openURL('whatsapp://send?phone=2341234567890').catch(err => 
+      console.error('Error opening WhatsApp:', err)
+    );
+  }
+
+  const handleBackPress = (): void => {
+    navigation?.goBack();
+  };
+
+  const handleSystemStatus = (): void => {
+    Alert.alert('System Status', 'All systems operational');
+  };
+
+  const handleCommunity = (): void => {
+    Alert.alert('Community', 'Opening community forum...');
+  };
+
+  const handleBlog = (): void => {
+    Alert.alert('Blog', 'Opening AmstaPay blog...');
+  };
+
+  const handleReportIssue = (): void => {
+    Alert.alert('Report Issue', 'Opening issue report form...');
+  };
+
+  const handleArticlePress = (articleTitle: string): void => {
+    Alert.alert('Article', `Opening: ${articleTitle}`);
+  };
+
+  const toggleCategory = (categoryId: string): void => {
     setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
   };
 
@@ -158,7 +240,7 @@ const HelpScreen = ({ navigation }) => {
     )
   );
 
-  const renderCategory = (category) => {
+  const renderCategory = (category: HelpCategory) => {
     const Icon = category.icon;
     const isExpanded = expandedCategory === category.id;
 
@@ -198,7 +280,7 @@ const HelpScreen = ({ navigation }) => {
               <TouchableOpacity
                 key={index}
                 style={styles.articleItem}
-                onPress={() => Alert.alert('Article', `Opening: ${article.title}`)}
+                onPress={() => handleArticlePress(article.title)}
                 activeOpacity={0.7}
               >
                 <View style={styles.articleLeft}>
@@ -220,7 +302,7 @@ const HelpScreen = ({ navigation }) => {
     );
   };
 
-  const renderContactOption = (option) => {
+  const renderContactOption = (option: ContactOption) => {
     const Icon = option.icon;
 
     return (
@@ -260,7 +342,7 @@ const HelpScreen = ({ navigation }) => {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => navigation?.goBack()}
+            onPress={handleBackPress}
           >
             <ArrowLeft size={24} color="#000000" />
           </TouchableOpacity>
@@ -322,7 +404,7 @@ const HelpScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.resourceItem}
-            onPress={() => Alert.alert('System Status', 'All systems operational')}
+            onPress={handleSystemStatus}
           >
             <CheckCircle size={20} color="#16A34A" />
             <Text style={styles.resourceText}>System Status</Text>
@@ -334,7 +416,7 @@ const HelpScreen = ({ navigation }) => {
 
           <TouchableOpacity 
             style={styles.resourceItem}
-            onPress={() => Alert.alert('Community', 'Opening community forum...')}
+            onPress={handleCommunity}
           >
             <Users size={20} color="#0EA5E9" />
             <Text style={styles.resourceText}>Community Forum</Text>
@@ -343,7 +425,7 @@ const HelpScreen = ({ navigation }) => {
 
           <TouchableOpacity 
             style={styles.resourceItem}
-            onPress={() => Alert.alert('Blog', 'Opening AmstaPay blog...')}
+            onPress={handleBlog}
           >
             <Globe size={20} color="#D97706" />
             <Text style={styles.resourceText}>AmstaPay Blog</Text>
@@ -352,7 +434,7 @@ const HelpScreen = ({ navigation }) => {
 
           <TouchableOpacity 
             style={styles.resourceItem}
-            onPress={() => Alert.alert('Report Issue', 'Opening issue report form...')}
+            onPress={handleReportIssue}
           >
             <AlertTriangle size={20} color="#DC2626" />
             <Text style={styles.resourceText}>Report a Problem</Text>
