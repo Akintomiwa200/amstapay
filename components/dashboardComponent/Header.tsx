@@ -1,17 +1,20 @@
-import { useRouter } from 'expo-router'; // Import router for navigation
+import { useRouter } from 'expo-router';
 import { Bell, HelpCircle } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const Header = () => {
   const router = useRouter();
+  
+  // Define the user name as a proper string
+  const userName = "John Doe";
 
   const handleHelpPress = () => {
-    router.push('/help'); // Navigate to the Help screen
+    router.push('/help');
   };
 
   const handleNotificationPress = () => {
-    router.push('/notification'); // Navigate to the Notifications screen
+    router.push('/notification');
   };
 
   return (
@@ -21,14 +24,14 @@ const Header = () => {
         <View style={styles.avatar}>
           <View style={styles.avatarInner} />
         </View>
-        <Text style={styles.greeting}>Hi, HAPPINESS</Text>
+        <Text style={styles.greeting}>{`Hi, ${userName}`}</Text>
       </View>
 
       {/* Right section: icons */}
       <View style={styles.iconRow}>
         {/* Help icon with badge */}
         <TouchableOpacity style={styles.iconWrapper} onPress={handleHelpPress}>
-          <HelpCircle size={24} color="#0D47A1" /> {/* Amstapay deep blue */}
+          <HelpCircle size={24} color="#0D47A1" />
           <View style={[styles.badge, styles.badgePink]}>
             <Text style={styles.badgeText}>?</Text>
           </View>
@@ -54,10 +57,10 @@ export default Header;
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingTop: 50, // extra top padding for notched phones
+    paddingTop: 50,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF', // light background
+    backgroundColor: '#FFFFFF',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -68,7 +71,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
-    backgroundColor: '#0D47A1', // Amstapay deep blue
+    backgroundColor: '#0D47A1',
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,13 +79,13 @@ const styles = StyleSheet.create({
   avatarInner: {
     width: 18,
     height: 18,
-    backgroundColor: '#FFD700', // Amstapay gold
+    backgroundColor: '#FFD700',
     borderRadius: 9,
   },
   greeting: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0D47A1', // Deep blue for text
+    color: '#0D47A1',
     marginLeft: 10,
   },
   iconRow: {
@@ -102,12 +105,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgePink: {
-    backgroundColor: '#FF4081', // Vibrant pink
+    backgroundColor: '#FF4081',
     width: 16,
     height: 16,
   },
   badgeRed: {
-    backgroundColor: '#E53935', // Rich red
+    backgroundColor: '#E53935',
     width: 20,
     height: 20,
   },

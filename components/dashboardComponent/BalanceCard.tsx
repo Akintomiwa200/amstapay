@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, Plus, Eye, EyeOff } from 'lucide-react-native';
+import { ChevronRight, Eye, EyeOff, Plus } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -14,6 +14,7 @@ const BalanceCard = () => {
   const handleAddMoney = () => {
     router.push('/add-money');
   };
+  const balanceText = showBalance ? '₦0.00' : '•••••••';
 
   return (
     <View style={styles.card}>
@@ -37,7 +38,7 @@ const BalanceCard = () => {
       <View style={styles.row}>
         <TouchableOpacity style={styles.row} onPress={() => setShowBalance((prev) => !prev)}>
           <Text style={styles.balance}>
-            {showBalance ? '₦0.00' : '•••••••'}
+            <Text style={styles.balance}>{balanceText}</Text>
           </Text>
           {showBalance ? (
             <EyeOff size={20} color="#000" style={{ marginLeft: 6 }} />

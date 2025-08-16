@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import {
+  Book,
   Car,
   ChevronUp,
   CreditCard,
@@ -81,6 +82,7 @@ const ServicesGrid: React.FC = () => {
     { icon: Car, label: 'Transport' },
     { icon: Home, label: 'Real Estate' },
     { icon: Gamepad2, label: 'Gaming' },
+    { icon: Book, label: 'School Fees' },
   ];
 
   const allServices = isExpanded

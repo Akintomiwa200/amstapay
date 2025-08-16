@@ -2,38 +2,38 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Gift, ChevronRight, Target } from 'lucide-react-native';
 
-const BonusSection = () => (
-  <View style={styles.container}>
-    <View style={styles.card}>
+const BonusSection: React.FC = () => (
+  <View style={bonusStyles.container}>
+    <View style={bonusStyles.card}>
       {/* Top row */}
-      <View style={[styles.row, styles.mb3]}>
-        <Text style={styles.title}>Earn Your Bonus</Text>
-        <View style={styles.row}>
-          <Gift size={20} color="#16a34a" style={styles.iconSpacing} /> {/* Updated to AmstaPay's primary green */}
-          <ChevronRight size={16} color="#6b7280" /> {/* Neutral gray */}
+      <View style={[bonusStyles.row, bonusStyles.mb3]}>
+        <Text style={bonusStyles.title}>Earn Your Bonus</Text>
+        <View style={bonusStyles.row}>
+          <Gift size={20} color="#D4AF37" style={bonusStyles.iconSpacing} />
+          <ChevronRight size={16} color="#6b7280" />
         </View>
       </View>
 
       {/* Inner white box */}
-      <View style={styles.innerBox}>
-        <View style={styles.row}>
+      <View style={bonusStyles.innerBox}>
+        <View style={bonusStyles.row}>
           {/* Icon circle */}
-          <View style={styles.iconContainer}>
-            <Target size={20} color="#facc15" /> {/* Yellow for emphasis */}
+          <View style={bonusStyles.iconContainer}>
+            <Target size={20} color="#D4AF37" />
           </View>
 
           {/* Text block */}
-          <View style={{ flex: 1 }}>
-            <Text style={styles.innerTitle}>Betting Bonus</Text>
-            <Text style={styles.innerText}>
+          <View style={bonusStyles.textContainer}>
+            <Text style={bonusStyles.innerTitle}>Betting Bonus</Text>
+            <Text style={bonusStyles.innerText}>
               Fund your betting account with ₦100 or more and earn up to ₦10 cashback!
             </Text>
           </View>
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Claim Now</Text>
+        <TouchableOpacity style={bonusStyles.button}>
+          <Text style={bonusStyles.buttonText}>Claim Now</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -42,15 +42,17 @@ const BonusSection = () => (
 
 export default BonusSection;
 
-const styles = StyleSheet.create({
+const bonusStyles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginBottom: 24,
   },
   card: {
-    backgroundColor: '#f0fdf4', // Light green background
+    backgroundColor: '#FFF9E6', // Light gold background
     borderRadius: 12,
     padding: 16,
+    borderWidth: 1,
+    borderColor: '#F0E6CC', // Subtle gold border
   },
   row: {
     flexDirection: 'row',
@@ -62,46 +64,58 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '500',
-    color: '#14532d', // Dark green for the title
+    color: '#333333', // Dark text
     fontSize: 16,
   },
   iconSpacing: {
     marginRight: 8,
   },
   innerBox: {
-    backgroundColor: '#ffffff', // White background
+    backgroundColor: '#FFFFFF', // Pure white
     borderRadius: 8,
     padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#F0F0F0', // Very light gray border
   },
   iconContainer: {
     width: 40,
     height: 40,
-    backgroundColor: '#fef9c3', // Light yellow background
+    backgroundColor: '#FFF5D9', // Light gold
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#F0E6CC', // Subtle gold border
+  },
+  textContainer: {
+    flex: 1,
   },
   innerTitle: {
     fontWeight: '500',
-    color: '#14532d', // Dark green for the title
+    color: '#333333', // Dark text
     fontSize: 14,
   },
   innerText: {
     fontSize: 12,
-    color: '#166534', // Medium green for the text
+    color: '#666666', // Medium gray
   },
   button: {
-    backgroundColor: '#16a34a', // AmstaPay's primary green
+    backgroundColor: '#D4AF37', // Gold button
     borderRadius: 9999,
     paddingVertical: 6,
     paddingHorizontal: 16,
     alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonText: {
-    color: '#ffffff', // White text
+    color: '#FFFFFF', // White text
     fontWeight: '500',
     fontSize: 14,
   },

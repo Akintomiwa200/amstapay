@@ -12,17 +12,17 @@ export default function DashboardScreen() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard key="dashboard" />;
       case 'reward':
-        return <Rewards />;
+        return <Rewards key="reward" />;
       case 'finance':
-        return <Finance />;
+        return <Finance key="finance" />;
       case 'card':
-        return <Cards />;
+        return <Cards key="card" />;
       case 'me':
-        return <Me />;
+        return <Me key="me" />;
       default:
-        return <Dashboard />;
+        return <Dashboard key="default" />;
     }
   };
 
@@ -32,4 +32,3 @@ export default function DashboardScreen() {
     </DashboardLayout>
   );
 }
-
