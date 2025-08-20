@@ -1,11 +1,10 @@
 import BalanceCard from '@/components/dashboardComponent/BalanceCard';
 import BonusSection from '@/components/dashboardComponent/BonusSection';
-import EmailBanner from '@/components/dashboardComponent/EmailBanner';
 import Header from "@/components/dashboardComponent/Header";
 import QuickActions from '@/components/dashboardComponent/QuickAction';
 import ServicesGrid from '@/components/dashboardComponent/ServicesGrid';
 import React from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 const Dashboard = () => (
   <View style={{ flex: 1 }}>
@@ -17,7 +16,7 @@ const Dashboard = () => (
       <Header />
       <BalanceCard />
       <QuickActions />
-      <EmailBanner />
+      {/* <EmailBanner /> */}
       <ServicesGrid />
       <BonusSection />
     </ScrollView>

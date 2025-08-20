@@ -4,16 +4,17 @@
     "slug": "amstapay",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/splash.jpeg",
     "scheme": "amstapay",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.herkintormiwer.amstapay"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/splash.jpeg",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
@@ -22,14 +23,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/splash.jpeg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/splash.jpeg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000"

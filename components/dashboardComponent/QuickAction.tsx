@@ -27,7 +27,7 @@ const QuickActions = () => {
             onPress={handleOpenScanner}
           >
             <View style={styles.iconContainer}>
-              <Icon size={24} color="#FFD700" />
+              <Icon size={24} color="#FFFFFF" />
             </View>
             <Text style={styles.label}>{action.label}</Text>
           </TouchableOpacity>
@@ -56,13 +56,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-    backgroundColor: '#000', // Black background for icons
+    backgroundColor: '#F97316', // Orange-500 background
     borderWidth: 1,
-    borderColor: '#FFD700', // Gold border
+    borderColor: '#EA580C', // Orange-600 border
   },
   label: {
     fontSize: 12,
-    color: '#000', // Black text
+    color: '#1F2937', // Dark gray text
     fontWeight: '500',
   },
 });

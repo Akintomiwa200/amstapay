@@ -1,82 +1,66 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CreditCard } from 'lucide-react-native';
+import { Target } from 'lucide-react-native';
 
-const BankTransferScreen = () => {
-  const [selectedBank, setSelectedBank] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [accountName, setAccountName] = useState('');
+const BettingScreen = () => {
+  const [selectedBookmaker, setSelectedBookmaker] = useState('');
+  const [accountId, setAccountId] = useState('');
   const [amount, setAmount] = useState('');
-  const [narration, setNarration] = useState('');
   const router = useRouter();
 
-  const banks = [
-    { id: 'access', name: 'Access Bank' },
-    { id: 'uba', name: 'UBA' },
-    { id: 'firstbank', name: 'First Bank' },
-    { id: 'zenith', name: 'Zenith Bank' },
-    { id: 'gtb', name: 'GTBank' },
-    { id: 'ecobank', name: 'EcoBank' },
+  const bookmakers = [
+    { id: 'bet9ja', name: 'Bet9ja' },
+    { id: 'nairabet', name: 'Nairabet' },
+    { id: 'sportybet', name: 'SportyBet' },
+    { id: 'betking', name: 'BetKing' },
+    { id: '1960bet', name: '1960Bet' },
   ];
 
-  const handleTransfer = () => {
-    console.log('Transferring money:', { selectedBank, accountNumber, accountName, amount, narration });
+  const handleFundAccount = () => {
+    console.log('Funding betting account:', { selectedBookmaker, accountId, amount });
     router.back();
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Bank Transfer</Text>
+        <Text style={styles.headerTitle}>Betting Account Funding</Text>
       </View>
 
       <View style={styles.formContainer}>
-        {/* Bank Selection */}
+        {/* Bookmaker Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Bank</Text>
+          <Text style={styles.sectionTitle}>Select Bookmaker</Text>
           <View style={styles.grid}>
-            {banks.map(bank => (
+            {bookmakers.map(bookmaker => (
               <TouchableOpacity
-                key={bank.id}
+                key={bookmaker.id}
                 style={[
                   styles.gridButton,
-                  selectedBank === bank.id && styles.gridButtonSelected
+                  selectedBookmaker === bookmaker.id && styles.gridButtonSelected
                 ]}
-                onPress={() => setSelectedBank(bank.id)}
+                onPress={() => setSelectedBookmaker(bookmaker.id)}
               >
                 <Text style={[
                   styles.gridButtonText,
-                  selectedBank === bank.id && styles.gridButtonTextSelected
+                  selectedBookmaker === bookmaker.id && styles.gridButtonTextSelected
                 ]}>
-                  {bank.name}
+                  {bookmaker.name}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Account Number */}
+        {/* Account ID */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Account Number</Text>
+          <Text style={styles.label}>Account ID/Username</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter account number"
-            value={accountNumber}
-            onChangeText={setAccountNumber}
-            keyboardType="numeric"
-          />
-        </View>
-
-        {/* Account Name (will be fetched automatically in real app) */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Account Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Account name will appear here"
-            value={accountName}
-            onChangeText={setAccountName}
-            editable={false}
+            placeholder="Enter your betting account ID"
+            value={accountId}
+            onChangeText={setAccountId}
           />
         </View>
 
@@ -92,24 +76,13 @@ const BankTransferScreen = () => {
           />
         </View>
 
-        {/* Narration */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Narration (Optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter description"
-            value={narration}
-            onChangeText={setNarration}
-          />
-        </View>
-
-        {/* Transfer Button */}
+        {/* Fund Button */}
         <TouchableOpacity
-          style={[styles.button, (!accountNumber || !amount || !selectedBank) && styles.buttonDisabled]}
-          onPress={handleTransfer}
-          disabled={!accountNumber || !amount || !selectedBank}
+          style={[styles.button, (!accountId || !amount || !selectedBookmaker) && styles.buttonDisabled]}
+          onPress={handleFundAccount}
+          disabled={!accountId || !amount || !selectedBookmaker}
         >
-          <Text style={styles.buttonText}>Transfer Money</Text>
+          <Text style={styles.buttonText}>Fund Account</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -136,4 +109,4 @@ const styles = StyleSheet.create({
   buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
 });
 
-export default BankTransferScreen;
+export default BettingScreen;

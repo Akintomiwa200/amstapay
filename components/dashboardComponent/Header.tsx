@@ -31,8 +31,8 @@ const Header = () => {
       <View style={styles.iconRow}>
         {/* Help icon with badge */}
         <TouchableOpacity style={styles.iconWrapper} onPress={handleHelpPress}>
-          <HelpCircle size={24} color="#0D47A1" />
-          <View style={[styles.badge, styles.badgePink]}>
+          <HelpCircle size={24} color="#F97316" />
+          <View style={[styles.badge, styles.badgeOrange]}>
             <Text style={styles.badgeText}>?</Text>
           </View>
         </TouchableOpacity>
@@ -42,7 +42,7 @@ const Header = () => {
           style={styles.iconWrapper}
           onPress={handleNotificationPress}
         >
-          <Bell size={24} color="#0D47A1" />
+          <Bell size={24} color="#F97316" />
           <View style={[styles.badge, styles.badgeRed]}>
             <Text style={styles.badgeText}>7</Text>
           </View>
@@ -63,6 +63,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
   row: {
     flexDirection: 'row',
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
-    backgroundColor: '#0D47A1',
+    backgroundColor: '#F97316', // Orange-500
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -79,13 +81,13 @@ const styles = StyleSheet.create({
   avatarInner: {
     width: 18,
     height: 18,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FFFFFF', // White inner circle
     borderRadius: 9,
   },
   greeting: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0D47A1',
+    color: '#1F2937', // Dark gray text
     marginLeft: 10,
   },
   iconRow: {
@@ -104,13 +106,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgePink: {
-    backgroundColor: '#FF4081',
+  badgeOrange: {
+    backgroundColor: '#EA580C', // Orange-600
     width: 16,
     height: 16,
   },
   badgeRed: {
-    backgroundColor: '#E53935',
+    backgroundColor: '#DC2626', // Red-600
     width: 20,
     height: 20,
   },

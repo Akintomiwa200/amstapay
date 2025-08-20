@@ -40,17 +40,17 @@ const ServicesGrid: React.FC = () => {
     const routes: Record<string, string> = {
       Airtime: '/airtime',
       Data: '/data',
-      Betting: '/scanner?type=betting',
-      TV: '/tv-services',
-      OWealth: '/owealth',
-      Loan: '/loan-services',
-      Invitation: '/invite',
-      Electricity: '/electricity',
+      Betting: '/betting',
+      TV: '/tv',
+    AmstaWealth: '/amstawealth',
+      Loan: '/loan',
+      Invitation: '/invitation',
+      Electricity: '/eletricity',
       Insurance: '/insurance',
       'Bank Transfer': '/bank-transfer',
-      'Gift Cards': '/gift-cards',
+      'Gift Cards': '/giftcard',
       Transport: '/transport',
-      'Real Estate': '/real-estate',
+      'Real Estate': '/realestate',
       Gaming: '/gaming',
     };
   
@@ -102,7 +102,7 @@ const ServicesGrid: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.iconWrapper}>
-                <Icon size={24} color="#000000" />
+                <Icon size={24} color="#FFFFFF" />
                 {service.badge && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{service.badge}</Text>
@@ -133,35 +133,40 @@ const styles = StyleSheet.create({
   item: {
     width: '22%',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   iconWrapper: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#FFD700',
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderColor: '#F97316', // Orange-500
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     position: 'relative',
     borderWidth: 1,
-    borderColor: '#000',
+    color: '#EA580C', // Orange-600 border
   },
   badge: {
     position: 'absolute',
     top: -6,
     right: -6,
-    backgroundColor: '#000',
-    paddingHorizontal: 4,
+    backgroundColor: '#EA580C', // Orange-600
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderRadius: 8,
+    minWidth: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeText: {
-    color: '#FFD700',
+    color: '#FFFFFF',
     fontSize: 9,
+    fontWeight: 'bold',
   },
   label: {
     fontSize: 12,
-    color: '#000',
+    color: '#1F2937', // Dark gray
     textAlign: 'center',
     fontWeight: '500',
   },
