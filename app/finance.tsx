@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { ArrowUpRight, ArrowDownRight, CreditCard, PieChart, Wallet, Clock, ChevronRight } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 const Finance = () => {
+  const router = useRouter();
+
   // Mock financial data
   const accounts = [
     { id: 1, name: 'Main Account', balance: '₦245,800', type: 'bank' },
@@ -18,11 +21,15 @@ const Finance = () => {
   ];
 
   const quickActions = [
-    { id: 1, title: 'Transfer', icon: <ArrowUpRight size={24} color="#3B82F6" /> },
-    { id: 2, title: 'Pay Bill', icon: <CreditCard size={24} color="#3B82F6" /> },
-    { id: 3, title: 'Invest', icon: <PieChart size={24} color="#3B82F6" /> },
-    { id: 4, title: 'Loans', icon: <Wallet size={24} color="#3B82F6" /> },
+    { id: 1, title: 'Transfer', icon: <ArrowUpRight size={24} color="#F97316" />, route: '/scan' },
+    { id: 2, title: 'Pay Bill', icon: <CreditCard size={24} color="#F97316" />, route: '/scan' },
+    { id: 3, title: 'Invest', icon: <PieChart size={24} color="#F97316" />, route: '/invest' },
+    { id: 4, title: 'Loans', icon: <Wallet size={24} color="#F97316" />, route: '/loan' },
   ];
+
+  const navigateTo = (route: string) => {
+    router.push(route as any);
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -38,7 +45,11 @@ const Finance = () => {
       {/* Quick Actions */}
       <View style={styles.quickActionsContainer}>
         {quickActions.map((action) => (
-          <TouchableOpacity key={action.id} style={styles.quickAction}>
+          <TouchableOpacity 
+            key={action.id} 
+            style={styles.quickAction}
+            onPress={() => navigateTo(action.route)}
+          >
             <View style={styles.quickActionIcon}>
               {action.icon}
             </View>
@@ -51,7 +62,7 @@ const Finance = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My Accounts</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigateTo('/accounts')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -59,9 +70,9 @@ const Finance = () => {
         {accounts.map((account) => (
           <TouchableOpacity key={account.id} style={styles.accountCard}>
             <View style={styles.accountIcon}>
-              {account.type === 'bank' ? <CreditCard size={20} color="#3B82F6" /> : 
-               account.type === 'savings' ? <PieChart size={20} color="#10B981" /> : 
-               <Wallet size={20} color="#F59E0B" />}
+              {account.type === 'bank' ? <CreditCard size={20} color="#F97316" /> : 
+               account.type === 'savings' ? <PieChart size={20} color="#F97316" /> : 
+               <Wallet size={20} color="#F97316" />}
             </View>
             <View style={styles.accountInfo}>
               <Text style={styles.accountName}>{account.name}</Text>
@@ -77,7 +88,7 @@ const Finance = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigateTo('/transactions')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -112,10 +123,15 @@ const Finance = () => {
 
       {/* Financial Insights */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Financial Insights</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Financial Insights</Text>
+          <TouchableOpacity onPress={() => navigateTo('/insights')}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.insightCard}>
           <View style={styles.insightIcon}>
-            <PieChart size={24} color="#3B82F6" />
+            <PieChart size={24} color="#F97316" />
           </View>
           <View style={styles.insightContent}>
             <Text style={styles.insightTitle}>Spending Analysis</Text>
@@ -127,13 +143,14 @@ const Finance = () => {
   );
 };
 
+// Keep the same styles as before
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
   header: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#F97316',
     padding: 24,
     paddingBottom: 32,
     borderBottomLeftRadius: 16,
@@ -146,7 +163,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   balanceContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
     borderRadius: 12,
     padding: 16,
   },
@@ -164,7 +181,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
-    marginTop: -24,
   },
   quickAction: {
     backgroundColor: '#FFFFFF',
@@ -215,7 +231,7 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   seeAll: {
-    color: '#3B82F6',
+    color: '#F97316',
     fontWeight: '500',
   },
   accountCard: {
@@ -303,7 +319,7 @@ const styles = StyleSheet.create({
   },
   insightCard: {
     flexDirection: 'row',
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#E07300',
     borderRadius: 12,
     padding: 16,
     marginTop: 12,
@@ -323,12 +339,12 @@ const styles = StyleSheet.create({
   insightTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0369A1',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   insightText: {
     fontSize: 14,
-    color: '#0C4A6E',
+    color: '#FFFFFF',
   },
 });
 

@@ -16,29 +16,16 @@ export default function ConfirmTransactionScreen() {
   const { recipient, amount, reference, type } = useLocalSearchParams();
   const router = useRouter();
   
-  const [selectedProvider, setSelectedProvider] = useState('');
   const [pinOrPassword, setPinOrPassword] = useState('');
   const [accountNumber, setAccountNumber] = useState(recipient as string || '');
   const [paymentAmount, setPaymentAmount] = useState(amount as string || '');
-  const [showProviders, setShowProviders] = useState(false);
-
-  const providers = [
-    { id: 'opay', name: 'OPay', icon: 'wallet-outline' },
-    { id: 'bank', name: 'Bank Transfer', icon: 'business-outline' },
-    { id: 'card', name: 'Debit Card', icon: 'card-outline' },
-    { id: 'ussd', name: 'USSD', icon: 'call-outline' },
-  ];
-
+ 
   const handleProviderSelect = (provider: any) => {
     setSelectedProvider(provider.name);
     setShowProviders(false);
   };
 
   const handleProceedToPay = () => {
-    if (!selectedProvider) {
-      Alert.alert('Error', 'Please select a payment provider');
-      return;
-    }
     if (!accountNumber) {
       Alert.alert('Error', 'Please enter account or phone number');
       return;
@@ -55,7 +42,7 @@ export default function ConfirmTransactionScreen() {
     // Process payment logic here
     Alert.alert(
       'Payment Confirmation', 
-      `Proceeding with payment of ₦${paymentAmount} to ${accountNumber} via ${selectedProvider}`,
+      `Proceeding with payment of ₦${paymentAmount} to ${accountNumber} `,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -87,35 +74,7 @@ export default function ConfirmTransactionScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Provider Selection */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Select provider</Text>
-          <TouchableOpacity 
-            style={styles.providerSelector}
-            onPress={() => setShowProviders(!showProviders)}
-          >
-            <Text style={[styles.providerText, !selectedProvider && styles.placeholder]}>
-              {selectedProvider || 'Choose payment method'}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color="#666" />
-          </TouchableOpacity>
-          
-          {showProviders && (
-            <View style={styles.providerDropdown}>
-              {providers.map((provider) => (
-                <TouchableOpacity
-                  key={provider.id}
-                  style={styles.providerOption}
-                  onPress={() => handleProviderSelect(provider)}
-                >
-                  <Ionicons name={provider.icon as any} size={20} color="#666" />
-                  <Text style={styles.providerOptionText}>{provider.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
+       
         {/* PIN/Password Input */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Enter pin/password</Text>
@@ -210,51 +169,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: '500',
   },
-  providerSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-  },
-  providerText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  providerDropdown: {
-    position: 'absolute',
-    top: 55,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  providerOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  providerOptionText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 12,
-  },
-  input: {
+ input: {
     fontSize: 16,
     color: '#333',
     paddingHorizontal: 15,

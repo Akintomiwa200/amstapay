@@ -63,7 +63,7 @@ const PaymentSuccess: React.FC = () => {
         {/* Success Icon and Message */}
         <View style={styles.successSection}>
           <View style={styles.successIconContainer}>
-            <CheckCircle size={80} color="#FFD700" />
+            <CheckCircle size={80} color="#FF8C00" />
           </View>
           
           <Text style={styles.successTitle}>Payment Successful!</Text>
@@ -111,7 +111,7 @@ const PaymentSuccess: React.FC = () => {
       {/* Bottom Button */}
       <View style={styles.bottomSection}>
         <TouchableOpacity style={styles.primaryButton} onPress={handleGoHome}>
-          <Home size={20} color="#000000" />
+          <Home size={20} color="#FFFFFF" />
           <Text style={styles.primaryButtonText}>Back to Home</Text>
         </TouchableOpacity>
       </View>
@@ -173,13 +173,13 @@ const styles = StyleSheet.create({
   successIconContainer: {
     width: 120,
     height: 120,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
     borderWidth: 4,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
   },
   successTitle: {
     fontSize: 24,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF8C00',
     marginBottom: 20,
   },
   detailsSection: {
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF8C00',
     borderRadius: 12,
     paddingVertical: 16,
     gap: 8,
@@ -298,6 +298,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
   },
 });

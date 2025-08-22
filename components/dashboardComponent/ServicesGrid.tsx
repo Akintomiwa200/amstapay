@@ -10,13 +10,17 @@ import {
   Home,
   Mail,
   MoreHorizontal,
-  Phone,
+  Smartphone, // Better icon for Airtime
   PiggyBank,
   Shield,
   Target,
   Tv,
   Users,
   Zap,
+  Wifi, // Better icon for Data
+  DollarSign, // Better icon for Betting
+  Banknote, // Better icon for Loan
+  GraduationCap, // Better icon for School Fees
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -42,7 +46,7 @@ const ServicesGrid: React.FC = () => {
       Data: '/data',
       Betting: '/betting',
       TV: '/tv',
-    AmstaWealth: '/amstawealth',
+      OWealth: '/amstawealth',
       Loan: '/loan',
       Invitation: '/invitation',
       Electricity: '/eletricity',
@@ -52,6 +56,7 @@ const ServicesGrid: React.FC = () => {
       Transport: '/transport',
       'Real Estate': '/realestate',
       Gaming: '/gaming',
+      'School Fees': '/schoolfees'
     };
   
     if (routes[service]) {
@@ -60,13 +65,14 @@ const ServicesGrid: React.FC = () => {
       console.warn(`No route defined for service: ${service}`);
     }
   };
+  
   const mainServices: Service[] = [
-    { icon: Phone, label: 'Airtime', badge: 'Up to 5%' },
-    { icon: Database, label: 'Data', badge: 'Up to 5%' },
-    { icon: Target, label: 'Betting' },
+    { icon: Smartphone, label: 'Airtime', badge: 'Up to 5%' }, // Changed from Phone to Smartphone
+    { icon: Wifi, label: 'Data', badge: 'Up to 5%' }, // Changed from Database to Wifi
+    { icon: DollarSign, label: 'Betting' }, // Changed from Target to DollarSign
     { icon: Tv, label: 'TV' },
     { icon: PiggyBank, label: 'OWealth' },
-    { icon: Users, label: 'Loan' },
+    { icon: Banknote, label: 'Loan' }, // Changed from Users to Banknote
     { icon: Mail, label: 'Invitation' },
     {
       icon: isExpanded ? ChevronUp : MoreHorizontal,
@@ -82,7 +88,7 @@ const ServicesGrid: React.FC = () => {
     { icon: Car, label: 'Transport' },
     { icon: Home, label: 'Real Estate' },
     { icon: Gamepad2, label: 'Gaming' },
-    { icon: Book, label: 'School Fees' },
+    { icon: GraduationCap, label: 'School Fees' }, // Changed from Book to GraduationCap
   ];
 
   const allServices = isExpanded
@@ -102,7 +108,7 @@ const ServicesGrid: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.iconWrapper}>
-                <Icon size={24} color="#FFFFFF" />
+                <Icon size={24} color="#F97316" />
                 {service.badge && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{service.badge}</Text>
@@ -138,14 +144,14 @@ const styles = StyleSheet.create({
   iconWrapper: {
     width: 52,
     height: 52,
-    borderColor: '#F97316', // Orange-500
+    borderColor: '#F97316', 
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     position: 'relative',
     borderWidth: 1,
-    color: '#EA580C', // Orange-600 border
+    color: '#F97316', // Orange-600 border
   },
   badge: {
     position: 'absolute',

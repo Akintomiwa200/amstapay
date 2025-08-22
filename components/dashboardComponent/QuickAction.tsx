@@ -1,20 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { ArrowDownLeft, Building } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { ArrowUpRight, ArrowDownLeft, SendIcon } from 'lucide-react-native';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const QuickActions = () => {
   const router = useRouter();
 
   const actions = [
-    { icon: ArrowDownLeft, label: 'To Amsta User' },
-    { icon: Building, label: 'To Other Bank' },
-    { icon: ArrowDownLeft, label: 'Withdraw' },
+    { icon: SendIcon, label: 'Send Money', onPress: () => router.push('/scan') },
+    { icon: ArrowDownLeft, label: 'Receive Money', onPress: () => router.push('/checkscan') },
   ];
-
-  const handleOpenScanner = () => {
-    router.push('/scan'); // Navigate to QR code scan screen
-  };
 
   return (
     <View style={styles.container}>
@@ -24,7 +19,7 @@ const QuickActions = () => {
           <TouchableOpacity
             key={index}
             style={styles.actionWrapper}
-            onPress={handleOpenScanner}
+            onPress={action.onPress}
           >
             <View style={styles.iconContainer}>
               <Icon size={24} color="#FFFFFF" />
@@ -50,8 +45,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 48,
-    height: 48,
+    width: 96,
+    height: 32,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',

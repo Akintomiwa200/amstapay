@@ -7,7 +7,7 @@ export default function IndexScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/login");
+      router.push("/onboarding");
     }, 5000);
     return () => clearTimeout(timer);
   }, [router]);

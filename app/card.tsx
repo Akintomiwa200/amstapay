@@ -6,7 +6,7 @@ const Cards = () => (
   <View style={styles.container}>
     <View style={styles.cardIllustration}>
       <CreditCard size={80} color="#6b7280" />
-      <Clock size={40} color="#3b82f6" style={styles.clockIcon} />
+      <Clock size={40} color="#F97316" style={styles.clockIcon} />
     </View>
     
     <Text style={styles.title}>Debit Cards Coming Soon</Text>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   notifyContainer: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#F97316',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

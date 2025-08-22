@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Gift, Star, Zap, CreditCard, ChevronRight } from 'lucide-react-native';
 
 const Rewards = () => {
+  const router = useRouter();
+  
   // Mock reward data
   const rewards = [
     { id: 1, title: 'Welcome Bonus', points: 50, icon: <Star size={24} color="#D4AF37" /> },
@@ -15,6 +18,10 @@ const Rewards = () => {
     { id: 2, type: 'Payment', amount: '-₦2,500', date: 'Yesterday, 3:20 PM' },
     { id: 3, type: 'Cashback', amount: '+₦150', date: 'Mar 12, 9:15 AM' },
   ];
+
+  const handleSeeAll = () => {
+    router.push('/recent-reward-transaction');
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -46,7 +53,7 @@ const Rewards = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleSeeAll}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -54,7 +61,7 @@ const Rewards = () => {
         {transactions.map((txn) => (
           <View key={txn.id} style={styles.transactionCard}>
             <View style={styles.transactionIcon}>
-              <CreditCard size={20} color="#D4AF37" />
+              <CreditCard size={20} color="#FF8C00" />
             </View>
             <View style={styles.transactionInfo}>
               <Text style={styles.transactionType}>{txn.type}</Text>
@@ -75,7 +82,7 @@ const Rewards = () => {
       {/* Promo Banner */}
       <View style={styles.promoBanner}>
         <Image 
-          source={require('@/assets/images/logo.png')} 
+          source={{ uri: 'https://illustrations.popsy.co/orange/gift-box.svg' }} 
           style={styles.bannerImage}
         />
         <View style={styles.promoContent}>
@@ -93,7 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#000000',
+    backgroundColor: '#FF8C00',
     padding: 24,
     paddingBottom: 32,
     borderBottomLeftRadius: 24,
@@ -106,17 +113,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   pointsContainer: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#E67300',
     borderRadius: 12,
     padding: 16,
   },
   pointsLabel: {
-    color: '#9CA3AF',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 16,
     marginBottom: 4,
+    opacity: 0.9,
   },
   pointsValue: {
-    color: '#D4AF37',
+    color: '#FFFFFF',
     fontSize: 28,
     fontWeight: 'bold',
   },
@@ -133,10 +141,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: '#000000',
   },
   seeAll: {
-    color: '#D4AF37',
+    color: '#FF8C00',
     fontWeight: '500',
   },
   rewardCard: {
@@ -148,7 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   rewardIcon: {
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -162,12 +170,12 @@ const styles = StyleSheet.create({
   rewardTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#111827',
+    color: '#000000',
     marginBottom: 4,
   },
   rewardPoints: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#666666',
   },
   transactionCard: {
     flexDirection: 'row',
@@ -177,7 +185,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   transactionIcon: {
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -191,12 +199,12 @@ const styles = StyleSheet.create({
   transactionType: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#111827',
+    color: '#000000',
     marginBottom: 4,
   },
   transactionDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#666666',
   },
   transactionAmount: {
     fontSize: 16,
@@ -212,12 +220,14 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFF4E6',
     flexDirection: 'row',
+    alignItems: 'center',
   },
   bannerImage: {
-    width: 120,
-    height: '100%',
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
   },
   promoContent: {
     flex: 1,
@@ -226,12 +236,12 @@ const styles = StyleSheet.create({
   promoTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#92400E',
+    color: '#000000',
     marginBottom: 8,
   },
   promoText: {
     fontSize: 14,
-    color: '#92400E',
+    color: '#666666',
   },
 });
 

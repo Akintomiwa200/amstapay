@@ -19,6 +19,21 @@ import {
   Smartphone
 } from 'lucide-react-native';
 
+// Color palette
+const COLORS = {
+  primary: '#F97316',      // Orange accent
+  primaryDark: '#EA580C',  // Darker orange
+  background: '#FFFFFF',   // White background
+  surface: '#F8F8F8',      // Light gray for surfaces
+  text: '#000000',         // Black text
+  textSecondary: '#666666', // Gray text
+  textTertiary: '#888888',  // Lighter gray text
+  border: '#F0F0F0',       // Light border
+  accent: '#FFD700',       // Yellow accent
+  warning: '#FFFBF0',      // Light yellow for warnings
+  warningBorder: '#FFD700', // Yellow border
+};
+
 export default function AddMoneyScreen() {
   const router = useRouter();
 
@@ -50,23 +65,23 @@ export default function AddMoneyScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-        <TouchableOpacity 
-  style={styles.backButton}
-  onPress={() => router.back()}
->
-  <ArrowLeft size={24} color="#000000" />
-</TouchableOpacity>
+        <View style={[styles.header, { backgroundColor: COLORS.background, borderBottomColor: COLORS.border }]}>
+          <TouchableOpacity 
+            style={[styles.backButton, { backgroundColor: COLORS.surface }]}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={COLORS.text} />
+          </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Add Money</Text>
+          <Text style={[styles.headerTitle, { color: COLORS.text }]}>Add Money</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -75,15 +90,15 @@ export default function AddMoneyScreen() {
           
           {/* Welcome Section */}
           <View style={styles.welcomeSection}>
-            <View style={styles.walletIconContainer}>
-              <Wallet size={48} color="#FFD700" />
-              <View style={styles.plusIcon}>
-                <Plus size={20} color="#000000" />
+            <View style={[styles.walletIconContainer, { backgroundColor: COLORS.text, borderColor: COLORS.primary }]}>
+              <Wallet size={48} color={COLORS.primary} />
+              <View style={[styles.plusIcon, { backgroundColor: COLORS.primary, borderColor: COLORS.background }]}>
+                <Plus size={20} color={COLORS.text} />
               </View>
             </View>
             
-            <Text style={styles.title}>Add Money to Wallet</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: COLORS.text }]}>Add Money to Wallet</Text>
+            <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>
               Choose your preferred method to fund your AmstaPay wallet securely
             </Text>
           </View>
@@ -95,30 +110,34 @@ export default function AddMoneyScreen() {
               return (
                 <TouchableOpacity
                   key={option.id}
-                  style={styles.optionCard}
+                  style={[styles.optionCard, { 
+                    backgroundColor: COLORS.background, 
+                    borderColor: COLORS.primary,
+                    shadowColor: COLORS.text 
+                  }]}
                   onPress={() => handleNavigate(option.id)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.optionHeader}>
-                    <View style={styles.optionIconContainer}>
-                      <Icon size={32} color="#000000" />
+                    <View style={[styles.optionIconContainer, { backgroundColor: COLORS.primary, borderColor: COLORS.text }]}>
+                      <Icon size={32} color={COLORS.text} />
                     </View>
-                    <View style={styles.optionBadge}>
-                      <Text style={styles.badgeText}>{option.badge}</Text>
+                    <View style={[styles.optionBadge, { backgroundColor: COLORS.text }]}>
+                      <Text style={[styles.badgeText, { color: COLORS.accent }]}>{option.badge}</Text>
                     </View>
                   </View>
                   
                   <View style={styles.optionContent}>
-                    <Text style={styles.optionTitle}>{option.title}</Text>
-                    <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
-                    <Text style={styles.optionDescription}>{option.description}</Text>
+                    <Text style={[styles.optionTitle, { color: COLORS.text }]}>{option.title}</Text>
+                    <Text style={[styles.optionSubtitle, { color: COLORS.textSecondary }]}>{option.subtitle}</Text>
+                    <Text style={[styles.optionDescription, { color: COLORS.textTertiary }]}>{option.description}</Text>
                   </View>
 
                   <View style={styles.optionFooter}>
                     <View style={styles.arrowContainer}>
-                      <Text style={styles.selectText}>Select</Text>
-                      <View style={styles.arrow}>
-                        <Text style={styles.arrowText}>→</Text>
+                      <Text style={[styles.selectText, { color: COLORS.text }]}>Select</Text>
+                      <View style={[styles.arrow, { backgroundColor: COLORS.primary, borderColor: COLORS.text }]}>
+                        <Text style={[styles.arrowText, { color: COLORS.text }]}>→</Text>
                       </View>
                     </View>
                   </View>
@@ -129,21 +148,27 @@ export default function AddMoneyScreen() {
 
           {/* Additional Info */}
           <View style={styles.infoSection}>
-            <View style={styles.infoCard}>
-              <CreditCard size={24} color="#FFD700" />
+            <View style={[styles.infoCard, { 
+              backgroundColor: COLORS.surface, 
+              borderLeftColor: COLORS.primary 
+            }]}>
+              <CreditCard size={24} color={COLORS.primary} />
               <View style={styles.infoContent}>
-                <Text style={styles.infoTitle}>Secure & Fast</Text>
-                <Text style={styles.infoDescription}>
+                <Text style={[styles.infoTitle, { color: COLORS.text }]}>Secure & Fast</Text>
+                <Text style={[styles.infoDescription, { color: COLORS.textSecondary }]}>
                   All transactions are encrypted and processed instantly
                 </Text>
               </View>
             </View>
 
-            <View style={styles.infoCard}>
-              <Smartphone size={24} color="#FFD700" />
+            <View style={[styles.infoCard, { 
+              backgroundColor: COLORS.surface, 
+              borderLeftColor: COLORS.primary 
+            }]}>
+              <Smartphone size={24} color={COLORS.primary} />
               <View style={styles.infoContent}>
-                <Text style={styles.infoTitle}>24/7 Available</Text>
-                <Text style={styles.infoDescription}>
+                <Text style={[styles.infoTitle, { color: COLORS.text }]}>24/7 Available</Text>
+                <Text style={[styles.infoDescription, { color: COLORS.textSecondary }]}>
                   Add money to your wallet anytime, anywhere
                 </Text>
               </View>
@@ -151,8 +176,11 @@ export default function AddMoneyScreen() {
           </View>
 
           {/* Bottom Note */}
-          <View style={styles.bottomNote}>
-            <Text style={styles.noteText}>
+          <View style={[styles.bottomNote, { 
+            backgroundColor: COLORS.warning, 
+            borderColor: COLORS.warningBorder 
+          }]}>
+            <Text style={[styles.noteText, { color: COLORS.text }]}>
               💡 Tip: Use QR code for instant transfers, Bank transfer for larger amounts
             </Text>
           </View>
@@ -166,7 +194,6 @@ export default function AddMoneyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
@@ -176,19 +203,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#F8F8F8',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
   },
   placeholder: {
     width: 40,
@@ -207,14 +230,12 @@ const styles = StyleSheet.create({
   walletIconContainer: {
     width: 100,
     height: 100,
-    backgroundColor: '#000000',
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
     position: 'relative',
     borderWidth: 4,
-    borderColor: '#FFD700',
   },
   plusIcon: {
     position: 'absolute',
@@ -222,23 +243,19 @@ const styles = StyleSheet.create({
     right: -8,
     width: 32,
     height: 32,
-    backgroundColor: '#FFD700',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000000',
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
@@ -247,13 +264,10 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   optionCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#FFD700',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -271,21 +285,17 @@ const styles = StyleSheet.create({
   optionIconContainer: {
     width: 60,
     height: 60,
-    backgroundColor: '#FFD700',
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#000000',
   },
   optionBadge: {
-    backgroundColor: '#000000',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
   badgeText: {
-    color: '#FFD700',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -295,17 +305,14 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
     marginBottom: 4,
   },
   optionSubtitle: {
     fontSize: 14,
-    color: '#666666',
     marginBottom: 8,
   },
   optionDescription: {
     fontSize: 13,
-    color: '#888888',
     lineHeight: 18,
   },
   optionFooter: {
@@ -317,23 +324,19 @@ const styles = StyleSheet.create({
   },
   selectText: {
     fontSize: 14,
-    color: '#000000',
     fontWeight: '600',
     marginRight: 8,
   },
   arrow: {
     width: 28,
     height: 28,
-    backgroundColor: '#FFD700',
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#000000',
   },
   arrowText: {
     fontSize: 16,
-    color: '#000000',
     fontWeight: 'bold',
   },
   infoSection: {
@@ -342,12 +345,10 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#FFD700',
   },
   infoContent: {
     marginLeft: 16,
@@ -356,25 +357,20 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 4,
   },
   infoDescription: {
     fontSize: 12,
-    color: '#666666',
     lineHeight: 16,
   },
   bottomNote: {
-    backgroundColor: '#FFFBF0',
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FFD700',
     alignItems: 'center',
   },
   noteText: {
     fontSize: 14,
-    color: '#000000',
     textAlign: 'center',
     lineHeight: 20,
   },

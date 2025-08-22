@@ -28,16 +28,14 @@ import {
   ArrowDownLeft
 } from 'lucide-react-native';
 
-
-
 type FilterButtonProps = {
-  filter: string; // or the correct type for filter
+  filter: string;
   label: string;
 };
 
 type Transaction = {
   id: string;
-  type: 'income' | 'expense' | string; // adjust to your types
+  type: 'income' | 'expense' | string;
   amount: string;
   description?: string;
   date?: string;
@@ -46,7 +44,6 @@ type Transaction = {
   recipient?: string;  
   reference?: string;
 };
-
 
 const sampleTransactions = [
   { 
@@ -145,7 +142,6 @@ export default function TransactionsScreen() {
   const [selectedFilter, setSelectedFilter] = useState('all');
 
   const getTransactionIcon = (type: string) => { 
-
     switch (type) {
       case 'airtime':
         return Smartphone;
@@ -195,7 +191,6 @@ export default function TransactionsScreen() {
       <TouchableOpacity 
         style={styles.transactionCard}
         onPress={() => {
-          // Navigate to transaction details
           console.log('View transaction details:', item.id);
         }}
         activeOpacity={0.7}
@@ -208,11 +203,11 @@ export default function TransactionsScreen() {
             ]}>
               <Icon 
                 size={20} 
-                color={isIncome ? '#16A34A' : '#D97706'} 
+                color={isIncome ? '#16A34A' : '#FF8C00'} 
               />
               <View style={[
                 styles.amountIndicator,
-                { backgroundColor: isIncome ? '#16A34A' : '#DC2626' }
+                { backgroundColor: isIncome ? '#16A34A' : '#FF8C00' }
               ]}>
                 {isIncome ? 
                   <ArrowDownLeft size={10} color="#FFFFFF" /> :
@@ -231,7 +226,7 @@ export default function TransactionsScreen() {
           <View style={styles.transactionRight}>
             <Text style={[
               styles.transactionAmount,
-              { color: isIncome ? '#16A34A' : '#DC2626' }
+              { color: isIncome ? '#16A34A' : '#FF8C00' }
             ]}>
               {item.amount}
             </Text>
@@ -275,7 +270,7 @@ export default function TransactionsScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Transactions</Text>
         <TouchableOpacity style={styles.calendarButton}>
-          <Calendar size={20} color="#000000" />
+          <Calendar size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -291,7 +286,7 @@ export default function TransactionsScreen() {
 
         <View style={styles.summaryCard}>
           <View style={styles.summaryIconContainer}>
-            <TrendingDown size={24} color="#DC2626" />
+            <TrendingDown size={24} color="#FF8C00" />
           </View>
           <Text style={styles.summaryLabel}>Total Expenses</Text>
           <Text style={styles.summaryAmount}>-₦{totalExpenses.toLocaleString()}</Text>
@@ -311,7 +306,7 @@ export default function TransactionsScreen() {
           />
         </View>
         <TouchableOpacity style={styles.filterIconButton}>
-          <Filter size={20} color="#000000" />
+          <Filter size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -377,7 +372,7 @@ const styles = StyleSheet.create({
   calendarButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF8C00',
   },
   summarySection: {
     flexDirection: 'row',
@@ -391,7 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -441,7 +436,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   filterIconButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF8C00',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -471,7 +466,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#FFD700',
+    color: '#FF8C00',
   },
   listContainer: {
     flex: 1,

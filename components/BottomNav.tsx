@@ -26,7 +26,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
             onPress={() => setActiveTab(item.key)}
             style={styles.item}
           >
-            <Icon color={activeTab === item.key ? '#16a34a' : '#9ca3af'} size={20} />
+            <Icon color={activeTab === item.key ? '#F97316' : '#9ca3af'} size={20} />
             <Text style={[styles.label, activeTab === item.key && styles.activeLabel]}>
               {item.label}
             </Text>
@@ -53,5 +53,5 @@ const styles = StyleSheet.create({
   },
   item: { alignItems: 'center' },
   label: { fontSize: 10, color: '#9ca3af' },
-  activeLabel: { color: '#16a34a' },
+  activeLabel: { color: '#F97316' },
 });
