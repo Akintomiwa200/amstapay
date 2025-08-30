@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SectionList } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, CreditCard, Filter, Calendar } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, CreditCard, Filter, Calendar, Receipt } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 const Transactions = () => {
@@ -11,22 +11,22 @@ const Transactions = () => {
     {
       title: 'Today',
       data: [
-        { id: 1, type: 'Deposit', amount: '+₦50,000', date: '10:45 AM', category: 'income' },
-        { id: 2, type: 'Electricity', amount: '-₦15,000', date: '3:20 PM', category: 'bill' },
+        { id: 1, type: 'Deposit', amount: '+₦50,000', date: '10:45 AM', category: 'income', receipt: true },
+        { id: 2, type: 'Electricity', amount: '-₦15,000', date: '3:20 PM', category: 'bill', receipt: true },
       ]
     },
     {
       title: 'Yesterday',
       data: [
-        { id: 3, type: 'Transfer', amount: '-₦25,000', date: '9:15 AM', category: 'transfer' },
+        { id: 3, type: 'Transfer', amount: '-₦25,000', date: '9:15 AM', category: 'transfer', receipt: true },
       ]
     },
     {
       title: 'March 2024',
       data: [
-        { id: 4, type: 'Salary', amount: '+₦120,000', date: 'Mar 1', category: 'income' },
-        { id: 5, type: 'Shopping', amount: '-₦45,000', date: 'Mar 5', category: 'expense' },
-        { id: 6, type: 'Airtime', amount: '-₦5,000', date: 'Mar 10', category: 'bill' },
+        { id: 4, type: 'Salary', amount: '+₦120,000', date: 'Mar 1', category: 'income', receipt: true },
+        { id: 5, type: 'Shopping', amount: '-₦45,000', date: 'Mar 5', category: 'expense', receipt: true },
+        { id: 6, type: 'Airtime', amount: '-₦5,000', date: 'Mar 10', category: 'bill', receipt: true },
       ]
     }
   ];
@@ -37,6 +37,11 @@ const Transactions = () => {
     { id: 'expense', label: 'Expense' },
     { id: 'transfer', label: 'Transfer' },
   ];
+
+  const handleReceiptPress = (transactionId) => {
+    // Navigate to receipt view or show receipt modal
+    router.push(`/receipt/${transactionId}`);
+  };
 
   const renderTransaction = ({ item }: { item: any }) => (
     <View style={styles.transactionCard}>
@@ -62,6 +67,14 @@ const Transactions = () => {
       >
         {item.amount}
       </Text>
+      {item.receipt && (
+        <TouchableOpacity 
+          style={styles.receiptButton}
+          onPress={() => handleReceiptPress(item.id)}
+        >
+          <Receipt size={18} color="#F97316" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -209,12 +222,18 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 12,
   },
   positiveAmount: {
     color: '#10B981',
   },
   negativeAmount: {
     color: '#EF4444',
+  },
+  receiptButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FEF3C7',
   },
 });
 

@@ -1,14 +1,19 @@
 import { useRouter } from 'expo-router';
 import { Bell, HelpCircle, User } from 'lucide-react-native';
 import React, { useState } from 'react';
+import { useAuth } from "@/context/AuthContext";
+
 import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 
 const Header = () => {
+  const { user } = useAuth();
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
   
   // Define the user name as a proper string
-  const userName = "John Doe";
+  
+  const userName = user?.fullName || user?.name || "Guest";
+
   
   // Online user profile image
   const userImage = { 
@@ -20,7 +25,7 @@ const Header = () => {
   };
 
   const handleNotificationPress = () => {
-    router.push('/notifications');
+    router.push('/notification');
   };
 
   const handleProfilePress = () => {

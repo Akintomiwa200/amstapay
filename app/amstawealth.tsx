@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useRouter } from 'expo-router';
 import { PiggyBank } from 'lucide-react-native';
 
-const OWealthScreen = () => {
+const AmstaWealthScreen = () => {
   const [selectedPlan, setSelectedPlan] = useState('');
   const router = useRouter();
 
@@ -21,7 +21,7 @@ const OWealthScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>OWealth Investment</Text>
+        <Text style={styles.headerTitle}>AmstaWealth Investment</Text>
         <Text style={styles.subtitle}>Grow your money with secure investments</Text>
       </View>
 
@@ -79,4 +79,4 @@ const styles = StyleSheet.create({
   investButtonText: { color: '#FFFFFF', fontWeight: '600' },
 });
 
-export default OWealthScreen;
+export default AmstaWealthScreen;

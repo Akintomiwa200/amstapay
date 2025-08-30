@@ -46,7 +46,7 @@ const ServicesGrid: React.FC = () => {
       Data: '/data',
       Betting: '/betting',
       TV: '/tv',
-      OWealth: '/amstawealth',
+      AmstaWealth: '/amstawealth',
       Loan: '/loan',
       Invitation: '/invitation',
       Electricity: '/eletricity',
@@ -71,7 +71,7 @@ const ServicesGrid: React.FC = () => {
     { icon: Wifi, label: 'Data', badge: 'Up to 5%' }, // Changed from Database to Wifi
     { icon: DollarSign, label: 'Betting' }, // Changed from Target to DollarSign
     { icon: Tv, label: 'TV' },
-    { icon: PiggyBank, label: 'OWealth' },
+    { icon: PiggyBank, label: 'AmstaWealth' },
     { icon: Banknote, label: 'Loan' }, // Changed from Users to Banknote
     { icon: Mail, label: 'Invitation' },
     {

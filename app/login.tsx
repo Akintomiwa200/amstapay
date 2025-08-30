@@ -1,15 +1,36 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 export default function LoginScreen() {
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const router = useRouter();
 
-  const handleLogin = () => {
-    // TODO: Add validation/authentication
-    router.push("/dashboard");
+  const handleLogin = async () => {
+    if (!emailOrPhone || !password) {
+      Alert.alert("Error", "Please enter both fields");
+      return;
+    }
+    try {
+      setLoading(true);
+      await login(emailOrPhone, password);
+      router.replace("/dashboard"); // 🎉 Successful login → dashboard
+    } catch (error: any) {
+      Alert.alert("Login failed", error.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,13 +54,12 @@ export default function LoginScreen() {
             value={emailOrPhone}
             onChangeText={setEmailOrPhone}
             className="border-b border-gray-300 text-base py-3 text-black"
-            keyboardType="email-address"
             autoCapitalize="none"
           />
         </View>
 
         {/* Password */}
-        <View className="mb-8">
+        <View className="mb-2">
           <Text className="text-gray-700 text-sm mb-2">Password</Text>
           <TextInput
             placeholder="Enter password"
@@ -50,17 +70,30 @@ export default function LoginScreen() {
             className="border-b border-gray-300 text-base py-3 text-black"
           />
         </View>
+
+        {/* Forgot Password Link */}
+        <TouchableOpacity
+          className="self-end mt-2"
+          onPress={() => router.push("/forgot-password")}
+        >
+          <Text className="text-orange-500 text-sm font-medium">
+            Forgot Password?
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Login Button */}
       <TouchableOpacity
+        disabled={loading}
         className="bg-orange-500 py-4 rounded-lg items-center mb-6"
         onPress={handleLogin}
       >
-        <Text className="text-white text-lg font-semibold">Log In</Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text className="text-white text-lg font-semibold">Log In</Text>
+        )}
       </TouchableOpacity>
-
-     
 
       {/* Signup Link */}
       <TouchableOpacity

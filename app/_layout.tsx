@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import 'react-native-reanimated';
+import { AuthProvider } from "../context/AuthContext";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import "../global.css";
 
@@ -45,29 +46,21 @@ export default function RootLayout() {
   const theme = colorScheme === 'dark' ? customDarkTheme : customLightTheme;
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={theme}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: {
-              flex: 1,
-              backgroundColor: theme.colors.background,
-            },
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="dashboard" />
-          <Stack.Screen name="reward" />
-          <Stack.Screen name="finance" />
-          <Stack.Screen name="card" />
-          <Stack.Screen name="me" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <AuthProvider>
+      <SafeAreaProvider>
+        <ThemeProvider value={theme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: {
+                flex: 1,
+                backgroundColor: theme.colors.background,
+              },
+            }}
+          />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 }

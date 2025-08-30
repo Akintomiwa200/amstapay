@@ -4,10 +4,12 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, View, Mod
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
+import { useAuth } from "@/context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
  
 
 const Me = () => {
+   const { user, logout } = useAuth();
   const router = useRouter();
   
   // State for settings modal
@@ -31,20 +33,20 @@ const Me = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
 
-  // User profile data
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    avatar: require('@/assets/images/logo.png'),
-    tier: 'Gold Member',
-    points: 1250,
-    address: '123 Main St, City, State 12345',
-    paymentMethods: [
-      { id: 1, type: 'Visa', last4: '4321' },
-      { id: 2, type: 'MasterCard', last4: '8765' }
-    ]
+ // replace hardcoded mock
+  const profileUser = {
+    name: user?.fullName || user?.name || "Guest",
+    email: user?.email || "Not provided",
+    phone: user?.phoneNumber || user?.phone || "Not provided",
+    accountType: user?.accountType || "personal",
+    avatar: require("../assets/images/logo.png"), // still fallback until backend provides avatar
+    points: 0, // backend doesn’t provide yet, so keep 0 or hide
   };
+// Dummy payment methods (replace later with backend data)
+const paymentMethods = [
+  { id: "1", type: "Visa", last4: "1234" },
+  { id: "2", type: "MasterCard", last4: "5678" },
+];
 
   // Mock reward data
   const rewards = [
@@ -159,7 +161,7 @@ const Me = () => {
             <Image source={user.avatar} style={styles.avatar} />
             <View style={styles.userDetails}>
               <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userTier}>{user.tier}</Text>
+              <Text style={styles.userTier}>{profileUser.accountType}</Text>
             </View>
           </View>
         </View>
@@ -202,34 +204,35 @@ const Me = () => {
           
           {personalInfoExpanded && (
             <>
-              <ProfileItem 
-                icon={<User size={20} color="#666666" />}
-                title="Name"
-                value={user.name}
-              />
-              <ProfileItem 
-                icon={<Mail size={20} color="#666666" />}
-                title="Email"
-                value={user.email}
-              />
-              <ProfileItem 
-                icon={<Phone size={20} color="#666666" />}
-                title="Phone"
-                value={user.phone}
-              />
+                <ProfileItem 
+      icon={<User size={20} color="#666666" />}
+      title="Name"
+      value={profileUser.name}
+    />
+    <ProfileItem 
+      icon={<Mail size={20} color="#666666" />}
+      title="Email"
+      value={profileUser.email}
+    />
+    <ProfileItem 
+      icon={<Phone size={20} color="#666666" />}
+      title="Phone"
+      value={profileUser.phone}
+    />
               <ProfileItem 
                 icon={<MapPin size={20} color="#666666" />}
                 title="Address"
-                value={user.address}
+                value={profileUser.address}
               />
               <View style={styles.paymentMethods}>
                 <Text style={styles.subSectionTitle}>Payment Methods</Text>
-                {user.paymentMethods.map((method) => (
-                  <View key={method.id} style={styles.paymentMethod}>
-                    <CreditCard size={16} color="#666666" />
-                    <Text style={styles.paymentText}>{method.type} •••• {method.last4}</Text>
-                  </View>
-                ))}
+             {paymentMethods.map((method) => (
+  <View key={method.id} style={styles.paymentMethod}>
+    <CreditCard size={16} color="#666666" />
+    <Text style={styles.paymentText}>{method.type} •••• {method.last4}</Text>
+  </View>
+))}
+
                 <TouchableOpacity 
                   style={styles.addButton}
                   onPress={() => navigateTo('/payment-methods')}
@@ -513,6 +516,10 @@ const ProfileItem = ({ icon, title, value }: { icon: React.ReactNode, title: str
 
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9FAFB', 
+  },
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
