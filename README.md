@@ -53,6 +53,6 @@ Join our community of developers creating universal apps.
 
 
 
-https://expo.dev/artifacts/eas/fxjzyhdF9WWU3MZyzEgS5C.apk
+https://expo.dev/artifacts/eas/6nBYbkHfubQdTFihqEXuPU.apk
 
 
