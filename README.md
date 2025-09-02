@@ -199,7 +199,11 @@ This moves the starter code to `app-example/` and creates a fresh `app/` directo
 
 You can download the latest development builds:
 
+<<<<<<< HEAD
 - 📱 **Android APK**: [Download Amstapay (Android)](https://github.com/your-username/amstapay/releases/latest)
+=======
+- 📱 **Android APK**: [Download Amstapay (Android)] (https://expo.dev/artifacts/eas/6nBYbkHfubQdTFihqEXuPU.apk)
+>>>>>>> 8fbe546ad7c51c49b95217ce87c27fb4c46dba91
 - 🍎 **iOS TestFlight**: [Join Beta Testing](https://testflight.apple.com/join/your-testflight-link)
 
 ⚠️ **Note**: These are development builds for testing purposes. Production builds are available through official app stores.
@@ -480,4 +484,8 @@ copies or substantial portions of the Software.
 
 [Website](https://amstapay.com) • [Documentation](https://docs.amstapay.com) • [Support](mailto:support@amstapay.com)
 
+<<<<<<< HEAD
 </div>
+=======
+</div>
+>>>>>>> 8fbe546ad7c51c49b95217ce87c27fb4c46dba91

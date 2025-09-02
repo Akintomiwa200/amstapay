@@ -1,22 +1,67 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  Alert,
+  ActivityIndicator
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Camera, Save, User, Mail, Phone, MapPin, Calendar } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext'; // adjust path
 
 const EditProfile = () => {
   const router = useRouter();
+  const { user, updateProfile, refreshUser, loading } = useAuth();
+
   const [formData, setFormData] = useState({
-    fullName: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+234 812 345 6789',
-    address: '123 Main Street, Lagos',
-    dob: '1990-01-01',
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    dob: '',
   });
 
-  const handleSave = () => {
-    // Save logic here
-    router.back();
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        fullName: user.fullName || '',
+        email: user.email || '',
+        phone: user.phoneNumber || user.phone || '',
+        address: user.address || '',
+        dob: user.dob || '',
+      });
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await updateProfile({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        dob: formData.dob,
+      });
+      Alert.alert('Success', 'Profile updated successfully');
+      await refreshUser();
+      router.back();
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert('Error', err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) return <ActivityIndicator style={{ flex: 1, marginTop: 50 }} size="large" />;
 
   return (
     <View style={styles.container}>
@@ -25,16 +70,18 @@ const EditProfile = () => {
           <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+        <TouchableOpacity onPress={handleSave} style={styles.saveButton} disabled={saving}>
           <Save size={20} color="#F97316" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' }}
+              source={{
+                uri: user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+              }}
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.cameraButton}>
@@ -44,176 +91,55 @@ const EditProfile = () => {
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <View style={styles.inputContainer}>
-              <User size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={formData.fullName}
-                onChangeText={(text) => setFormData({ ...formData, fullName: text })}
-                placeholder="Enter your full name"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputContainer}>
-              <Mail size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                placeholder="Enter your email"
-                keyboardType="email-address"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <View style={styles.inputContainer}>
-              <Phone size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={formData.phone}
-                onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                placeholder="Enter your phone number"
-                keyboardType="phone-pad"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <View style={styles.inputContainer}>
-              <MapPin size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={formData.address}
-                onChangeText={(text) => setFormData({ ...formData, address: text })}
-                placeholder="Enter your address"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date of Birth</Text>
-            <View style={styles.inputContainer}>
-              <Calendar size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={formData.dob}
-                onChangeText={(text) => setFormData({ ...formData, dob: text })}
-                placeholder="YYYY-MM-DD"
-              />
-            </View>
-          </View>
+          <FormInput label="Full Name" icon={<User size={20} color="#666" />} value={formData.fullName} onChange={text => setFormData({ ...formData, fullName: text })} />
+          <FormInput label="Email Address" icon={<Mail size={20} color="#666" />} value={formData.email} onChange={text => setFormData({ ...formData, email: text })} keyboardType="email-address" />
+          <FormInput label="Phone Number" icon={<Phone size={20} color="#666" />} value={formData.phone} onChange={text => setFormData({ ...formData, phone: text })} keyboardType="phone-pad" />
+          <FormInput label="Address" icon={<MapPin size={20} color="#666" />} value={formData.address} onChange={text => setFormData({ ...formData, address: text })} />
+          <FormInput label="Date of Birth" icon={<Calendar size={20} color="#666" />} value={formData.dob} onChange={text => setFormData({ ...formData, dob: text })} placeholder="YYYY-MM-DD" />
         </View>
 
-        <TouchableOpacity style={styles.saveLargeButton} onPress={handleSave}>
-          <Text style={styles.saveLargeButtonText}>Save Changes</Text>
+        <TouchableOpacity style={styles.saveLargeButton} onPress={handleSave} disabled={saving}>
+          <Text style={styles.saveLargeButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 };
 
+const FormInput = ({ label, icon, value, onChange, keyboardType = 'default', placeholder = '' }: any) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.label}>{label}</Text>
+    <View style={styles.inputContainer}>
+      {icon}
+      <TextInput
+        style={styles.input}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder || `Enter your ${label.toLowerCase()}`}
+        keyboardType={keyboardType}
+      />
+    </View>
+  </View>
+);
+
 export default EditProfile;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  saveButton: {
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#F97316',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  form: {
-    marginBottom: 24,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#000',
-  },
-  saveLargeButton: {
-    backgroundColor: '#F97316',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveLargeButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: '#FFF' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 60, backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E5E5E5' },
+  backButton: { padding: 8 },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#000' },
+  saveButton: { padding: 8 },
+  content: { flex: 1, paddingHorizontal: 20 },
+  profileSection: { alignItems: 'center', marginBottom: 32 },
+  avatarContainer: { position: 'relative' },
+  avatar: { width: 100, height: 100, borderRadius: 50 },
+  cameraButton: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#F97316', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  form: { marginBottom: 24 },
+  inputGroup: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: '#000', marginBottom: 8 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E5E5', borderRadius: 8, paddingHorizontal: 16 },
+  input: { flex: 1, height: 50, fontSize: 16, color: '#000' },
+  saveLargeButton: { backgroundColor: '#F97316', padding: 16, borderRadius: 8, alignItems: 'center' },
+  saveLargeButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
 });

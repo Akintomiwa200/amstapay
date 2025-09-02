@@ -1,20 +1,43 @@
 import { useRouter } from 'expo-router';
 import { ChevronRight, Eye, EyeOff, Plus } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { useAuth } from '../../context/AuthContext'; // adjust the path if needed
 
 const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { getWalletBalance } = useAuth();
 
-  const handleOpenHistory = () => {
-    router.push('/transactions');
+  const fetchBalance = async () => {
+    try {
+      setLoading(true);
+      const data = await getWalletBalance();
+      setBalance(data.balance);
+    } catch (err) {
+      console.error("Failed to fetch balance", err);
+      setBalance(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddMoney = () => {
-    router.push('/add-money');
-  };
-  const balanceText = showBalance ? '₦0.00' : '•••••••';
+  useEffect(() => {
+    fetchBalance();
+  }, []);
+
+  const handleOpenHistory = () => router.push('/transactions');
+  const handleAddMoney = () => router.push('/add-money');
+
+  const balanceText = showBalance
+    ? loading
+      ? 'Loading...'
+      : balance !== null
+      ? `₦${balance.toLocaleString()}`
+      : '₦0.00'
+    : '•••••••';
 
   return (
     <View style={styles.card}>
@@ -36,7 +59,13 @@ const BalanceCard = () => {
 
       {/* Bottom row */}
       <View style={[styles.row, styles.bottomRow]}>
-        <TouchableOpacity style={styles.row} onPress={() => setShowBalance((prev) => !prev)}>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => {
+            setShowBalance(prev => !prev);
+            fetchBalance(); // refresh balance whenever toggled
+          }}
+        >
           <Text style={styles.balance}>{balanceText}</Text>
           {showBalance ? (
             <EyeOff size={20} color="#1F2937" style={{ marginLeft: 8 }} />
@@ -56,6 +85,7 @@ const BalanceCard = () => {
 
 export default BalanceCard;
 
+// existing styles remain the same
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
@@ -64,76 +94,30 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#F3F4F6', // Light gray border
+    borderColor: '#F3F4F6',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bottomRow: {
-    marginTop: 16,
-    justifyContent: 'space-between',
-  },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  bottomRow: { marginTop: 16, justifyContent: 'space-between' },
   iconCircle: {
     width: 20,
     height: 20,
-    backgroundColor: 'rgba(249, 115, 22, 0.2)', // Orange-500 with opacity
+    backgroundColor: 'rgba(249, 115, 22, 0.2)',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
-  iconDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#F97316', // Orange-500
-    borderRadius: 4,
-  },
-  smallCircle: {
-    width: 16,
-    height: 16,
-    backgroundColor: 'rgba(249, 115, 22, 0.2)', // Orange-500 with opacity
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  subText: {
-    fontSize: 12,
-    color: '#6B7280', // Medium gray
-  },
-  historyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 64,
-    padding: 4,
-  },
-  linkText: {
-    fontSize: 12,
-    color: '#F97316', // Orange-500
-    fontWeight: '500',
-    marginRight: 4,
-  },
-  balance: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1F2937', // Dark gray
-  },
-  addMoneyBtn: {
-    backgroundColor: '#F97316', // Orange-500
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  addMoneyText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
-  },
+  iconDot: { width: 8, height: 8, backgroundColor: '#F97316', borderRadius: 4 },
+  smallCircle: { width: 16, height: 16, backgroundColor: 'rgba(249, 115, 22, 0.2)', borderRadius: 8, marginLeft: 8 },
+  subText: { fontSize: 12, color: '#6B7280' },
+  historyButton: { flexDirection: 'row', alignItems: 'center', marginLeft: 64, padding: 4 },
+  linkText: { fontSize: 12, color: '#F97316', fontWeight: '500', marginRight: 4 },
+  balance: { fontSize: 22, fontWeight: 'bold', color: '#1F2937' },
+  addMoneyBtn: { backgroundColor: '#F97316', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
+  addMoneyText: { color: '#FFFFFF', fontSize: 14, fontWeight: '500', marginLeft: 6 },
 });

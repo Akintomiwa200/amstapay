@@ -41,7 +41,7 @@ export default function AddMoneyScreen() {
     if (method === 'qr') {
       router.push('/qr-code');
     } else if (method === 'bank') {
-      router.push('/bank-transfer');
+      router.push('/bankTransfer');
     }
   };
 

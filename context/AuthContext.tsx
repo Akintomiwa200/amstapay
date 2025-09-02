@@ -10,6 +10,29 @@ type User = {
   isVerified?: boolean;
   role?: string;
   createdAt?: string;
+  name?: string;
+  phone?: string;
+};
+
+type Transaction = {
+  _id: string;
+  sender: string;
+  receiverName: string;
+  receiverAccountNumber: string;
+  receiverBank: string;
+  amount: number;
+  type: string;
+  qrData?: string;
+  reference?: string;
+  merchantId?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+};
+
+type WalletBalance = {
+  balance: number;
 };
 
 type AuthContextType = {
@@ -19,6 +42,19 @@ type AuthContextType = {
   login: (emailOrPhone: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  getTransactions: () => Promise<Transaction[]>;
+  getTransaction: (id: string) => Promise<Transaction>;
+  updateTransactionStatus: (id: string, status: string) => Promise<void>;
+  getWalletBalance: () => Promise<WalletBalance>;
+  fundWallet: (amount: number, paymentMethod: string) => Promise<void>;
+  withdrawFromWallet: (amount: number, accountDetails: any) => Promise<void>;
+  transferToWallet: (amount: number, recipient: string) => Promise<void>;
+  getWalletTransactions: () => Promise<any[]>;
+  sendViaQR: (qrData: any, amount: number) => Promise<void>;
+  receiveViaQR: (qrData: any) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (savedUser) {
             setUser(JSON.parse(savedUser));
           } else {
-            await fetchUserProfile(savedToken); // refresh if only token is saved
+            await fetchUserProfile(savedToken);
           }
         }
       } catch (err) {
@@ -50,53 +86,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loadStoredAuth();
   }, []);
 
- // AuthContext.tsx
+  const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+    const baseUrl = "https://amstapay-backend.onrender.com/api";
+    // const baseUrl = "http://localhost:3000/api";
+    
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    };
 
-const fetchUserProfile = async (authToken: string) => {
-  const res = await fetch("https://amstapay-backend.onrender.com/api/users/me", {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
+    const response = await fetch(`${baseUrl}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch user profile");
-  }
-
-  return res.json();
-};
-
-const login = async (emailOrPhone: string, password: string) => {
-  try {
-    const res = await fetch(
-      "https://amstapay-backend.onrender.com/api/auth/login",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailOrPhone, password }),
-      }
-    );
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || "Invalid credentials");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API request failed: ${response.status}`);
     }
 
-    const data = await res.json();
+    return response.json();
+  };
 
-    // save token
+  const fetchUserProfile = async (authToken: string) => {
+    const data = await apiRequest("/users/me", {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    
+    setUser(data);
+    await AsyncStorage.setItem("user", JSON.stringify(data));
+    return data;
+  };
+
+  const login = async (emailOrPhone: string, password: string) => {
+    const data = await apiRequest("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ emailOrPhone, password }),
+    });
+
     setToken(data.token);
     await AsyncStorage.setItem("token", data.token);
 
-    // fetch profile using token
     const profile = await fetchUserProfile(data.token);
     setUser(profile);
     await AsyncStorage.setItem("user", JSON.stringify(profile));
-  } catch (err) {
-    throw err;
-  }
-};
-
+  };
 
   const logout = async () => {
     setUser(null);
@@ -105,16 +142,118 @@ const login = async (emailOrPhone: string, password: string) => {
     await AsyncStorage.removeItem("user");
   };
 
-  // Allow screens to refresh user manually
   const refreshUser = async () => {
     if (token) {
       await fetchUserProfile(token);
     }
   };
 
+  const updateProfile = async (userData: Partial<User>) => {
+    const data = await apiRequest("/users/me", {
+      method: "PUT",
+      body: JSON.stringify(userData),
+    });
+    
+    setUser(data);
+    await AsyncStorage.setItem("user", JSON.stringify(data));
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await apiRequest("/users/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  };
+
+  const deleteAccount = async () => {
+    await apiRequest("/users/delete", {
+      method: "DELETE",
+    });
+    
+    await logout();
+  };
+
+  const getTransactions = async (): Promise<Transaction[]> => {
+    return await apiRequest("/transactions");
+  };
+
+  const getTransaction = async (id: string): Promise<Transaction> => {
+    return await apiRequest(`/transactions/${id}`);
+  };
+
+  const updateTransactionStatus = async (id: string, status: string) => {
+    await apiRequest(`/transactions/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+  };
+
+  const getWalletBalance = async (): Promise<WalletBalance> => {
+    return await apiRequest("/wallets/balance");
+  };
+
+  const fundWallet = async (amount: number, paymentMethod: string) => {
+    await apiRequest("/wallets/fund", {
+      method: "POST",
+      body: JSON.stringify({ amount, paymentMethod }),
+    });
+  };
+
+  const withdrawFromWallet = async (amount: number, accountDetails: any) => {
+    await apiRequest("/wallets/withdraw", {
+      method: "POST",
+      body: JSON.stringify({ amount, accountDetails }),
+    });
+  };
+
+  const transferToWallet = async (amount: number, recipient: string) => {
+    await apiRequest("/wallets/transfer", {
+      method: "POST",
+      body: JSON.stringify({ amount, recipient }),
+    });
+  };
+
+  const getWalletTransactions = async (): Promise<any[]> => {
+    return await apiRequest("/wallets/transactions");
+  };
+
+  const sendViaQR = async (qrData: any, amount: number) => {
+    await apiRequest("/payments/send", {
+      method: "POST",
+      body: JSON.stringify({ qrData, amount }),
+    });
+  };
+
+  const receiveViaQR = async (qrData: any) => {
+    await apiRequest("/payments/receive", {
+      method: "POST",
+      body: JSON.stringify({ qrData }),
+    });
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, logout, refreshUser }}
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        logout,
+        refreshUser,
+        updateProfile,
+        changePassword,
+        deleteAccount,
+        getTransactions,
+        getTransaction,
+        updateTransactionStatus,
+        getWalletBalance,
+        fundWallet,
+        withdrawFromWallet,
+        transferToWallet,
+        getWalletTransactions,
+        sendViaQR,
+        receiveViaQR,
+      }}
     >
       {children}
     </AuthContext.Provider>

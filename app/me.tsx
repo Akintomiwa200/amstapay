@@ -33,20 +33,22 @@ const Me = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
 
- // replace hardcoded mock
-  const profileUser = {
-    name: user?.fullName || user?.name || "Guest",
-    email: user?.email || "Not provided",
-    phone: user?.phoneNumber || user?.phone || "Not provided",
-    accountType: user?.accountType || "personal",
-    avatar: require("../assets/images/logo.png"), // still fallback until backend provides avatar
-    points: 0, // backend doesn’t provide yet, so keep 0 or hide
-  };
-// Dummy payment methods (replace later with backend data)
+const profileUser = {
+  name: user?.fullName || user?.name || "Guest",
+  email: user?.email || "Not provided",
+  phone: user?.phoneNumber || user?.phone || "Not provided",
+  accountType: user?.accountType || "Personal",
+  avatar: user?.avatar ? { uri: user.avatar } : require("../assets/images/logo.png"),
+  points: user?.points ?? 0,
+  address: user?.address || "Not provided",
+};
+
+
 const paymentMethods = [
-  { id: "1", type: "Visa", last4: "1234" },
-  { id: "2", type: "MasterCard", last4: "5678" },
+  { id: '1', type: 'Visa', last4: '1234' },
+  { id: '2', type: 'Mastercard', last4: '5678' },
 ];
+
 
   // Mock reward data
   const rewards = [
@@ -84,6 +86,9 @@ const paymentMethods = [
                 await SecureStore.deleteItemAsync('userPreferences');
                 await SecureStore.deleteItemAsync('recentTransactions');
                 await SecureStore.deleteItemAsync('cachedBalance');
+                
+                // Use the logout function from AuthContext
+                await logout();
                 
                 // Reset navigation state and redirect to login
                 router.replace('/login');
@@ -158,9 +163,9 @@ const paymentMethods = [
           </View>
           
           <View style={styles.profileInfo}>
-            <Image source={user.avatar} style={styles.avatar} />
+            <Image source={profileUser.avatar} style={styles.avatar} />
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user.name}</Text>
+              <Text style={styles.userName}>{profileUser.name}</Text>
               <Text style={styles.userTier}>{profileUser.accountType}</Text>
             </View>
           </View>
@@ -170,7 +175,7 @@ const paymentMethods = [
         <View style={styles.rewardsSummary}>
           <View style={styles.pointsContainer}>
             <Text style={styles.pointsLabel}>Available Points</Text>
-            <Text style={styles.pointsValue}>{user.points}</Text>
+            <Text style={styles.pointsValue}>{profileUser.points}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.rewardsActions}>
@@ -204,21 +209,21 @@ const paymentMethods = [
           
           {personalInfoExpanded && (
             <>
-                <ProfileItem 
-      icon={<User size={20} color="#666666" />}
-      title="Name"
-      value={profileUser.name}
-    />
-    <ProfileItem 
-      icon={<Mail size={20} color="#666666" />}
-      title="Email"
-      value={profileUser.email}
-    />
-    <ProfileItem 
-      icon={<Phone size={20} color="#666666" />}
-      title="Phone"
-      value={profileUser.phone}
-    />
+              <ProfileItem 
+                icon={<User size={20} color="#666666" />}
+                title="Name"
+                value={profileUser.name}
+              />
+              <ProfileItem 
+                icon={<Mail size={20} color="#666666" />}
+                title="Email"
+                value={profileUser.email}
+              />
+              <ProfileItem 
+                icon={<Phone size={20} color="#666666" />}
+                title="Phone"
+                value={profileUser.phone}
+              />
               <ProfileItem 
                 icon={<MapPin size={20} color="#666666" />}
                 title="Address"
@@ -226,13 +231,12 @@ const paymentMethods = [
               />
               <View style={styles.paymentMethods}>
                 <Text style={styles.subSectionTitle}>Payment Methods</Text>
-             {paymentMethods.map((method) => (
-  <View key={method.id} style={styles.paymentMethod}>
-    <CreditCard size={16} color="#666666" />
-    <Text style={styles.paymentText}>{method.type} •••• {method.last4}</Text>
-  </View>
-))}
-
+                {paymentMethods.map((method) => (
+                  <View key={method.id} style={styles.paymentMethod}>
+                    <CreditCard size={16} color="#666666" />
+                    <Text style={styles.paymentText}>{method.type} •••• {method.last4}</Text>
+                  </View>
+                ))}
                 <TouchableOpacity 
                   style={styles.addButton}
                   onPress={() => navigateTo('/payment-methods')}
@@ -510,10 +514,6 @@ const ProfileItem = ({ icon, title, value }: { icon: React.ReactNode, title: str
     </View>
   </View>
 );
-
-// ... keep your existing styles exactly the same ...
-// Your styles object remains unchanged
-
 
 const styles = StyleSheet.create({
   safeArea: {

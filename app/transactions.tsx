@@ -1,237 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  View, 
-  Text, 
-  FlatList, 
-  StyleSheet, 
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  TextInput
+  View, Text, FlatList, StyleSheet, TouchableOpacity,
+  SafeAreaView, StatusBar, TextInput, ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft,
-  Search,
-  Filter,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Smartphone,
-  Building2,
-  Zap,
-  CreditCard,
-  Users,
-  MoreHorizontal,
-  ChevronRight,
-  ArrowUpRight,
-  ArrowDownLeft
+  ArrowLeft, Search, Filter, Calendar, TrendingUp, TrendingDown,
+  Smartphone, Building2, Zap, CreditCard, Users, MoreHorizontal,
+  ChevronRight, ArrowUpRight, ArrowDownLeft
 } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
 
-type FilterButtonProps = {
-  filter: string;
-  label: string;
-};
-
-type Transaction = {
-  id: string;
-  type: 'income' | 'expense' | string;
-  amount: string;
-  description?: string;
-  date?: string;
-  time?: string;
-  title: string;  
-  recipient?: string;  
-  reference?: string;
-};
-
-const sampleTransactions = [
-  { 
-    id: '1', 
-    title: 'Airtime Purchase', 
-    amount: '-₦500', 
-    date: '2025-08-10', 
-    time: '14:30',
-    type: 'airtime',
-    status: 'completed',
-    reference: 'TXN001234567',
-    recipient: 'MTN Nigeria'
-  },
-  { 
-    id: '2', 
-    title: 'Bank Deposit', 
-    amount: '+₦5,000', 
-    date: '2025-08-09', 
-    time: '09:15',
-    type: 'deposit',
-    status: 'completed',
-    reference: 'TXN001234566',
-    recipient: 'AmstaPay Wallet'
-  },
-  { 
-    id: '3', 
-    title: 'POS Withdrawal', 
-    amount: '-₦1,000', 
-    date: '2025-08-07', 
-    time: '16:45',
-    type: 'withdrawal',
-    status: 'completed',
-    reference: 'TXN001234565',
-    recipient: 'Lagos Island POS'
-  },
-  { 
-    id: '4', 
-    title: 'Data Bundle', 
-    amount: '-₦1,500', 
-    date: '2025-08-06', 
-    time: '11:20',
-    type: 'data',
-    status: 'completed',
-    reference: 'TXN001234564',
-    recipient: 'Airtel Nigeria'
-  },
-  { 
-    id: '5', 
-    title: 'Electricity Bill', 
-    amount: '-₦3,200', 
-    date: '2025-08-05', 
-    time: '19:30',
-    type: 'utilities',
-    status: 'completed',
-    reference: 'TXN001234563',
-    recipient: 'EEDC Prepaid'
-  },
-  { 
-    id: '6', 
-    title: 'Wallet Transfer', 
-    amount: '+₦2,500', 
-    date: '2025-08-04', 
-    time: '13:10',
-    type: 'transfer',
-    status: 'completed',
-    reference: 'TXN001234562',
-    recipient: 'John Doe'
-  },
-  { 
-    id: '7', 
-    title: 'QR Payment', 
-    amount: '-₦750', 
-    date: '2025-08-03', 
-    time: '10:45',
-    type: 'qr_payment',
-    status: 'completed',
-    reference: 'TXN001234561',
-    recipient: 'Shop Rite Store'
-  },
-  { 
-    id: '8', 
-    title: 'Cashback Reward', 
-    amount: '+₦50', 
-    date: '2025-08-02', 
-    time: '08:30',
-    type: 'cashback',
-    status: 'completed',
-    reference: 'TXN001234560',
-    recipient: 'AmstaPay Rewards'
-  }
-];
+type FilterButtonProps = { filter: string; label: string; };
 
 export default function TransactionsScreen() {
   const router = useRouter();
+  const { getWalletTransactions, loading: authLoading } = useAuth();
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
 
-  const getTransactionIcon = (type: string) => { 
-    switch (type) {
-      case 'airtime':
-        return Smartphone;
-      case 'data':
-        return Smartphone;
-      case 'deposit':
-        return Building2;
-      case 'withdrawal':
-        return CreditCard;
-      case 'utilities':
-        return Zap;
-      case 'transfer':
-        return Users;
-      case 'qr_payment':
-        return CreditCard;
-      case 'cashback':
-        return TrendingUp;
-      default:
-        return MoreHorizontal;
+  useEffect(() => {
+    fetchTransactions();
+    // Optional: Polling every 30s
+    const interval = setInterval(fetchTransactions, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const data = await getWalletTransactions();
+      setTransactions(data);
+    } catch (err: any) {
+      console.error('Failed to fetch transactions', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredTransactions = sampleTransactions.filter(transaction => {
-    const matchesSearch = transaction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.recipient.toLowerCase().includes(searchQuery.toLowerCase());
-    
+  const getTransactionIcon = (type: string) => { 
+    switch (type) {
+      case 'airtime': return Smartphone;
+      case 'data': return Smartphone;
+      case 'deposit': return Building2;
+      case 'withdrawal': return CreditCard;
+      case 'utilities': return Zap;
+      case 'transfer': return Users;
+      case 'qr_payment': return CreditCard;
+      case 'cashback': return TrendingUp;
+      default: return MoreHorizontal;
+    }
+  };
+
+  const filteredTransactions = transactions.filter(transaction => {
+    const title = transaction.title || transaction.type || '';
+    const recipient = transaction.recipient || transaction.receiverName || '';
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          recipient.toLowerCase().includes(searchQuery.toLowerCase());
+
     if (selectedFilter === 'all') return matchesSearch;
-    if (selectedFilter === 'income') return matchesSearch && transaction.amount.startsWith('+');
-    if (selectedFilter === 'expense') return matchesSearch && transaction.amount.startsWith('-');
-    
+    if (selectedFilter === 'income') return matchesSearch && transaction.amount > 0;
+    if (selectedFilter === 'expense') return matchesSearch && transaction.amount < 0;
+
     return matchesSearch;
   });
 
-  const totalIncome = sampleTransactions
-    .filter(t => t.amount.startsWith('+'))
-    .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[^\d.-]/g, '')), 0);
-  
-  const totalExpenses = sampleTransactions
-    .filter(t => t.amount.startsWith('-'))
-    .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount.replace(/[^\d.-]/g, ''))), 0);
+  const totalIncome = transactions
+    .filter(t => t.amount > 0)
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  const renderTransaction = ({ item }: { item: Transaction }) => {
+  const totalExpenses = transactions
+    .filter(t => t.amount < 0)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+  const renderTransaction = ({ item }: { item: any }) => {
     const Icon = getTransactionIcon(item.type);
-    const isIncome = item.amount.startsWith('+');
-    
+    const isIncome = item.amount > 0;
+
     return (
-      <TouchableOpacity 
-        style={styles.transactionCard}
-        onPress={() => {
-          console.log('View transaction details:', item.id);
-        }}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.transactionCard} activeOpacity={0.7}>
         <View style={styles.transactionContent}>
           <View style={styles.transactionLeft}>
-            <View style={[
-              styles.iconContainer,
-              { backgroundColor: isIncome ? '#E8F5E8' : '#FFF4E6' }
-            ]}>
-              <Icon 
-                size={20} 
-                color={isIncome ? '#16A34A' : '#FF8C00'} 
-              />
-              <View style={[
-                styles.amountIndicator,
-                { backgroundColor: isIncome ? '#16A34A' : '#FF8C00' }
-              ]}>
-                {isIncome ? 
-                  <ArrowDownLeft size={10} color="#FFFFFF" /> :
-                  <ArrowUpRight size={10} color="#FFFFFF" />
-                }
+            <View style={[styles.iconContainer, { backgroundColor: isIncome ? '#E8F5E8' : '#FFF4E6' }]}>
+              <Icon size={20} color={isIncome ? '#16A34A' : '#FF8C00'} />
+              <View style={[styles.amountIndicator, { backgroundColor: isIncome ? '#16A34A' : '#FF8C00' }]}>
+                {isIncome ? <ArrowDownLeft size={10} color="#FFF" /> : <ArrowUpRight size={10} color="#FFF" />}
               </View>
             </View>
-            
+
             <View style={styles.transactionDetails}>
-              <Text style={styles.transactionTitle}>{item.title}</Text>
-              <Text style={styles.transactionRecipient}>{item.recipient}</Text>
-              <Text style={styles.transactionReference}>Ref: {item.reference}</Text>
+              <Text style={styles.transactionTitle}>{item.title || item.type}</Text>
+              <Text style={styles.transactionRecipient}>{item.recipient || item.receiverName}</Text>
+              <Text style={styles.transactionReference}>Ref: {item.reference || item._id}</Text>
             </View>
           </View>
-          
+
           <View style={styles.transactionRight}>
-            <Text style={[
-              styles.transactionAmount,
-              { color: isIncome ? '#16A34A' : '#FF8C00' }
-            ]}>
-              {item.amount}
+            <Text style={[styles.transactionAmount, { color: isIncome ? '#16A34A' : '#FF8C00' }]}>
+              {isIncome ? `+₦${item.amount.toLocaleString()}` : `-₦${Math.abs(item.amount).toLocaleString()}`}
             </Text>
-            <Text style={styles.transactionDate}>{item.date}</Text>
-            <Text style={styles.transactionTime}>{item.time}</Text>
+            <Text style={styles.transactionDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
             <ChevronRight size={16} color="#666666" style={styles.chevron} />
           </View>
         </View>
@@ -241,109 +111,84 @@ export default function TransactionsScreen() {
 
   const FilterButton: React.FC<FilterButtonProps> = ({ filter, label }) => (
     <TouchableOpacity
-      style={[
-        styles.filterButton,
-        selectedFilter === filter && styles.filterButtonActive
-      ]}
+      style={[styles.filterButton, selectedFilter === filter && styles.filterButtonActive]}
       onPress={() => setSelectedFilter(filter)}
     >
-      <Text style={[
-        styles.filterButtonText,
-        selectedFilter === filter && styles.filterButtonTextActive
-      ]}>
+      <Text style={[styles.filterButtonText, selectedFilter === filter && styles.filterButtonTextActive]}>
         {label}
       </Text>
     </TouchableOpacity>
   );
 
+  if (loading || authLoading) return <ActivityIndicator style={{ flex: 1, marginTop: 50 }} size="large" />;
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#000000" />
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Transactions</Text>
         <TouchableOpacity style={styles.calendarButton}>
-          <Calendar size={20} color="#FFFFFF" />
+          <Calendar size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
 
-      {/* Summary Cards */}
+      {/* Summary */}
       <View style={styles.summarySection}>
         <View style={styles.summaryCard}>
-          <View style={styles.summaryIconContainer}>
-            <TrendingUp size={24} color="#16A34A" />
-          </View>
+          <View style={styles.summaryIconContainer}><TrendingUp size={24} color="#16A34A" /></View>
           <Text style={styles.summaryLabel}>Total Income</Text>
           <Text style={styles.summaryAmount}>+₦{totalIncome.toLocaleString()}</Text>
         </View>
-
         <View style={styles.summaryCard}>
-          <View style={styles.summaryIconContainer}>
-            <TrendingDown size={24} color="#FF8C00" />
-          </View>
+          <View style={styles.summaryIconContainer}><TrendingDown size={24} color="#FF8C00" /></View>
           <Text style={styles.summaryLabel}>Total Expenses</Text>
           <Text style={styles.summaryAmount}>-₦{totalExpenses.toLocaleString()}</Text>
         </View>
       </View>
 
-      {/* Search Bar */}
+      {/* Search & Filters */}
       <View style={styles.searchSection}>
         <View style={styles.searchBar}>
-          <Search size={20} color="#666666" />
+          <Search size={20} color="#666" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search transactions..."
-            placeholderTextColor="#666666"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
-        <TouchableOpacity style={styles.filterIconButton}>
-          <Filter size={20} color="#FFFFFF" />
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterIconButton}><Filter size={20} color="#FFF" /></TouchableOpacity>
       </View>
 
-      {/* Filter Buttons */}
       <View style={styles.filterSection}>
         <FilterButton filter="all" label="All" />
         <FilterButton filter="income" label="Income" />
         <FilterButton filter="expense" label="Expenses" />
       </View>
 
-      {/* Transaction List */}
-      <View style={styles.listContainer}>
-        <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>Recent Transactions</Text>
-          <Text style={styles.listCount}>{filteredTransactions.length} transactions</Text>
-        </View>
-
-        <FlatList
-          data={filteredTransactions}
-          keyExtractor={(item) => item.id}
-          renderItem={renderTransaction}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateTitle}>No transactions found</Text>
-              <Text style={styles.emptyStateText}>
-                Try adjusting your search or filter criteria
-              </Text>
-            </View>
-          )}
-        />
-      </View>
+      {/* Transactions */}
+      <FlatList
+        data={filteredTransactions}
+        keyExtractor={item => item._id}
+        renderItem={renderTransaction}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateTitle}>No transactions found</Text>
+            <Text style={styles.emptyStateText}>Try adjusting your search or filter criteria</Text>
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

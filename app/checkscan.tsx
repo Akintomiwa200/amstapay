@@ -1,7 +1,10 @@
 // checkscan.tsx
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Camera, QrCode, Download, Share2 } from 'lucide-react-native';
+import { ArrowLeft, Camera, QrCode, Download, Share2, User } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
+import { captureRef } from 'react-native-view-shot'
 import { 
   ActivityIndicator, 
   StyleSheet, 
@@ -13,40 +16,65 @@ import {
   Alert
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { useAuth } from '../context/AuthContext'; // Update this path
 
 const CheckScan = () => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(true);
   const router = useRouter();
   
-  // Mock user data that would be embedded in the QR code
-  const [userData, setUserData] = useState({
-    userId: "USER-123456",
-    name: "John Doe",
-    accountNumber: "1234567890",
-    bank: "AmstaPay",
-    phone: "+2348012345678"
-  });
+  const { user, getWalletBalance, refreshUser } = useAuth();
+const qrRef = React.useRef<QRCode>(null);
 
   useEffect(() => {
-    // Simulate loading user data
-    setTimeout(() => {
-      setHasPermission(true);
-    }, 1000);
-
-    // UNCOMMENT FOR AUTO NAVIGATION TESTING
-    // Auto navigate to waiting screen after 3 seconds for testing
-    // const autoNavigateTimer = setTimeout(() => {
-    //   handleSimulatedScan();
-    // }, 3000);
-    // return () => clearTimeout(autoNavigateTimer);
+    loadUserData();
   }, []);
 
-  const handleShareQR = async () => {
+  const loadUserData = async () => {
     try {
+      setLoadingBalance(true);
+      
+      // Refresh user data and get wallet balance
+      await refreshUser();
+      const balance = await getWalletBalance();
+      setWalletBalance(balance.balance);
+      
+    } catch (error: any) {
+      console.error('Failed to load user data:', error);
+      Alert.alert('Error', 'Failed to load user information');
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
+  const generateQRData = () => {
+    if (!user) return "";
+    
+    return JSON.stringify({
+      type: "receive_payment",
+      userId: user._id,
+      name: user.fullName || user.name || "Unknown User",
+      accountNumber: user.phoneNumber || user.phone || "",
+      bank: "AmstaPay",
+      phone: user.phoneNumber || user.phone || "",
+      email: user.email || "",
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  const handleShareQR = async () => {
+    if (!user) {
+      Alert.alert('Error', 'User information not available');
+      return;
+    }
+
+    try {
+      const userName = user.fullName || user.name || 'AmstaPay User';
+      const userPhone = user.phoneNumber || user.phone || 'Not available';
+      
       await Share.share({
-        message: `Send money to ${userData.name} via QR code. Account: ${userData.accountNumber}, Bank: ${userData.bank}`,
+        message: `Send money to ${userName} via QR code scanning. Phone: ${userPhone}, Bank: AmstaPay`,
         title: 'Share QR Payment Details'
       });
     } catch (error) {
@@ -54,67 +82,41 @@ const CheckScan = () => {
     }
   };
 
-  // SIMULATED SCANNING LOGIC (for testing without actual device)
-  const handleSimulatedScan = () => {
-    setScanned(true);
-    setIsProcessing(true);
-    
-    // Simulate processing the QR code data
-    setTimeout(() => {
-      setIsProcessing(false);
-      
-      // Navigate to the waiting screen with transaction data
-      router.push({
-        pathname: '/waiting-transaction',
-        params: {
-          accountName: userData.name,
-          accountNumber: userData.accountNumber,
-          bank: userData.bank,
-          amount: "₦5,000.00"
-        }
-      } as any);
-    }, 2000);
-  };
+ const handleDownloadQR = async () => {
+  if (!qrRef.current) return;
 
-  // ACTUAL SCANNING LOGIC (commented out for testing)
-  /*
-  const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    setIsProcessing(true);
-    
-    try {
-      // Parse the QR code data
-      const scannedData = JSON.parse(data);
-      
-      // Validate the QR code data
-      if (scannedData.type === "payment" && scannedData.accountNumber) {
-        // Process the payment after a short delay
-        setTimeout(() => {
-          setIsProcessing(false);
-          router.push({
-            pathname: '/waiting-transaction',
-            params: {
-              accountName: scannedData.name,
-              accountNumber: scannedData.accountNumber,
-              bank: scannedData.bank,
-              amount: "₦5,000.00" // This would typically come from an amount input
-            }
-          } as any);
-        }, 2000);
-      } else {
-        Alert.alert('Error', 'Invalid QR code format');
-        setIsProcessing(false);
-        setScanned(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Could not read QR code data');
-      setIsProcessing(false);
-      setScanned(false);
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow access to save images to your gallery');
+      return;
     }
-  };
-  */
 
-  if (hasPermission === null) {
+    qrRef.current.toDataURL((dataURL: string) => {
+      const path = `${FileSystem.cacheDirectory}QR_${Date.now()}.png`;
+      FileSystem.writeAsStringAsync(path, dataURL, { encoding: FileSystem.EncodingType.Base64 })
+        .then(async () => {
+          await MediaLibrary.saveToLibraryAsync(path);
+          Alert.alert('Success', 'QR code saved to your gallery!');
+        })
+        .catch((err) => {
+          console.error(err);
+          Alert.alert('Error', 'Failed to save QR code');
+        });
+    });
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Something went wrong while saving QR code');
+  }
+};
+
+
+  const openScanner = () => {
+    router.push('/scan' as any); // Navigate to your scan screen
+  };
+
+  // Show loading state while user data is being fetched
+  if (!user || loadingBalance) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#F97316" />
@@ -122,27 +124,10 @@ const CheckScan = () => {
       </View>
     );
   }
-  
-  if (hasPermission === false) {
-    return (
-      <View style={styles.container}>
-        <Text>No access to camera</Text>
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
-  // QR code data string (could be JSON encoded)
-  const qrData = JSON.stringify({
-    type: "payment",
-    userId: userData.userId,
-    accountNumber: userData.accountNumber,
-    bank: userData.bank,
-    name: userData.name,
-    timestamp: new Date().toISOString()
-  });
+  const qrData = generateQRData();
+  const userName = user.fullName || user.name || 'AmstaPay User';
+  const userPhone = user.phoneNumber || user.phone || 'Not available';
 
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
@@ -153,28 +138,62 @@ const CheckScan = () => {
             <ArrowLeft color="#000" size={24} />
           </TouchableOpacity>
           <Text style={styles.title}>My QR Code</Text>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
+            <Camera color="#F97316" size={24} />
+          </TouchableOpacity>
         </View>
 
         {/* User Info */}
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>{userData.name}</Text>
-          <Text style={styles.userDetails}>{userData.accountNumber} </Text>
+          <View style={styles.userAvatar}>
+  <User size={24} color="#F97316" />
+</View>
+<Text style={styles.userName}>{user.fullName || user.name}</Text>
+<Text style={styles.userDetails}>{user.accountNumber || user.phoneNumber || user.phone}</Text>
+<Text style={styles.userDetails}>AmstaPay</Text>
+
+          {walletBalance !== null && (
+            <Text style={styles.balanceText}>
+              Balance: ₦{walletBalance.toLocaleString()}
+            </Text>
+          )}
         </View>
 
         {/* QR Code Display */}
         <View style={styles.qrContainer}>
           <View style={styles.qrCard}>
-            <QRCode
-              value={qrData}
-              size={250}
-              color="#000000"
-              backgroundColor="#FFFFFF"
-              logoSize={60}
-              logoMargin={10}
-              logoBorderRadius={30}
-              logoBackgroundColor="transparent"
-            />
+          <View
+  ref={qrCardRef}
+  style={{
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+  }}
+>
+       <QRCode
+  value={qrData}
+  size={250}
+  color="#000000"
+  backgroundColor="#FFFFFF"
+  logoSize={60}
+  logoMargin={10}
+  logoBorderRadius={30}
+  logoBackgroundColor="transparent"
+  getRef={qrRef}
+/>
+{/* User info below QR */}
+  <Text style={{ fontWeight: 'bold', fontSize: 18, marginTop: 12 }}>
+    {userName}
+  </Text>
+  <Text style={{ fontSize: 14, color: '#666' }}>
+    {user.phoneNumber || user.phone}
+  </Text>
+  <Text style={{ fontSize: 14, color: '#666' }}>
+    {user.email}
+  </Text>
+</View>
+
             
             <View style={styles.qrOverlay}>
               <View style={styles.logoContainer}>
@@ -196,13 +215,11 @@ const CheckScan = () => {
             <Text style={styles.actionButtonText}>Share</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleDownloadQR}>
             <Download size={24} color="#F97316" />
             <Text style={styles.actionButtonText}>Save</Text>
           </TouchableOpacity>
         </View>
-
-       
 
         {/* Processing Indicator */}
         {isProcessing && (
@@ -225,8 +242,29 @@ const CheckScan = () => {
           </View>
           <View style={styles.infoItem}>
             <View style={styles.infoBullet} />
-            <Text style={styles.infoText}>You can also scan others' QR codes to pay them</Text>
+            <Text style={styles.infoText}>Scan others' QR codes to pay them quickly</Text>
           </View>
+          <View style={styles.infoItem}>
+            <View style={styles.infoBullet} />
+            <Text style={styles.infoText}>All transactions are secure and encrypted</Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity 
+            style={styles.quickActionButton} 
+            onPress={() => router.push('/wallet' as any)}
+          >
+            <Text style={styles.quickActionText}>View Wallet</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickActionButton} 
+            onPress={() => router.push('/transactions' as any)}
+          >
+            <Text style={styles.quickActionText}>Transaction History</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -262,17 +300,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F8F8F8',
   },
+  scanButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FFF7ED',
+  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000',
   },
-  headerSpacer: {
-    width: 40,
-  },
   userInfo: {
     alignItems: 'center',
     marginBottom: 32,
+  },
+  userAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   userName: {
     fontSize: 22,
@@ -281,13 +330,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   userDetails: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#666',
     marginBottom: 2,
   },
-  userPhone: {
+  balanceText: {
     fontSize: 18,
-    color: '#666',
+    fontWeight: '600',
+    color: '#F97316',
+    marginTop: 8,
   },
   qrContainer: {
     alignItems: 'center',
@@ -337,7 +388,7 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 40,
+    marginBottom: 32,
   },
   actionButton: {
     flexDirection: 'row',
@@ -353,57 +404,6 @@ const styles = StyleSheet.create({
     color: '#F97316',
     fontWeight: '600',
   },
-  scannerSection: {
-    width: '100%',
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  scannerPlaceholder: {
-    width: '100%',
-    height: 250,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
-  },
-  cameraIcon: {
-    marginBottom: 16,
-  },
-  qrFrame: {
-    width: 150,
-    height: 150,
-    borderWidth: 2,
-    borderColor: '#F97316',
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  placeholderText: {
-    color: '#666',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  simulateButton: {
-    backgroundColor: '#F97316',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  simulateButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
   processingContainer: {
     alignItems: 'center',
     marginVertical: 20,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
     padding: 20,
     borderRadius: 12,
-    marginTop: 20,
+    marginBottom: 20,
   },
   infoTitle: {
     fontSize: 16,
@@ -443,17 +443,22 @@ const styles = StyleSheet.create({
     color: '#666',
     flex: 1,
   },
-  button: {
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  quickActionButton: {
+    flex: 1,
     backgroundColor: '#F97316',
-    paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
-    marginTop: 20,
+    alignItems: 'center',
   },
-  buttonText: {
+  quickActionText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontWeight: '600',
+    fontSize: 14,
   },
   loadingText: {
     marginTop: 16,
