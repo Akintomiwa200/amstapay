@@ -1,24 +1,25 @@
-
-
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Clipboard, Alert, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions } from 'react-native';
+import * as Clipboard from 'expo-clipboard'; // <-- better than deprecated react-native Clipboard
 import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext'; // adjust path if needed
 
 const { height } = Dimensions.get('window');
 
 const AddMoneyScreen = () => {
   const router = useRouter();
+  const { user } = useAuth(); // 🔑 get user details from context
 
-  // Dummy bank details
+  // Replace dummy with real data
   const bankDetails = {
-    bankName: 'Access Bank',
-    accountNumber: '0123456789',
-    accountName: 'Peter Akintomiwa',
+    bankName: 'Amstapay',
+    accountNumber: user?.amstapayAccountNumber || '----------',
+    accountName: user?.fullName || user?.accountName || '----------',
   };
 
-  const handleCopy = (text: string) => {
-    Clipboard.setString(text);
+  const handleCopy = async (text: string) => {
+    await Clipboard.setStringAsync(text);
     Alert.alert('Copied', `${text} copied to clipboard`);
   };
 
@@ -37,7 +38,9 @@ const AddMoneyScreen = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Send Money to Your Wallet</Text>
-        <Text style={styles.subtitle}>Use the bank details below to fund your wallet:</Text>
+        <Text style={styles.subtitle}>
+          Use the bank details below to fund your wallet:
+        </Text>
 
         <View style={styles.detailRow}>
           <Text style={styles.label}>Bank Name:</Text>
