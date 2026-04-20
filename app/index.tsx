@@ -9,101 +9,81 @@ import {
   StyleSheet,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Path, Circle, Ellipse, G } from "react-native-svg";
+import Svg, { Path, Circle, Rect, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { useAuth } from "../context/AuthContext";
 
 const { width, height } = Dimensions.get("window");
 
-// Premier League Lion Logo — pure SVG, no image
-function PremierLeagueLion({ size = 200 }: { size?: number }) {
+// AmstaPay Logo - Modern geometric design
+function AmstaPayLogo({ size = 200 }: { size?: number }) {
+  const logoSize = size;
+  const center = logoSize / 2;
+  
   return (
-    <Svg width={size} height={size} viewBox="0 0 200 200">
-      {/* Crown */}
+    <Svg width={logoSize} height={logoSize} viewBox="0 0 200 200">
+      <Defs>
+        <SvgGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#22f0c3" />
+          <Stop offset="33%" stopColor="#2db3ff" />
+          <Stop offset="66%" stopColor="#8b5cf6" />
+          <Stop offset="100%" stopColor="#ff3cac" />
+        </SvgGradient>
+        <SvgGradient id="innerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#2D0057" />
+          <Stop offset="100%" stopColor="#1a0035" />
+        </SvgGradient>
+      </Defs>
+
+      {/* Outer circle with gradient */}
+      <Circle cx={center} cy={center} r="90" fill="url(#logoGradient)" />
+      
+      {/* Inner circle */}
+      <Circle cx={center} cy={center} r="75" fill="url(#innerGradient)" />
+      
+      {/* Abstract "A" shape */}
       <Path
-        d="M100 10 L88 35 L76 18 L80 42 L68 28 L75 52 L125 52 L132 28 L120 42 L124 18 L112 35 Z"
-        fill="#2D0057"
+        d={`M${center - 35} ${center + 45} L${center} ${center - 45} L${center + 35} ${center + 45}`}
+        stroke="url(#logoGradient)"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
       />
-      {/* Crown base band */}
+      
+      {/* Cross bar of "A" */}
       <Path
-        d="M70 50 Q100 44 130 50 L128 60 Q100 54 72 60 Z"
-        fill="#2D0057"
+        d={`M${center - 22} ${center + 10} L${center + 22} ${center + 10}`}
+        stroke="url(#logoGradient)"
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
       />
-
-      {/* Head / mane outer shape */}
-      <Path
-        d="M100 58
-           C 72 58, 50 70, 44 88
-           C 38 106, 40 124, 48 136
-           C 56 148, 68 155, 78 158
-           C 84 160, 90 162, 96 164
-           L 100 168
-           L 104 164
-           C 110 162, 116 160, 122 158
-           C 132 155, 144 148, 152 136
-           C 160 124, 162 106, 156 88
-           C 150 70, 128 58, 100 58 Z"
-        fill="#2D0057"
-      />
-
-      {/* Face — lighter area */}
-      <Path
-        d="M100 72
-           C 85 72, 72 80, 68 92
-           C 64 104, 66 118, 74 128
-           C 80 136, 90 140, 100 140
-           C 110 140, 120 136, 126 128
-           C 134 118, 136 104, 132 92
-           C 128 80, 115 72, 100 72 Z"
-        fill="#3D0070"
-      />
-
-      {/* Eye */}
-      <Ellipse cx="93" cy="100" rx="8" ry="6" fill="#2D0057" />
-      <Ellipse cx="91" cy="99" rx="3" ry="2.5" fill="#ffffff" />
-
-      {/* Nose */}
-      <Path
-        d="M97 115 Q100 112 103 115 Q101 120 97 115 Z"
-        fill="#2D0057"
-      />
-
-      {/* Muzzle */}
-      <Ellipse cx="100" cy="122" rx="12" ry="8" fill="#4A0090" />
-      <Path d="M100 118 L100 126" stroke="#2D0057" strokeWidth="1.5" />
-      <Path d="M90 122 Q100 130 110 122" stroke="#2D0057" strokeWidth="1.5" fill="none" />
-
-      {/* Mane wisps left */}
-      <Path d="M60 85 Q48 95 50 110" stroke="#2D0057" strokeWidth="7" strokeLinecap="round" fill="none" />
-      <Path d="M58 100 Q44 112 48 128" stroke="#2D0057" strokeWidth="6" strokeLinecap="round" fill="none" />
-      <Path d="M62 118 Q50 130 56 146" stroke="#2D0057" strokeWidth="5" strokeLinecap="round" fill="none" />
-
-      {/* Mane wisps right */}
-      <Path d="M140 85 Q152 95 150 110" stroke="#2D0057" strokeWidth="7" strokeLinecap="round" fill="none" />
-      <Path d="M142 100 Q156 112 152 128" stroke="#2D0057" strokeWidth="6" strokeLinecap="round" fill="none" />
-      <Path d="M138 118 Q150 130 144 146" stroke="#2D0057" strokeWidth="5" strokeLinecap="round" fill="none" />
-
-      {/* Chest / body bottom */}
-      <Path
-        d="M78 158 Q100 168 122 158 Q118 178 100 182 Q82 178 78 158 Z"
-        fill="#2D0057"
-      />
+      
+      {/* Decorative dot above */}
+      <Circle cx={center} cy={center - 55} r="4" fill="#22f0c3" />
+      
+      {/* Decorative stars */}
+      <Circle cx={center - 60} cy={center + 20} r="3" fill="#2db3ff" opacity="0.6" />
+      <Circle cx={center + 55} cy={center + 15} r="2" fill="#8b5cf6" opacity="0.5" />
+      <Circle cx={center - 45} cy={center - 30} r="2.5" fill="#ff3cac" opacity="0.4" />
+      <Circle cx={center + 50} cy={center - 25} r="3" fill="#22f0c3" opacity="0.5" />
     </Svg>
   );
 }
 
-// Diagonal stripe pattern using SVG
+// Diagonal stripe pattern with better blending
 function DiagonalStripes() {
   const stripes = [];
-  const count = 8;
-  const gap = width * 0.28;
+  const count = 6;
+  const gap = width * 0.35;
 
   for (let i = -2; i < count; i++) {
     const x = i * gap;
     stripes.push(
       <Path
         key={i}
-        d={`M${x} 0 L${x + height * 0.6} ${height} L${x + gap * 0.55 + height * 0.6} ${height} L${x + gap * 0.55} 0 Z`}
-        fill="rgba(0,0,0,0.04)"
+        d={`M${x} 0 L${x + height * 0.7} ${height} L${x + gap * 0.6 + height * 0.7} ${height} L${x + gap * 0.6} 0 Z`}
+        fill="rgba(45, 0, 87, 0.03)"
       />
     );
   }
@@ -144,43 +124,62 @@ export default function IndexScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
-      {/* White base */}
-      <View style={StyleSheet.absoluteFillObject} />
+      {/* Main gradient background that covers everything with smooth transition */}
+      <LinearGradient
+        colors={[
+          "#FFFFFF",
+          "#FFFFFF",
+          "#F8F8FC",
+          "#F0EDF5",
+          "#E8E0F0",
+          "#D8CCE8",
+          "#C8B8E0",
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.7 }}
+        style={StyleSheet.absoluteFillObject}
+      />
 
       {/* Diagonal stripes overlay */}
       <DiagonalStripes />
 
       {/* Main centered content */}
       <View style={styles.content}>
-        {/* Lion logo — pure SVG */}
-        <PremierLeagueLion size={180} />
+        {/* AmstaPay Logo */}
+        <AmstaPayLogo size={180} />
 
         {/* Text block */}
         <View style={styles.textBlock}>
-          <Text style={styles.tagline}>The new home of the</Text>
-          <Text style={styles.tagline}>
-            <Text style={styles.taglineBold}>AmstaPay</Text>
+          <Text style={styles.tagline}>Welcome to</Text>
+          <Text style={styles.appName}>
+            Amsta<Text style={styles.appNameHighlight}>Pay</Text>
           </Text>
-          <Text style={styles.sub}>Scan. Pay. Transact seamlessly with Web3-powered banking.</Text>
+          <Text style={styles.sub}>
+            Scan. Pay. Transact seamlessly with Web3-powered banking.
+          </Text>
         </View>
 
         {/* Loading indicator */}
         {(loading || !minimumTimePassed) && (
-          <ActivityIndicator size="large" color="#3D0070" style={styles.loader} />
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#8b5cf6" />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
         )}
       </View>
 
-      {/* Bottom rainbow gradient — matches Figma */}
+      {/* Bottom gradient that blends smoothly from the top gradient */}
       <LinearGradient
         colors={[
-          "transparent",
-          "rgba(34,240,195,0.7)",
-          "rgba(45,179,255,0.85)",
-          "rgba(139,92,246,0.9)",
-          "rgba(255,60,172,1)",
+          "rgba(34,240,195,0)",
+          "rgba(34,240,195,0.15)",
+          "rgba(45,179,255,0.25)",
+          "rgba(139,92,246,0.4)",
+          "rgba(255,60,172,0.6)",
+          "rgba(255,60,172,0.8)",
         ]}
-        start={{ x: 0.1, y: 0.5 }}
-        end={{ x: 0.9, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={styles.bottomGradient}
       />
     </View>
@@ -190,7 +189,6 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
     overflow: "hidden",
   },
   content: {
@@ -198,41 +196,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-    marginTop: -20,
     zIndex: 10,
   },
   textBlock: {
     alignItems: "center",
-    marginTop: 24,
+    marginTop: 32,
   },
   tagline: {
-    fontSize: 22,
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+    fontWeight: "400",
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  appName: {
+    fontSize: 42,
+    fontWeight: "800",
     color: "#2D0057",
     textAlign: "center",
-    fontFamily: "System",
-    fontWeight: "400",
-    lineHeight: 32,
-    letterSpacing: 0.2,
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
-  taglineBold: {
-    fontWeight: "700",
+  appNameHighlight: {
+    background: "linear-gradient(45deg, #22f0c3, #2db3ff, #8b5cf6, #ff3cac)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
   },
   sub: {
     fontSize: 14,
-    color: "#555",
+    color: "#6B7280",
     textAlign: "center",
-    marginTop: 10,
     maxWidth: 280,
     lineHeight: 20,
   },
-  loader: {
+  loaderContainer: {
     marginTop: 48,
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 12,
+    color: "#8b5cf6",
+    marginTop: 8,
+    fontWeight: "500",
   },
   bottomGradient: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: height * 0.35,
+    height: height * 0.4,
   },
 });

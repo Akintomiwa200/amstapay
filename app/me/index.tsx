@@ -1,5 +1,5 @@
 // app/me/index.tsx
-import { ChevronRight, ChevronDown, Gift, LogOut, Mail, Phone, Settings, Star, User, Zap, X, CreditCard, MapPin, HelpCircle, Shield, Bell, Award, TrendingUp, Wallet, Lock, Smartphone, Globe, Moon, Sun } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, Gift, LogOut, Mail, Phone, Settings, Star, User, Zap, X, CreditCard, MapPin, HelpCircle, Shield, Bell, Award, TrendingUp, Wallet, Lock, Smartphone, Globe, Moon, Sun, Info } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, View, Modal, Switch, Dimensions } from 'react-native';
 import { useRouter } from "expo-router";
@@ -34,7 +34,7 @@ const Me = () => {
     email: user?.email || "Not provided",
     phone: user?.phoneNumber || user?.phone || "Not provided",
     accountType: user?.accountType || "Personal",
-    avatar: user?.avatar ? { uri: user.avatar } : require("../assets/images/logo.png"),
+    avatar: user?.avatar ? { uri: user.avatar } : require("../../assets/images/logo.png"),
     points: user?.points ?? 1250,
     address: user?.address || "Not provided",
     joinDate: user?.joinDate || "January 2024",
@@ -98,6 +98,13 @@ const Me = () => {
       case 'rewards': setRewardsExpanded(!rewardsExpanded); break;
       case 'account': setAccountExpanded(!accountExpanded); break;
     }
+  };
+
+  const handleNavigateToSettings = (screen: string) => {
+    setSettingsVisible(false);
+    setTimeout(() => {
+      router.push(screen as any);
+    }, 100);
   };
 
   return (
@@ -213,7 +220,7 @@ const Me = () => {
                       <Text style={styles.paymentText}>{method.type} •••• {method.last4} (Expires {method.expiry})</Text>
                     </View>
                   ))}
-                  <TouchableOpacity style={styles.addButton} onPress={() => navigateTo('/payment-methods')}>
+                  <TouchableOpacity style={styles.addButton} onPress={() => navigateTo('/settings/payment-methods')}>
                     <Text style={styles.addButtonText}>+ Add Payment Method</Text>
                   </TouchableOpacity>
                 </View>
@@ -268,10 +275,10 @@ const Me = () => {
             {accountExpanded && (
               <>
                 <AccountAction icon={Settings} label="Settings" onPress={() => setSettingsVisible(true)} />
-                <AccountAction icon={HelpCircle} label="Help & Support" onPress={() => navigateTo('/help-support')} />
-                <AccountAction icon={Shield} label="Privacy Policy" onPress={() => navigateTo('/privacy-policy')} />
-                <AccountAction icon={Gift} label="Refer Friends" onPress={() => navigateTo('/referral')} />
-                <AccountAction icon={Lock} label="Change PIN" onPress={() => navigateTo('/change-pin')} />
+                <AccountAction icon={HelpCircle} label="Help & Support" onPress={() => navigateTo('/settings/help-support')} />
+                <AccountAction icon={Shield} label="Privacy Policy" onPress={() => navigateTo('/settings/privacy-policy')} />
+                <AccountAction icon={Gift} label="Refer Friends" onPress={() => navigateTo('/settings/referral')} />
+                <AccountAction icon={Lock} label="Change PIN" onPress={() => navigateTo('/settings/change-pin')} />
                 <AccountAction 
                   icon={LogOut} 
                   label={isLoggingOut ? 'Logging out...' : 'Logout'} 
@@ -286,7 +293,12 @@ const Me = () => {
       </SafeAreaView>
 
       {/* Settings Modal */}
-      <Modal animationType="slide" transparent={false} visible={settingsVisible} onRequestClose={() => setSettingsVisible(false)}>
+      <Modal 
+        animationType="slide" 
+        transparent={false} 
+        visible={settingsVisible} 
+        onRequestClose={() => setSettingsVisible(false)}
+      >
         <View style={styles.modalContainer}>
           <LinearGradient colors={[C.primary, C.violet]} style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Settings</Text>
@@ -297,7 +309,7 @@ const Me = () => {
           
           <ScrollView style={styles.modalContent}>
             {/* Appearance */}
-            <SettingsSection title="Appearance" icon={Moon}>
+            <SettingsSection title="Appearance" icon={Sun}>
               <SettingsItem 
                 label="Dark Mode" 
                 icon={darkMode ? Moon : Sun}
@@ -305,7 +317,12 @@ const Me = () => {
                 value={darkMode}
                 onValueChange={setDarkMode}
               />
-              <SettingsItem label="Language" value="English" icon={Globe} onPress={() => {}} />
+              <SettingsItem 
+                label="Language" 
+                value="English" 
+                icon={Globe} 
+                onPress={() => handleNavigateToSettings('/settings/language')} 
+              />
             </SettingsSection>
 
             {/* Notifications */}
@@ -335,14 +352,67 @@ const Me = () => {
                 value={twoFactorAuth}
                 onValueChange={setTwoFactorAuth}
               />
-              <SettingsItem label="Change Password" icon={Lock} onPress={() => navigateTo('/change-password')} />
-              <SettingsItem label="Biometric Login" icon={Smartphone} type="switch" value={false} onValueChange={() => {}} />
+              <SettingsItem 
+                label="Change Password" 
+                icon={Lock} 
+                onPress={() => handleNavigateToSettings('/settings/change-password')} 
+              />
+              <SettingsItem 
+                label="Change PIN" 
+                icon={Lock} 
+                onPress={() => handleNavigateToSettings('/settings/change-pin')} 
+              />
+              <SettingsItem 
+                label="Biometric Login" 
+                icon={Smartphone} 
+                type="switch" 
+                value={false} 
+                onValueChange={() => {}} 
+              />
+              <SettingsItem 
+                label="Privacy Settings" 
+                icon={Shield} 
+                onPress={() => handleNavigateToSettings('/settings/privacy')} 
+              />
+            </SettingsSection>
+
+            {/* Support */}
+            <SettingsSection title="Support" icon={HelpCircle}>
+              <SettingsItem 
+                label="Help & Support" 
+                icon={HelpCircle} 
+                onPress={() => handleNavigateToSettings('/settings/help-support')} 
+              />
+              <SettingsItem 
+                label="Refer Friends" 
+                icon={Gift} 
+                onPress={() => handleNavigateToSettings('/settings/referral')} 
+              />
+              <SettingsItem 
+                label="Rate Us" 
+                icon={Star} 
+                onPress={() => {}} 
+              />
             </SettingsSection>
 
             {/* About */}
             <SettingsSection title="About" icon={Info}>
-              <SettingsItem label="App Version" value="1.0.0" icon={Smartphone} onPress={() => {}} />
-              <SettingsItem label="Terms of Service" icon={Shield} onPress={() => navigateTo('/terms')} />
+              <SettingsItem 
+                label="App Version" 
+                value="1.0.0" 
+                icon={Smartphone} 
+                onPress={() => {}} 
+              />
+              <SettingsItem 
+                label="Privacy Policy" 
+                icon={Shield} 
+                onPress={() => handleNavigateToSettings('/settings/privacy-policy')} 
+              />
+              <SettingsItem 
+                label="Terms of Service" 
+                icon={FileText} 
+                onPress={() => handleNavigateToSettings('/settings/terms')} 
+              />
             </SettingsSection>
           </ScrollView>
         </View>
@@ -382,7 +452,7 @@ const SettingsSection = ({ title, icon: Icon, children }: any) => (
   </View>
 );
 
-const SettingsItem = ({ label, value, icon: Icon, type, onPress, onValueChange, checked }: any) => {
+const SettingsItem = ({ label, value, icon: Icon, type, onPress, onValueChange }: any) => {
   const ItemIcon = Icon;
   if (type === 'switch') {
     return (
@@ -394,8 +464,8 @@ const SettingsItem = ({ label, value, icon: Icon, type, onPress, onValueChange, 
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: C.border, true: C.violet }}
-          thumbColor="#fff"
+          trackColor={{ false: C.border, true: C.violet + '50' }}
+          thumbColor={value ? C.violet : '#fff'}
         />
       </View>
     );
@@ -411,6 +481,9 @@ const SettingsItem = ({ label, value, icon: Icon, type, onPress, onValueChange, 
     </TouchableOpacity>
   );
 };
+
+// Add FileText icon import
+import { FileText } from 'lucide-react-native';
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: C.bg },
@@ -495,18 +568,9 @@ const styles = StyleSheet.create({
   settingsSectionTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
   settingsSectionContent: { backgroundColor: C.primaryLight, borderRadius: 16, overflow: 'hidden' },
   settingsItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
-  settingsItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  settingsItemText: { fontSize: 15, color: C.text },
+  settingsItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  settingsItemText: { fontSize: 15, color: C.text, flex: 1 },
   settingsItemValue: { fontSize: 13, color: C.textSub, marginRight: 8 },
 });
-
-// Import Info icon if not available
-const Info = ({ size, color }: any) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="16" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12.01" y2="8" />
-  </svg>
-);
 
 export default Me;
