@@ -1,7 +1,7 @@
 // layout/dashboardLayout.tsx
 import BottomNav from "@/components/BottomNav";
 import React from "react";
-import { StyleSheet, View, StatusBar } from "react-native";
+import { StyleSheet, View, StatusBar, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 

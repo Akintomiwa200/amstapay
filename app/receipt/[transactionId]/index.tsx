@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useRouter, useSearchParams } from 'expo-router';
-import { useAuth } from '../../../context/AuthContext';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Copy } from 'lucide-react-native';
 
 const ReceiptScreen = () => {
   const router = useRouter();
-  const { transactionId } = useSearchParams(); // get :transactionId param
+  const { transactionId } = useLocalSearchParams(); // get :transactionId param
   const { getTransaction } = useAuth();
   const [transaction, setTransaction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
