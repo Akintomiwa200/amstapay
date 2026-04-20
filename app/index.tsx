@@ -11,62 +11,73 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path, Circle, Rect, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
 // AmstaPay Logo - Modern geometric design
+
 function AmstaPayLogo({ size = 200 }: { size?: number }) {
-  const logoSize = size;
-  const center = logoSize / 2;
-  
+  const { theme, isDarkMode } = useTheme();
+
+  const center = 100; // keep SVG consistent
+  const scale = size / 200;
+
   return (
-    <Svg width={logoSize} height={logoSize} viewBox="0 0 200 200">
+    <Svg width={size} height={size} viewBox="0 0 200 200">
       <Defs>
-        <SvgGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#22f0c3" />
-          <Stop offset="33%" stopColor="#2db3ff" />
-          <Stop offset="66%" stopColor="#8b5cf6" />
-          <Stop offset="100%" stopColor="#ff3cac" />
-        </SvgGradient>
-        <SvgGradient id="innerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#2D0057" />
-          <Stop offset="100%" stopColor="#1a0035" />
+        {/* Brand gradient */}
+        <SvgGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor={theme.colors.mint} />
+          <Stop offset="50%" stopColor={theme.colors.blue} />
+          <Stop offset="100%" stopColor={theme.colors.violet} />
         </SvgGradient>
       </Defs>
 
-      {/* Outer circle with gradient */}
-      <Circle cx={center} cy={center} r="90" fill="url(#logoGradient)" />
-      
-      {/* Inner circle */}
-      <Circle cx={center} cy={center} r="75" fill="url(#innerGradient)" />
-      
-      {/* Abstract "A" shape */}
-      <Path
-        d={`M${center - 35} ${center + 45} L${center} ${center - 45} L${center + 35} ${center + 45}`}
-        stroke="url(#logoGradient)"
+      {/* Outer ring */}
+      <Circle
+        cx={center}
+        cy={center}
+        r="92"
+        fill="none"
+        stroke="url(#brandGradient)"
         strokeWidth="8"
+      />
+
+      {/* Inner background */}
+      <Circle
+        cx={center}
+        cy={center}
+        r="80"
+        fill={theme.colors.surface}
+      />
+
+      {/* Main "A" shape */}
+      <Path
+        d="M70 140 L100 60 L130 140"
+        stroke={theme.colors.primary}
+        strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
       />
-      
-      {/* Cross bar of "A" */}
+
+      {/* Cross bar */}
       <Path
-        d={`M${center - 22} ${center + 10} L${center + 22} ${center + 10}`}
-        stroke="url(#logoGradient)"
-        strokeWidth="6"
+        d="M82 110 L118 110"
+        stroke={theme.colors.primary}
+        strokeWidth="8"
         strokeLinecap="round"
-        fill="none"
       />
-      
-      {/* Decorative dot above */}
-      <Circle cx={center} cy={center - 55} r="4" fill="#22f0c3" />
-      
-      {/* Decorative stars */}
-      <Circle cx={center - 60} cy={center + 20} r="3" fill="#2db3ff" opacity="0.6" />
-      <Circle cx={center + 55} cy={center + 15} r="2" fill="#8b5cf6" opacity="0.5" />
-      <Circle cx={center - 45} cy={center - 30} r="2.5" fill="#ff3cac" opacity="0.4" />
-      <Circle cx={center + 50} cy={center - 25} r="3" fill="#22f0c3" opacity="0.5" />
+
+      {/* Accent glow line (subtle fintech touch) */}
+      <Path
+        d="M60 150 Q100 170 140 150"
+        stroke="url(#brandGradient)"
+        strokeWidth="4"
+        opacity="0.6"
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }
@@ -103,6 +114,8 @@ function DiagonalStripes() {
 export default function IndexScreen() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { theme, isDarkMode } = useTheme();
+
   const [minimumTimePassed, setMinimumTimePassed] = useState(false);
 
   useEffect(() => {
@@ -112,74 +125,74 @@ export default function IndexScreen() {
 
   useEffect(() => {
     if (minimumTimePassed && !loading) {
-      if (user) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/onboarding");
-      }
+      router.replace(user ? "/dashboard" : "/onboarding");
     }
-  }, [minimumTimePassed, loading, user, router]);
+  }, [minimumTimePassed, loading, user]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        translucent
+        backgroundColor="transparent"
+      />
 
-      {/* Main gradient background that covers everything with smooth transition */}
+      {/* Top Gradient */}
       <LinearGradient
-        colors={[
-          "#FFFFFF",
-          "#FFFFFF",
-          "#F8F8FC",
-          "#F0EDF5",
-          "#E8E0F0",
-          "#D8CCE8",
-          "#C8B8E0",
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.7 }}
+        colors={
+          isDarkMode
+            ? [
+                theme.colors.background,
+                theme.colors.surface,
+                theme.colors.surfaceAlt,
+              ]
+            : [
+                "#FFFFFF",
+                "#F8F8FC",
+                "#E8E0F0",
+              ]
+        }
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Diagonal stripes overlay */}
       <DiagonalStripes />
 
-      {/* Main centered content */}
       <View style={styles.content}>
-        {/* AmstaPay Logo */}
         <AmstaPayLogo size={180} />
 
-        {/* Text block */}
         <View style={styles.textBlock}>
-          <Text style={styles.tagline}>Welcome to</Text>
-          <Text style={styles.appName}>
-            Amsta<Text style={styles.appNameHighlight}>Pay</Text>
+          <Text style={[styles.tagline, { color: theme.colors.textSecondary }]}>
+            Welcome to
           </Text>
-          <Text style={styles.sub}>
+
+          <Text style={[styles.appName, { color: theme.colors.primary }]}>
+            AmstaPay
+          </Text>
+
+          <Text style={[styles.sub, { color: theme.colors.textSecondary }]}>
             Scan. Pay. Transact seamlessly with Web3-powered banking.
           </Text>
         </View>
 
-        {/* Loading indicator */}
         {(loading || !minimumTimePassed) && (
           <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#8b5cf6" />
-            <Text style={styles.loadingText}>Loading...</Text>
+            <ActivityIndicator
+              size="large"
+              color={theme.colors.violet}
+            />
+            <Text style={[styles.loadingText, { color: theme.colors.violet }]}>
+              Loading...
+            </Text>
           </View>
         )}
       </View>
 
-      {/* Bottom gradient that blends smoothly from the top gradient */}
+      {/* Bottom Gradient */}
       <LinearGradient
-        colors={[
-          "rgba(34,240,195,0)",
-          "rgba(34,240,195,0.15)",
-          "rgba(45,179,255,0.25)",
-          "rgba(139,92,246,0.4)",
-          "rgba(255,60,172,0.6)",
-          "rgba(255,60,172,0.8)",
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={theme.colors.gradientAccent.map((c, i) =>
+          i === 0 ? "transparent" : c
+        )}
         style={styles.bottomGradient}
       />
     </View>

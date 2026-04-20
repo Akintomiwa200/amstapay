@@ -1,66 +1,57 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
-
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from "@react-navigation/native";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { AuthProvider } from "../context/AuthContext";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <AppContent />
+        </SafeAreaProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
 
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+function AppContent() {
+  const { theme, isDarkMode } = useTheme();
 
-  if (!loaded) return null;
-
-  const customLightTheme = {
-    ...DefaultTheme,
+  const navigationTheme = {
+    ...(isDarkMode ? DarkTheme : DefaultTheme),
     colors: {
-      ...DefaultTheme.colors,
-      background: '#ffffff',
-      card: '#ffffff',
-      text: '#000000',
-      border: '#e5e5e5',
-      notification: '#ff3b30',
-      primary: '#16a34a',
+      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+
+      background: theme.colors.background,
+      card: theme.colors.surface,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      primary: theme.colors.violet,
+      notification: theme.colors.pink,
     },
   };
-
-  const customDarkTheme = {
-    ...DarkTheme,
-    colors: {
-      ...DarkTheme.colors,
-      background: '#000000',
-      card: '#1c1c1e',
-      text: '#ffffff',
-      border: '#38383a',
-      notification: '#ff453a',
-      primary: '#16a34a',
-    },
-  };
-
-  const theme = colorScheme === 'dark' ? customDarkTheme : customLightTheme;
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <ThemeProvider value={theme}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: {
-                flex: 1,
-                backgroundColor: theme.colors.background,
-              },
-            }}
-          />
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <NavigationThemeProvider value={navigationTheme}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: theme.colors.background,
+          },
+        }}
+      />
+
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
+    </NavigationThemeProvider>
   );
 }
