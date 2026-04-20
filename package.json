@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
-    "@react-native-async-storage/async-storage": "3.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-clipboard/clipboard": "^1.16.3",
     "@react-native-community/datetimepicker": "9.1.0",
     "@react-native-picker/picker": "2.11.4",
@@ -20,7 +20,6 @@
     "@react-navigation/elements": "^2.9.14",
     "@react-navigation/native": "^7.2.2",
     "@react-navigation/native-stack": "^7.14.11",
-    "@types/uuid": "^11.0.0",
     "ajv": "^8.18.0",
     "ajv-keywords": "^5.1.0",
     "dayjs": "^1.11.20",
@@ -52,12 +51,12 @@
     "prettier-plugin-tailwindcss": "^0.7.2",
     "react": "19.2.5",
     "react-dom": "19.2.5",
-    "react-native": "0.85.1",
+    "react-native": "0.83.4",
     "react-native-css": "^3.0.7",
     "react-native-gesture-handler": "~2.31.1",
     "react-native-get-random-values": "~2.0.0",
     "react-native-qrcode-svg": "^6.3.21",
-    "react-native-reanimated": "~4.3.0",
+    "react-native-reanimated": "~4.2.1",
     "react-native-safe-area-context": "5.7.0",
     "react-native-screens": "~4.24.0",
     "react-native-svg": "15.15.4",
@@ -71,11 +70,16 @@
     "@babel/core": "^7.29.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/react": "~19.2.14",
-    "eslint": "^10.2.0",
+    "eslint": "^9.39.4",
     "eslint-config-expo": "~55.0.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
-    "typescript": "~6.0.2"
+    "typescript": "~5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "lightningcss": "1.30.1"
+    }
   },
   "private": true
 }

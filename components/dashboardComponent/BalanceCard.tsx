@@ -1,8 +1,11 @@
+// components/dashboardComponent/BalanceCard.tsx
 import { useRouter } from 'expo-router';
-import { ChevronRight, Eye, EyeOff, Plus } from 'lucide-react-native';
+import { ChevronRight, Wallet,Eye, EyeOff, Plus, TrendingUp, Shield } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { useAuth } from '../../context/AuthContext'; // adjust the path if needed
+import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../context/AuthContext';
+import { C } from './colors';
 
 const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(false);
@@ -40,84 +43,101 @@ const BalanceCard = () => {
     : '•••••••';
 
   return (
-    <View style={styles.card}>
-      {/* Top row */}
-      <View style={styles.row}>
+    <LinearGradient
+      colors={[C.primary, C.violet]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.card}
+    >
+      <View style={styles.topRow}>
         <View style={styles.row}>
           <View style={styles.iconCircle}>
-            <View style={styles.iconDot} />
+            <Wallet size={16} color="#fff" />
           </View>
-          <Text style={styles.subText}>Available Balance</Text>
-          <View style={styles.smallCircle} />
+          <Text style={styles.subText}>Total Balance</Text>
         </View>
-
         <TouchableOpacity style={styles.historyButton} onPress={handleOpenHistory}>
-          <Text style={styles.linkText}>Transaction History</Text>
-          <ChevronRight size={16} color="#F97316" />
+          <Text style={styles.linkText}>History</Text>
+          <ChevronRight size={14} color={C.mint} />
         </TouchableOpacity>
       </View>
 
-      {/* Bottom row */}
-      <View style={[styles.row, styles.bottomRow]}>
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => {
-            setShowBalance(prev => !prev);
-            fetchBalance(); // refresh balance whenever toggled
-          }}
-        >
+      <View style={styles.balanceRow}>
+        <TouchableOpacity style={styles.balanceWrapper} onPress={() => setShowBalance(prev => !prev)}>
           <Text style={styles.balance}>{balanceText}</Text>
           {showBalance ? (
-            <EyeOff size={20} color="#1F2937" style={{ marginLeft: 8 }} />
+            <EyeOff size={20} color="rgba(255,255,255,0.7)" />
           ) : (
-            <Eye size={20} color="#1F2937" style={{ marginLeft: 8 }} />
+            <Eye size={20} color="rgba(255,255,255,0.7)" />
           )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.addMoneyBtn} onPress={handleAddMoney}>
-          <Plus size={16} color="#FFFFFF" />
+          <Plus size={16} color={C.primary} />
           <Text style={styles.addMoneyText}>Add Money</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}>
+          <TrendingUp size={14} color={C.mint} />
+          <Text style={styles.statLabel}>Today's Spend</Text>
+          <Text style={styles.statValue}>₦0.00</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Shield size={14} color={C.mint} />
+          <Text style={styles.statLabel}>Locked Savings</Text>
+          <Text style={styles.statValue}>₦0.00</Text>
+        </View>
+      </View>
+    </LinearGradient>
   );
 };
 
-export default BalanceCard;
-
-// existing styles remain the same
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginBottom: 24,
-    borderRadius: 16,
+    borderRadius: 24,
     padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  bottomRow: { marginTop: 16, justifyContent: 'space-between' },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconCircle: {
-    width: 20,
-    height: 20,
-    backgroundColor: 'rgba(249, 115, 22, 0.2)',
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
   },
-  iconDot: { width: 8, height: 8, backgroundColor: '#F97316', borderRadius: 4 },
-  smallCircle: { width: 16, height: 16, backgroundColor: 'rgba(249, 115, 22, 0.2)', borderRadius: 8, marginLeft: 8 },
-  subText: { fontSize: 12, color: '#6B7280' },
-  historyButton: { flexDirection: 'row', alignItems: 'center', marginLeft: 64, padding: 4 },
-  linkText: { fontSize: 12, color: '#F97316', fontWeight: '500', marginRight: 4 },
-  balance: { fontSize: 22, fontWeight: 'bold', color: '#1F2937' },
-  addMoneyBtn: { backgroundColor: '#F97316', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
-  addMoneyText: { color: '#FFFFFF', fontSize: 14, fontWeight: '500', marginLeft: 6 },
+  subText: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
+  historyButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  linkText: { fontSize: 12, color: C.mint, fontWeight: '600' },
+  balanceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  balanceWrapper: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  balance: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  addMoneyBtn: { 
+    backgroundColor: '#fff', 
+    paddingVertical: 8, 
+    paddingHorizontal: 16, 
+    borderRadius: 30, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 6 
+  },
+  addMoneyText: { color: C.primary, fontSize: 13, fontWeight: '700' },
+  statsRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: 16 },
+  statItem: { flex: 1, gap: 4 },
+  statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 16 },
+  statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.6)' },
+  statValue: { fontSize: 14, fontWeight: '700', color: '#fff' },
 });
+
+export default BalanceCard;

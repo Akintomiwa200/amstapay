@@ -1,156 +1,102 @@
+// components/dashboardComponent/Header.tsx
 import { useRouter } from 'expo-router';
-import { Bell, HelpCircle, User } from 'lucide-react-native';
+import { Bell, HelpCircle, User, Wallet } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useAuth } from "@/context/AuthContext";
-
 import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { C } from './colors';
 
 const Header = () => {
   const { user } = useAuth();
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
   
-  // Define the user name as a proper string
-  
   const userName = user?.fullName || user?.name || "Guest";
-
+  const firstName = userName.split(' ')[0];
   
-  // Online user profile image
   const userImage = { 
-    uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' 
+    uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80' 
   };
 
-  const handleHelpPress = () => {
-    router.push('/help-support');
-  };
-
-  const handleNotificationPress = () => {
-    router.push('/notification');
-  };
-
-  const handleProfilePress = () => {
-    router.push('/me');
-  };
-
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  const handleHelpPress = () => router.push('/help-support');
+  const handleNotificationPress = () => router.push('/notification');
+  const handleProfilePress = () => router.push('/me');
 
   return (
-    <View style={styles.container}>
-      {/* Left section: user image and greeting - now clickable */}
-      <TouchableOpacity 
-        style={styles.row} 
-        onPress={handleProfilePress}
-        activeOpacity={0.7}
-      >
+    <LinearGradient
+      colors={[C.primaryLight, C.bg]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.container}
+    >
+      <TouchableOpacity style={styles.row} onPress={handleProfilePress} activeOpacity={0.7}>
         {imageError ? (
           <View style={[styles.userImage, styles.avatarFallback]}>
-            <User size={20} color="#FF8C00" />
+            <User size={20} color={C.primary} />
           </View>
         ) : (
-          <Image 
-            source={userImage} 
-            style={styles.userImage}
-            resizeMode="cover"
-            onError={handleImageError}
-          />
+          <Image source={userImage} style={styles.userImage} onError={() => setImageError(true)} />
         )}
-        <Text style={styles.greeting}>{`Hi, ${userName}`}</Text>
+        <View>
+          <Text style={styles.greetingTop}>Welcome back,</Text>
+          <Text style={styles.greeting}>{firstName}</Text>
+        </View>
       </TouchableOpacity>
 
-      {/* Right section: icons */}
       <View style={styles.iconRow}>
-        {/* Help icon with badge */}
         <TouchableOpacity style={styles.iconWrapper} onPress={handleHelpPress}>
-          <HelpCircle size={24} color="#FF8C00" />
-          <View style={[styles.badge, styles.badgeOrange]}>
-            <Text style={styles.badgeText}>?</Text>
-          </View>
+          <HelpCircle size={22} color={C.primary} />
         </TouchableOpacity>
-
-        {/* Notification icon with badge */}
-        <TouchableOpacity
-          style={styles.iconWrapper}
-          onPress={handleNotificationPress}
-        >
-          <Bell size={24} color="#FF8C00" />
+        <TouchableOpacity style={styles.iconWrapper} onPress={handleNotificationPress}>
+          <Bell size={22} color={C.primary} />
           <View style={[styles.badge, styles.badgeRed]}>
-            <Text style={styles.badgeText}>7</Text>
+            <Text style={styles.badgeText}>3</Text>
           </View>
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
-
-export default Header;
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: C.border,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#FF8C00',
-    backgroundColor: '#F3F4F6',
+    borderColor: C.violet,
+    backgroundColor: C.primaryLight,
   },
-  avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF4E6',
-  },
-  greeting: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    marginLeft: 10,
-  },
-  iconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconWrapper: {
-    position: 'relative',
-    marginHorizontal: 6,
-  },
+  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
+  greetingTop: { fontSize: 12, color: C.textSub, marginBottom: 2 },
+  greeting: { fontSize: 18, fontWeight: '700', color: C.primary },
+  iconRow: { flexDirection: 'row', gap: 16 },
+  iconWrapper: { position: 'relative' },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    borderRadius: 9999,
+    top: -6,
+    right: -8,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  badgeOrange: {
-    backgroundColor: '#E67300',
-    width: 16,
-    height: 16,
-  },
-  badgeRed: {
-    backgroundColor: '#DC2626',
-    width: 20,
-    height: 20,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
+  badgeRed: { backgroundColor: C.error },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
 });
+
+export default Header;

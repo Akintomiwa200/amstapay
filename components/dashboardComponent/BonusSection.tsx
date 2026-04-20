@@ -1,144 +1,78 @@
+// components/dashboardComponent/BonusSection.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Gift, ChevronRight, Target } from 'lucide-react-native';
-
-// Color palette
-const COLORS = {
-  primary: '#F97316',      // Orange
-  primaryLight: '#FDBA74', // Light orange
-  background: '#FFFFFF',   // White
-  text: '#000000',         // Black
-  textSecondary: '#374151', // Dark gray
-  textTertiary: '#6B7280',  // Medium gray
-  border: '#E5E7EB',       // Light border
-  accent: '#D97706',       // Darker orange for accents
-};
+import { LinearGradient } from 'expo-linear-gradient';
+import { Gift, ChevronRight, Target, Sparkles } from 'lucide-react-native';
+import { C } from './colors';
 
 const BonusSection: React.FC = () => (
-  <View style={bonusStyles.container}>
-    <View style={bonusStyles.card}>
-      {/* Top row */}
-      <View style={[bonusStyles.row, bonusStyles.mb3]}>
-        <Text style={bonusStyles.title}>Earn Your Bonus</Text>
-        <View style={bonusStyles.row}>
-          <Gift size={20} color={COLORS.primary} style={bonusStyles.iconSpacing} />
-          <ChevronRight size={16} color={COLORS.textTertiary} />
+  <View style={styles.container}>
+    <LinearGradient
+      colors={[C.primaryLight, C.bg]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.card}
+    >
+      <View style={styles.headerRow}>
+        <View style={styles.row}>
+          <Sparkles size={18} color={C.violet} />
+          <Text style={styles.title}>Earn Your Bonus</Text>
         </View>
+        <TouchableOpacity>
+          <ChevronRight size={18} color={C.textSub} />
+        </TouchableOpacity>
       </View>
 
-      {/* Inner white box */}
-      <View style={bonusStyles.innerBox}>
-        {/* Content and button side by side */}
-        <View style={bonusStyles.contentContainer}>
-          {/* Icon and text */}
-          <View style={bonusStyles.contentRow}>
-            <View style={bonusStyles.iconContainer}>
-              <Target size={20} color={COLORS.primary} />
-            </View>
-            <View style={bonusStyles.textContainer}>
-              <Text style={bonusStyles.innerTitle}>Betting Bonus</Text>
-              <Text style={bonusStyles.innerText}>
-                Fund your betting account with ₦100 or more and earn up to ₦10 cashback!
-              </Text>
-            </View>
+      <View style={styles.innerBox}>
+        <View style={styles.contentRow}>
+          <View style={styles.iconContainer}>
+            <Target size={22} color={C.violet} />
           </View>
-          
-          {/* Action Button - Now properly positioned on the side */}
-          <TouchableOpacity style={bonusStyles.button}>
-            <Text style={bonusStyles.buttonText}>Claim Now</Text>
-          </TouchableOpacity>
+          <View style={styles.textContainer}>
+            <Text style={styles.innerTitle}>Betting Bonus</Text>
+            <Text style={styles.innerText}>
+              Fund your betting account with ₦100 or more and earn up to ₦10 cashback instantly!
+            </Text>
+          </View>
         </View>
+        
+        <TouchableOpacity style={styles.button}>
+          <LinearGradient
+            colors={[C.mint, C.blue, C.violet]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.buttonGradient}
+          >
+            <Text style={styles.buttonText}>Claim Now</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   </View>
 );
 
-export default BonusSection;
-
-const bonusStyles = StyleSheet.create({
-  container: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#FFF7ED', // Light orange background
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.primaryLight, // Light orange border
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  mb3: {
-    marginBottom: 12,
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontWeight: '600',
-    color: COLORS.text,
-    fontSize: 16,
-  },
-  iconSpacing: {
-    marginRight: 8,
-  },
-  innerBox: {
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-    marginRight: 12,
-  },
+const styles = StyleSheet.create({
+  container: { marginHorizontal: 20, marginBottom: 24 },
+  card: { borderRadius: 20, padding: 16, borderWidth: 1, borderColor: C.border },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { fontWeight: '700', color: C.primary, fontSize: 16 },
+  innerBox: { backgroundColor: C.bg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.border },
+  contentRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   iconContainer: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#FFEDD5', // Very light orange
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    backgroundColor: C.primaryLight,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: COLORS.primaryLight,
-    flexShrink: 0,
   },
-  textContainer: {
-    flex: 1,
-    flexShrink: 1,
-  },
-  innerTitle: {
-    fontWeight: '600',
-    color: COLORS.text,
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  innerText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    lineHeight: 16,
-  },
-  button: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    flexShrink: 0, // Prevent button from shrinking
-  },
-  buttonText: {
-    color: COLORS.background,
-    fontWeight: '600',
-    fontSize: 14,
-    textAlign: 'center',
-  },
+  textContainer: { flex: 1 },
+  innerTitle: { fontWeight: '700', color: C.text, fontSize: 14, marginBottom: 4 },
+  innerText: { fontSize: 12, color: C.textSub, lineHeight: 16 },
+  button: { borderRadius: 30, overflow: 'hidden' },
+  buttonGradient: { paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  buttonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });
+
+export default BonusSection;

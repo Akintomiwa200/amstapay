@@ -1,78 +1,60 @@
+// components/dashboardComponent/ServicesGrid.tsx
 import { useRouter } from 'expo-router';
 import {
-  Book,
-  Car,
-  ChevronUp,
-  CreditCard,
-  Database,
-  Gamepad2,
-  Gift,
-  Home,
-  Mail,
-  MoreHorizontal,
-  Smartphone, // Better icon for Airtime
-  PiggyBank,
-  Shield,
-  Target,
-  Tv,
-  Users,
-  Zap,
-  Wifi, // Better icon for Data
-  DollarSign, // Better icon for Betting
-  Banknote, // Better icon for Loan
-  GraduationCap, // Better icon for School Fees
+  Smartphone, Wifi, DollarSign, Tv, PiggyBank, Banknote, Mail,
+  Zap, Shield, CreditCard, Gift, Car, Home, Gamepad2, GraduationCap,
+  MoreHorizontal, ChevronUp, Scan, Camera, Send, QrCode
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { C } from './colors';
 
-// Define a type for the services
 type Service = {
   icon: React.ComponentType<{ size: number; color: string }>;
   label: string;
-  badge?: string; // Optional badge property
+  badge?: string;
+  route?: string;
 };
 
 const ServicesGrid: React.FC = () => {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
-  const handleNavigation = (service: string): void => {
+
+  const handleNavigation = (service: string, route?: string): void => {
     if (service === 'More' || service === 'Less') {
       setIsExpanded(!isExpanded);
       return;
     }
-  
+    
     const routes: Record<string, string> = {
+      'Scan & Send': '/scan-send',
       Airtime: '/airtime',
       Data: '/data',
       Betting: '/betting',
       TV: '/tv',
       AmstaWealth: '/amstawealth',
       Loan: '/loan',
-      Invitation: '/invitation',
-      Electricity: '/eletricity',
-      Insurance: '/insurance',
+      Electricity: '/electricity',
       'Bank Transfer': '/bank-transfer',
       'Gift Cards': '/giftcard',
-      Transport: '/transport',
-      'Real Estate': '/realestate',
-      Gaming: '/gaming',
-      'School Fees': '/schoolfees'
+      'School Fees': '/schoolfees',
     };
   
-    if (routes[service]) {
-      router.push(routes[service] as any); 
-    } else {
-      console.warn(`No route defined for service: ${service}`);
-    }
+    const targetRoute = route || routes[service];
+    if (targetRoute) router.push(targetRoute as any);
   };
   
   const mainServices: Service[] = [
-    { icon: Smartphone, label: 'Airtime', badge: 'Up to 5%' }, // Changed from Phone to Smartphone
-    { icon: Wifi, label: 'Data', badge: 'Up to 5%' }, // Changed from Database to Wifi
-    { icon: DollarSign, label: 'Betting' }, // Changed from Target to DollarSign
+    { icon: Scan, label: 'Scan & Send', badge: 'Web3', route: '/scan-send' },
+    { icon: Camera, label: 'Snap & Pay', badge: 'New', route: '/snap-pay' },
+    { icon: Send, label: 'Send Money', route: '/send-money' },
+    { icon: QrCode, label: 'Receive', route: '/receive-money' },
+    { icon: Smartphone, label: 'Airtime', badge: 'Up to 5%' },
+    { icon: Wifi, label: 'Data', badge: 'Up to 5%' },
+    { icon: DollarSign, label: 'Betting' },
     { icon: Tv, label: 'TV' },
     { icon: PiggyBank, label: 'AmstaWealth' },
-    { icon: Banknote, label: 'Loan' }, // Changed from Users to Banknote
+    { icon: Banknote, label: 'Loan' },
     { icon: Mail, label: 'Invitation' },
     {
       icon: isExpanded ? ChevronUp : MoreHorizontal,
@@ -88,15 +70,14 @@ const ServicesGrid: React.FC = () => {
     { icon: Car, label: 'Transport' },
     { icon: Home, label: 'Real Estate' },
     { icon: Gamepad2, label: 'Gaming' },
-    { icon: GraduationCap, label: 'School Fees' }, // Changed from Book to GraduationCap
+    { icon: GraduationCap, label: 'School Fees' },
   ];
 
-  const allServices = isExpanded
-    ? [...mainServices, ...additionalServices]
-    : mainServices;
+  const allServices = isExpanded ? [...mainServices, ...additionalServices] : mainServices;
 
   return (
     <View style={styles.wrapper}>
+      <Text style={styles.sectionTitle}>Services</Text>
       <View style={styles.grid}>
         {allServices.map((service, index) => {
           const Icon = service.icon;
@@ -104,13 +85,13 @@ const ServicesGrid: React.FC = () => {
             <TouchableOpacity
               key={index}
               style={styles.item}
-              onPress={() => handleNavigation(service.label)}
+              onPress={() => handleNavigation(service.label, service.route)}
               activeOpacity={0.7}
             >
               <View style={styles.iconWrapper}>
-                <Icon size={24} color="#F97316" />
+                <Icon size={24} color={C.violet} />
                 {service.badge && (
-                  <View style={styles.badge}>
+                  <View style={[styles.badge, service.badge === 'Web3' && styles.web3Badge]}>
                     <Text style={styles.badgeText}>{service.badge}</Text>
                   </View>
                 )}
@@ -124,56 +105,35 @@ const ServicesGrid: React.FC = () => {
   );
 };
 
-export default ServicesGrid;
-
 const styles = StyleSheet.create({
-  wrapper: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  item: {
-    width: '22%',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+  wrapper: { paddingHorizontal: 20, marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.primary, marginBottom: 16 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  item: { width: '22%', alignItems: 'center', marginBottom: 20 },
   iconWrapper: {
-    width: 52,
-    height: 52,
-    borderColor: '#F97316', 
-    borderRadius: 14,
+    width: 56,
+    height: 56,
+    backgroundColor: C.primaryLight,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     position: 'relative',
-    borderWidth: 1,
-    color: '#F97316', // Orange-600 border
   },
   badge: {
     position: 'absolute',
     top: -6,
     right: -6,
-    backgroundColor: '#EA580C', // Orange-600
-    paddingHorizontal: 5,
+    backgroundColor: C.mint,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 10,
     minWidth: 30,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: 'bold',
-  },
-  label: {
-    fontSize: 12,
-    color: '#1F2937', // Dark gray
-    textAlign: 'center',
-    fontWeight: '500',
-  },
+  web3Badge: { backgroundColor: C.violet },
+  badgeText: { color: C.primary, fontSize: 8, fontWeight: 'bold' },
+  label: { fontSize: 11, color: C.text, textAlign: 'center', fontWeight: '500' },
 });
+
+export default ServicesGrid;

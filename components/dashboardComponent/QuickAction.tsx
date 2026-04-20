@@ -1,14 +1,39 @@
+// components/dashboardComponent/QuickAction.tsx
 import { useRouter } from 'expo-router';
-import { ArrowUpRight, ArrowDownLeft, SendIcon } from 'lucide-react-native';
+import { QrCode, Scan, Send, ArrowDownLeft, Camera } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { C } from './colors';
 
 const QuickActions = () => {
   const router = useRouter();
 
   const actions = [
-    { icon: SendIcon, label: 'Send Money', onPress: () => router.push('/scan') },
-    { icon: ArrowDownLeft, label: 'Receive Money', onPress: () => router.push('/checkscan') },
+    { 
+      icon: Scan, 
+      label: 'Scan & Pay', 
+      onPress: () => router.push('/scan'),
+      gradient: [C.mint, C.blue]
+    },
+    { 
+      icon: Send, 
+      label: 'Send', 
+      onPress: () => router.push('/send-money'),
+      gradient: [C.violet, C.pink]
+    },
+    { 
+      icon: QrCode, 
+      label: 'My QR', 
+      onPress: () => router.push('/my-qr'),
+      gradient: [C.primary, C.violet]
+    },
+    { 
+      icon: ArrowDownLeft, 
+      label: 'Request', 
+      onPress: () => router.push('/request-money'),
+      gradient: [C.blue, C.mint]
+    },
   ];
 
   return (
@@ -20,10 +45,16 @@ const QuickActions = () => {
             key={index}
             style={styles.actionWrapper}
             onPress={action.onPress}
+            activeOpacity={0.8}
           >
-            <View style={styles.iconContainer}>
-              <Icon size={24} color="#FFFFFF" />
-            </View>
+            <LinearGradient
+              colors={action.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <Icon size={22} color="#fff" />
+            </LinearGradient>
             <Text style={styles.label}>{action.label}</Text>
           </TouchableOpacity>
         );
@@ -32,32 +63,27 @@ const QuickActions = () => {
   );
 };
 
-export default QuickActions;
-
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    marginBottom: 28,
   },
-  actionWrapper: {
-    alignItems: 'center',
-  },
+  actionWrapper: { alignItems: 'center', gap: 8 },
   iconContainer: {
-    width: 96,
-    height: 32,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    backgroundColor: '#F97316', // Orange-500 background
-    borderWidth: 1,
-    borderColor: '#EA580C', // Orange-600 border
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  label: {
-    fontSize: 12,
-    color: '#1F2937', // Dark gray text
-    fontWeight: '500',
-  },
+  label: { fontSize: 12, color: C.text, fontWeight: '500' },
 });
+
+export default QuickActions;
