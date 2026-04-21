@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-    const baseUrl = "https://amstapay-backend.onrender.com/api";
+    const baseUrl = "https://amstapay-backend.onrender.com/api/v1";
     // const baseUrl = "http://localhost:3000/api"; // Use this for local development
     
     console.log(`Making API request to: ${baseUrl}${endpoint}`);
