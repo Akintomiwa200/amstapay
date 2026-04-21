@@ -11,6 +11,34 @@ type User = {
   isVerified?: boolean;
   role?: string;
   createdAt?: string;
+  updatedAt?: string;
+  amstapayAccountNumber?: string;
+  accountNumber?: string;
+  accountName?: string;
+  bankName?: string;
+  kycLevel?: number;
+  dateOfBirth?: string;
+  gender?: string;
+  residentialAddress?: string;
+  passportPhoto?: string;
+  idDocument?: string;
+  utilityBill?: string;
+  pin?: string;
+  verificationCode?: string | null;
+  isOtpVerified?: boolean;
+  businessName?: string;
+  businessAddress?: string;
+  businessType?: string;
+  guarantorName?: string;
+  guarantorRelationship?: string;
+  guarantorPhone?: string;
+  guarantorAddress?: string;
+  termsAgreed?: boolean;
+  infoAccurate?: boolean;
+  verificationConsent?: boolean;
+  verifications?: any[];
+  __v?: number;
+  // For compatibility
   name?: string;
   phone?: string;
 };
@@ -164,22 +192,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const fetchUserProfile = async (authToken: string) => {
-    try {
-      const data = await apiRequest("/users/me", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      
-      setUser(data);
-      await AsyncStorage.setItem("user", JSON.stringify(data));
-      return data;
-    } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      throw error;
-    }
-  };
+ // Update the fetchUserProfile function to handle the response correctly
+const fetchUserProfile = async (authToken: string) => {
+  try {
+    const data = await apiRequest("/users/me", {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    
+    // Handle different response structures
+    const userData = data.user || data.data || data;
+    
+    setUser(userData);
+    await AsyncStorage.setItem("user", JSON.stringify(userData));
+    return userData;
+  } catch (error) {
+    console.error("Failed to fetch user profile:", error);
+    throw error;
+  }
+};
 
   const login = async (emailOrPhone: string, password: string) => {
     try {
