@@ -1,6 +1,6 @@
-// app/scan-send.tsx - New Web3 Scan & Send Screen
+// app/scan-send.tsx
 import { useRouter } from 'expo-router';
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,133 +10,324 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Camera, QrCode, ChevronLeft, Send, Scan, FileText } from 'lucide-react-native';
+import { Camera, ChevronLeft, Send, RefreshCw, Building2, User, Wallet } from 'lucide-react-native';
 import { C } from '@/components/dashboardComponent/colors';
+import { useAuth } from '@/context/AuthContext';
+import * as ImagePicker from 'expo-image-picker';
+import TextRecognition from 'react-native-text-recognition';
 
 export default function ScanSendScreen() {
   const router = useRouter();
-  const [scanMode, setScanMode] = useState<'qr' | 'manual'>('qr');
+  const { transferToWallet } = useAuth();
+
+  const [image, setImage] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
   const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountType, setAccountType] = useState<'crypto' | 'nigerian' | 'international' | 'unknown'>('unknown');
+  const [confidence, setConfidence] = useState(0);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const handleScanQR = () => {
-    // In production: open QR scanner
-    Alert.alert('QR Scanner', 'Camera will open to scan recipient QR code');
+  const numericAmount = useMemo(() => Number(amount), [amount]);
+
+  useEffect(() => {
+    (async () => {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required.');
+        }
+      }
+    })();
+  }, []);
+
+  const handleSnapPhoto = async (useCamera: boolean = true) => {
+    try {
+      const result = useCamera
+        ? await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.8,
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.8,
+          });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setImage(imageUri);
+        setAccountNumber('');
+        setAccountName('');
+        setBankName('');
+        setAccountType('unknown');
+        setConfidence(0);
+        setAmount('');
+        extractDataFromImage(imageUri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to capture image.');
+    }
   };
 
-  const handleSnapAccount = () => {
-    // In production: use OCR to capture account number from image
-    Alert.alert('Snap Account', 'Camera will open to capture account number from cheque or card');
+  const extractDataFromImage = async (imageUri: string) => {
+    setProcessing(true);
+    try {
+      const recognizedLines: string[] = await TextRecognition.recognize(imageUri);
+      const recognizedText = recognizedLines.join('\n');
+      console.log('OCR Text:', recognizedText);
+
+      let extractedAccount = '';
+      let extractedType: 'crypto' | 'nigerian' | 'international' | 'unknown' = 'unknown';
+
+      // Check crypto first
+      const cryptoMatch = recognizedText.match(/\b(0x[a-fA-F0-9]{40})\b/);
+      if (cryptoMatch) {
+        extractedAccount = cryptoMatch[1];
+        extractedType = 'crypto';
+        setAccountType('crypto');
+        setBankName('Ethereum Wallet');
+        setAccountNumber(extractedAccount);
+        setConfidence(0.98);
+        setProcessing(false);
+        Alert.alert('Crypto Detected', 'Ethereum address: ' + extractedAccount);
+        return;
+      }
+
+      // Extract 10-digit account number
+      const accountMatches = recognizedText.match(/\b\d{10}\b/g);
+      if (accountMatches && accountMatches.length > 0) {
+        extractedAccount = accountMatches[0];
+        extractedType = 'nigerian';
+      } else {
+        // Try flexible pattern
+        const flexibleMatch = recognizedText.match(/(\d[\d\s\-]{8,}\d)/g);
+        if (flexibleMatch) {
+          const cleaned = flexibleMatch[0].replace(/[\s\-]/g, '');
+          if (cleaned.length === 10) {
+            extractedAccount = cleaned;
+            extractedType = 'nigerian';
+          } else if (cleaned.length > 10 && cleaned.length <= 18) {
+            extractedAccount = cleaned;
+            extractedType = 'international';
+          }
+        }
+      }
+
+      if (!extractedAccount) {
+        throw new Error('No valid account number found');
+      }
+
+      setAccountNumber(extractedAccount);
+      setAccountType(extractedType);
+      setConfidence(0.95);
+
+      // Extract bank name from text
+      const bankWords = ['bank', 'trust', 'financial', 'gtb', 'zenith', 'uba', 'access', 'fidelity', 'opay', 'palmpay'];
+      const lowerText = recognizedText.toLowerCase();
+      for (const word of bankWords) {
+        if (lowerText.includes(word)) {
+          // Extract nearby text as bank name
+          const idx = lowerText.indexOf(word);
+          const snippet = recognizedText.substring(Math.max(0, idx - 20), idx + 30);
+          const nameMatch = snippet.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/);
+          if (nameMatch) {
+            setBankName(nameMatch[1]);
+            break;
+          }
+        }
+      }
+
+      // Extract account name
+      const namePatterns = [
+        /(?:name|acct name|account name|holder)\s*[:\-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+        /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/m,
+      ];
+
+      for (const pattern of namePatterns) {
+        const match = recognizedText.match(pattern);
+        if (match && match[1]) {
+          setAccountName(match[1].trim());
+          break;
+        }
+      }
+
+      // Extract amount
+      const amountMatch = recognizedText.match(/₦\s*([\d,]+(?:\.\d{2})?)/);
+      if (amountMatch && amountMatch[1]) {
+        setAmount(amountMatch[1].replace(/,/g, ''));
+      }
+
+      Alert.alert('Detection Complete',
+        'Account: ' + extractedAccount + '\nBank: ' + (bankName || 'N/A') + '\nName: ' + (accountName || 'N/A'));
+
+    } catch (error) {
+      console.error('Extraction failed:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to extract details');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleSendMoney = async () => {
-    if (!accountNumber || accountNumber.length < 10) {
-      Alert.alert('Error', 'Please enter a valid account number');
-      return;
-    }
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
 
-    setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setLoading(false);
-    
-    Alert.alert('Success', `₦${amount} sent successfully!`, [
-      { text: 'OK', onPress: () => router.back() }
-    ]);
+    if (!accountNumber) {
+      Alert.alert('Error', 'Please snap an account number first');
+      return;
+    }
+
+    try {
+      setSending(true);
+      const response = await transferToWallet(numericAmount, accountNumber);
+
+      const transactionId =
+        response?.transaction?._id ||
+        response?.data?.transaction?._id ||
+        response?.transactionId ||
+        response?.data?.transactionId;
+
+      if (transactionId) {
+        router.replace({
+          pathname: '/receipt/[transactionId]',
+          params: { transactionId },
+        });
+        return;
+      }
+
+      Alert.alert('Success', '₦' + numericAmount.toLocaleString() + ' sent successfully!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to process transaction';
+      Alert.alert('Payment Failed', message);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft size={24} color={C.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Scan & Send</Text>
+        <Text style={styles.headerTitle}>Snap & Send</Text>
         <View style={{ width: 40 }} />
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Mode Toggle */}
-        <View style={styles.toggleContainer}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, scanMode === 'qr' && styles.toggleActive]}
-            onPress={() => setScanMode('qr')}
-          >
-            <QrCode size={18} color={scanMode === 'qr' ? '#fff' : C.primary} />
-            <Text style={[styles.toggleText, scanMode === 'qr' && styles.toggleTextActive]}>Scan QR</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleBtn, scanMode === 'manual' && styles.toggleActive]}
-            onPress={() => setScanMode('manual')}
-          >
-            <FileText size={18} color={scanMode === 'manual' ? '#fff' : C.primary} />
-            <Text style={[styles.toggleText, scanMode === 'manual' && styles.toggleTextActive]}>Manual Entry</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Scan Area */}
-        {scanMode === 'qr' ? (
-          <View style={styles.scanArea}>
-            <TouchableOpacity style={styles.scanButton} onPress={handleScanQR}>
-              <LinearGradient
-                colors={[C.mint, C.blue, C.violet]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.scanButtonGradient}
+        <View style={styles.captureSection}>
+          {image ? (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: image }} style={styles.capturedImage} />
+              <TouchableOpacity
+                style={styles.retakeButton}
+                onPress={() => handleSnapPhoto(true)}
+                disabled={processing || sending}
               >
-                <Camera size={40} color="#fff" />
-                <Text style={styles.scanButtonText}>Tap to Scan QR Code</Text>
+                <RefreshCw size={16} color={C.primary} />
+                <Text style={styles.retakeText}>Retake</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Camera size={48} color={C.textSub} />
+              <Text style={styles.placeholderText}>Snap a cheque, bank slip, or wallet</Text>
+              <Text style={styles.placeholderSubtext}>Auto-detects account, bank, name & amount</Text>
+            </View>
+          )}
+
+          {processing && (
+            <View style={styles.processingOverlay}>
+              <ActivityIndicator size="large" color={C.primary} />
+              <Text style={styles.processingText}>Extracting details...</Text>
+            </View>
+          )}
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={() => handleSnapPhoto(true)}
+              disabled={processing || sending}
+            >
+              <LinearGradient colors={[C.primary, C.secondary]} style={styles.buttonGradient}>
+                <Camera size={20} color="#fff" />
+                <Text style={styles.buttonText}>Camera</Text>
               </LinearGradient>
             </TouchableOpacity>
-            
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
 
-            <TouchableOpacity style={styles.snapButton} onPress={handleSnapAccount}>
-              <Scan size={24} color={C.violet} />
-              <Text style={styles.snapButtonText}>Snap Account Number</Text>
-              <Text style={styles.snapButtonSubtext}>Take a photo of cheque or account number</Text>
+            <TouchableOpacity
+              style={styles.galleryButton}
+              onPress={() => handleSnapPhoto(false)}
+              disabled={processing || sending}
+            >
+              <Text style={styles.galleryButtonText}>Gallery</Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.manualArea}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Account Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 10-digit account number"
-                value={accountNumber}
-                onChangeText={setAccountNumber}
-                keyboardType="numeric"
-                maxLength={10}
-              />
+        </View>
+
+        {accountNumber ? (
+          <View style={[
+            styles.resultCard,
+            accountType === 'crypto' && styles.resultCardCrypto,
+            accountType === 'nigerian' && styles.resultCardNigerian,
+          ]}>
+            <View style={styles.resultHeader}>
+              {accountType === 'crypto' ? (
+                <Wallet size={20} color={C.primary} />
+              ) : accountType === 'nigerian' ? (
+                <Text style={styles.flagEmoji}>🇳🇬</Text>
+              ) : (
+                <Building2 size={20} color={C.secondary} />
+              )}
+              <Text style={styles.resultType}>
+                {accountType === 'crypto' ? 'Crypto Wallet' :
+                  accountType === 'nigerian' ? 'Nigerian Bank' :
+                    accountType === 'international' ? 'International' : 'Unknown'}
+              </Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Recipient Name</Text>
-              <View style={styles.namePreview}>
-                <Text style={styles.nameText}>John Doe</Text>
-                <TouchableOpacity>
-                  <Text style={styles.verifyText}>Verify</Text>
-                </TouchableOpacity>
+            <View style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Account:</Text>
+              <Text style={styles.resultValue}>{accountNumber}</Text>
+            </View>
+
+            {bankName ? (
+              <View style={styles.resultRow}>
+                <Text style={styles.resultLabel}>Bank/Wallet:</Text>
+                <Text style={styles.resultValue}>{bankName}</Text>
               </View>
-            </View>
-          </View>
-        )}
+            ) : null}
 
-        {/* Amount Input */}
+            {accountName ? (
+              <View style={styles.resultRow}>
+                <User size={14} color={C.textSub} />
+                <Text style={styles.resultLabel}>Name:</Text>
+                <Text style={styles.resultValue}>{accountName}</Text>
+              </View>
+            ) : null}
+
+            <Text style={styles.resultConfidence}>
+              Confidence: {(confidence * 100).toFixed(1)}%
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Amount (₦)</Text>
           <TextInput
@@ -148,7 +339,6 @@ export default function ScanSendScreen() {
           />
         </View>
 
-        {/* Note Input */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Note (Optional)</Text>
           <TextInput
@@ -160,20 +350,21 @@ export default function ScanSendScreen() {
           />
         </View>
 
-        {/* Send Button */}
-        <TouchableOpacity style={styles.sendButton} onPress={handleSendMoney} disabled={loading}>
+        <TouchableOpacity
+          style={[styles.sendButton, (!accountNumber || !amount || sending) && styles.buttonDisabled]}
+          onPress={handleSendMoney}
+          disabled={!accountNumber || !amount || sending}
+        >
           <LinearGradient
-            colors={[C.mint, C.blue, C.violet, C.pink]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.sendButtonGradient}
+            colors={(!accountNumber || !amount || sending) ? ['#ccc', '#ccc'] : [C.primary, C.secondary]}
+            style={styles.buttonGradient}
           >
-            {loading ? (
+            {sending ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <>
                 <Send size={20} color="#fff" />
-                <Text style={styles.sendButtonText}>Send Money</Text>
+                <Text style={styles.buttonText}>Send Money</Text>
               </>
             )}
           </LinearGradient>
@@ -196,31 +387,69 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: C.primary },
   content: { padding: 20, paddingBottom: 40 },
-  toggleContainer: { flexDirection: 'row', backgroundColor: C.primaryLight, borderRadius: 40, padding: 4, marginBottom: 24 },
-  toggleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 36 },
-  toggleActive: { backgroundColor: C.primary },
-  toggleText: { fontSize: 14, fontWeight: '600', color: C.primary },
-  toggleTextActive: { color: '#fff' },
-  scanArea: { marginBottom: 24 },
-  scanButton: { borderRadius: 20, overflow: 'hidden' },
-  scanButtonGradient: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
-  scanButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: C.border },
-  dividerText: { marginHorizontal: 12, color: C.textSub, fontSize: 12 },
-  snapButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 16, backgroundColor: C.primaryLight, borderRadius: 16 },
-  snapButtonText: { fontSize: 16, fontWeight: '600', color: C.violet },
-  snapButtonSubtext: { fontSize: 11, color: C.textSub },
-  manualArea: { marginBottom: 24 },
+
+  captureSection: { marginBottom: 24 },
+  imageContainer: { marginBottom: 16, alignItems: 'center' },
+  capturedImage: { width: '100%', height: 200, borderRadius: 12, marginBottom: 12 },
+  retakeButton: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8 },
+  retakeText: { fontSize: 14, color: C.primary, fontWeight: '600' },
+
+  placeholderContainer: {
+    height: 220,
+    backgroundColor: C.surfaceContainer,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    padding: 20,
+  },
+  placeholderText: { marginTop: 12, fontSize: 16, color: C.textSub, textAlign: 'center', fontWeight: '600' },
+  placeholderSubtext: { marginTop: 4, fontSize: 12, color: C.textSub, textAlign: 'center' },
+
+  processingOverlay: {
+    alignItems: 'center',
+    padding: 16,
+  },
+  processingText: { marginTop: 8, fontSize: 14, color: C.primary, fontWeight: '600' },
+
+  buttonRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  cameraButton: { flex: 1, borderRadius: 12, overflow: 'hidden' },
+  galleryButton: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+  },
+  galleryButtonText: { fontSize: 14, fontWeight: '600', color: C.primary },
+  buttonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
+  buttonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+
+  resultCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: C.success,
+  },
+  resultCardCrypto: { borderColor: '#FFD700' },
+  resultCardNigerian: { borderColor: '#008751' },
+  resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  flagEmoji: { fontSize: 20 },
+  resultType: { fontSize: 14, fontWeight: '600', color: C.primary },
+  resultRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' },
+  resultLabel: { fontSize: 12, color: C.textSub },
+  resultValue: { fontSize: 16, fontWeight: '700', color: C.primary, letterSpacing: 1 },
+  resultConfidence: { fontSize: 12, color: C.success, marginTop: 8 },
+
   inputGroup: { marginBottom: 20 },
   inputLabel: { fontSize: 14, fontWeight: '600', color: C.primary, marginBottom: 8 },
-  input: { backgroundColor: C.inputBg, borderRadius: 14, padding: 14, fontSize: 16, borderWidth: 1, borderColor: C.border },
-  amountInput: { backgroundColor: C.inputBg, borderRadius: 14, padding: 14, fontSize: 24, fontWeight: '700', textAlign: 'center', borderWidth: 1, borderColor: C.border },
-  noteInput: { backgroundColor: C.inputBg, borderRadius: 14, padding: 14, fontSize: 14, borderWidth: 1, borderColor: C.border, minHeight: 80 },
-  namePreview: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.inputBg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.border },
-  nameText: { fontSize: 16, color: C.text },
-  verifyText: { fontSize: 12, color: C.violet, fontWeight: '600' },
-  sendButton: { borderRadius: 14, overflow: 'hidden', marginTop: 12 },
-  sendButtonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
-  sendButtonText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  amountInput: { backgroundColor: '#fff', borderRadius: 14, padding: 14, fontSize: 24, fontWeight: '700', textAlign: 'center', borderWidth: 1, borderColor: C.border },
+  noteInput: { backgroundColor: '#fff', borderRadius: 14, padding: 14, fontSize: 14, borderWidth: 1, borderColor: C.border, minHeight: 80 },
+
+  sendButton: { borderRadius: 14, overflow: 'hidden', marginTop: 12, marginBottom: 20 },
+  buttonDisabled: { opacity: 0.5 },
 });

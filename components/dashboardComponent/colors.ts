@@ -1,19 +1,46 @@
-// colors.ts - Central color configuration
+// colors.ts - Central color configuration - BluPay Theme
 export const C = {
-  bg: "#FFFFFF",
-  primary: "#2D0057",
-  primaryLight: "#F3EFF8",
-  primaryDark: "#1a0035",
-  mint: "#22f0c3",
-  blue: "#2db3ff",
-  violet: "#8b5cf6",
-  pink: "#ff3cac",
-  text: "#1a0035",
-  textSub: "#6B7280",
-  border: "#E8E0F0",
-  inputBg: "#FAF8FC",
-  error: "#ef4444",
-  success: "#22f0c3",
+  // Primary colors
+  primary: "#001360",
+  primaryContainer: "#002395",
+  primaryLight: "#dee1ff",
+  primaryDim: "#bac3ff",
+
+  // Secondary colors
+  secondary: "#00677e",
+  secondaryContainer: "#00d2fd",
+  secondaryFixed: "#b4ebff",
+
+  // Tertiary colors
+  tertiary: "#080075",
+  tertiaryContainer: "#1509ad",
+
+  // Surface colors
+  bg: "#faf8ff",
+  surface: "#faf8ff",
+  surfaceContainer: "#eaedff",
+  surfaceContainerHigh: "#e2e7ff",
+  surfaceVariant: "#dae2fd",
+
+  // Text colors
+  text: "#131b2e",
+  textSub: "#444653",
+
+  // Border
+  border: "#c5c5d5",
+  outline: "#757684",
+
+  // Status colors
+  error: "#ba1a1a",
+  success: "#00d2fd",
   warning: "#f59e0b",
-  cardBg: "#FFFFFF",
+
+  // Legacy colors (for compatibility)
+  mint: "#00d2fd",
+  blue: "#3e54c1",
+  violet: "#080075",
+  pink: "#1509ad",
+
+  // Card background
+  cardBg: "#ffffff",
 };

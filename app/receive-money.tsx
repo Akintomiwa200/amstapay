@@ -1,9 +1,10 @@
 // app/receive-money.tsx - Receive Money Screen
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Share, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Copy, Share2, QrCode, CreditCard, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { C } from '@/components/dashboardComponent/colors';
 import { useAuth } from '@/context/AuthContext';
 
@@ -13,13 +14,19 @@ export default function ReceiveMoneyScreen() {
   const [amount, setAmount] = useState('');
 
   const accountDetails = {
-    accountNumber: '2098765432',
-    accountName: user?.fullName || user?.name || 'Guest User',
-    bankName: 'AmstaPay',
+    accountNumber: user?.amstapayAccountNumber || user?.accountNumber || 'N/A',
+    accountName: user?.accountName || user?.fullName || user?.name || 'Guest User',
+    bankName: user?.bankName || 'AmstaPay',
   };
 
-  const handleCopy = (text: string) => {
-    // Copy to clipboard
+  const handleCopy = async (text: string) => {
+    if (!text || text === 'N/A') {
+      Alert.alert('Unavailable', 'No account number available for this profile yet.');
+      return;
+    }
+
+    await Clipboard.setStringAsync(text);
+    Alert.alert('Copied', 'Account number copied to clipboard.');
   };
 
   const handleShare = async () => {
@@ -27,8 +34,8 @@ export default function ReceiveMoneyScreen() {
       await Share.share({
         message: `Send money to my AmstaPay account:\n\nAccount Name: ${accountDetails.accountName}\nAccount Number: ${accountDetails.accountNumber}\nBank: ${accountDetails.bankName}${amount ? `\nAmount: ₦${amount}` : ''}`,
       });
-    } catch (e) {
-      // Handle error
+    } catch {
+      Alert.alert('Share Failed', 'Unable to share account details right now.');
     }
   };
 
@@ -45,7 +52,6 @@ export default function ReceiveMoneyScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Account Card */}
         <View style={styles.accountCard}>
           <Text style={styles.cardLabel}>Your AmstaPay Account</Text>
           <View style={styles.detailRow}>
@@ -67,7 +73,6 @@ export default function ReceiveMoneyScreen() {
           </View>
         </View>
 
-        {/* Amount Request */}
         <View style={styles.amountSection}>
           <Text style={styles.label}>Request Amount (Optional)</Text>
           <View style={styles.amountInput}>
@@ -83,7 +88,6 @@ export default function ReceiveMoneyScreen() {
           </View>
         </View>
 
-        {/* Actions */}
         <View style={styles.actionsRow}>
           <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/qr-code')}>
             <QrCode size={24} color={C.violet} />
@@ -95,7 +99,6 @@ export default function ReceiveMoneyScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Other Methods */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Other Ways to Receive</Text>
           <TouchableOpacity style={styles.methodRow}>

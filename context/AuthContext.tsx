@@ -80,10 +80,12 @@ type AuthContextType = {
   getWalletBalance: () => Promise<WalletBalance>;
   fundWallet: (amount: number, paymentMethod: string) => Promise<void>;
   withdrawFromWallet: (amount: number, accountDetails: any) => Promise<void>;
-  transferToWallet: (amount: number, recipient: string) => Promise<void>;
+  transferToWallet: (amount: number, recipient: string) => Promise<any>;
   getWalletTransactions: () => Promise<any[]>;
   sendViaQR: (qrData: any, amount: number) => Promise<void>;
   receiveViaQR: (qrData: any) => Promise<void>;
+  buyAirtime: (payload: { network: string; phoneNumber: string; amount: number }) => Promise<any>;
+  verifyAccount: (accountNumber: string) => Promise<{ accountName: string; bankName: string }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -346,7 +348,7 @@ const fetchUserProfile = async (authToken: string) => {
   };
 
   const transferToWallet = async (amount: number, recipient: string) => {
-    await apiRequest("/wallets/transfer", {
+    return await apiRequest("/wallets/transfer", {
       method: "POST",
       body: JSON.stringify({ amount, recipient }),
     });
@@ -357,17 +359,53 @@ const fetchUserProfile = async (authToken: string) => {
   };
 
   const sendViaQR = async (qrData: any, amount: number) => {
-    await apiRequest("/payments/send", {
+    return await apiRequest("/payments/send", {
       method: "POST",
       body: JSON.stringify({ qrData, amount }),
     });
   };
 
   const receiveViaQR = async (qrData: any) => {
-    await apiRequest("/payments/receive", {
+    return await apiRequest("/payments/receive", {
       method: "POST",
       body: JSON.stringify({ qrData }),
     });
+  };
+
+  const buyAirtime = async (payload: { network: string; phoneNumber: string; amount: number }) => {
+    const endpoints = ["/bills/airtime", "/airtime/purchase", "/airtime"];
+    let lastError: unknown;
+
+    for (const endpoint of endpoints) {
+      try {
+        return await apiRequest(endpoint, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error("Airtime purchase failed");
+  };
+
+  const verifyAccount = async (accountNumber: string): Promise<{ accountName: string; bankName: string }> => {
+    try {
+      const data = await apiRequest("/accounts/verify", {
+        method: "POST",
+        body: JSON.stringify({ accountNumber }),
+      });
+      
+      return {
+        accountName: data.accountName || data.account_name || data.name || '',
+        bankName: data.bankName || data.bank_name || data.bank || '',
+      };
+    } catch (error) {
+      console.error('Account verification failed:', error);
+      // Return empty if API fails
+      return { accountName: '', bankName: '' };
+    }
   };
 
   return (
@@ -390,9 +428,11 @@ const fetchUserProfile = async (authToken: string) => {
         withdrawFromWallet,
         transferToWallet,
         getWalletTransactions,
-        sendViaQR,
-        receiveViaQR,
-      }}
+         sendViaQR,
+         receiveViaQR,
+         buyAirtime,
+         verifyAccount,
+       }}
     >
       {children}
     </AuthContext.Provider>

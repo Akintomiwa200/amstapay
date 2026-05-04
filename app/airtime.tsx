@@ -1,27 +1,77 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Phone } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
+
+type Provider = {
+  id: string;
+  name: string;
+};
+
+const providers: Provider[] = [
+  { id: 'mtn', name: 'MTN' },
+  { id: 'airtel', name: 'Airtel' },
+  { id: 'glo', name: 'Glo' },
+  { id: '9mobile', name: '9mobile' },
+];
+
+const quickAmounts = [100, 200, 500, 1000];
 
 const AirtimeScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   const router = useRouter();
+  const { buyAirtime } = useAuth();
 
-  const providers = [
-    { id: 'mtn', name: 'MTN' },
-    { id: 'airtel', name: 'Airtel' },
-    { id: 'glo', name: 'Glo' },
-    { id: '9mobile', name: '9mobile' },
-  ];
+  const sanitizedPhone = useMemo(() => phoneNumber.replace(/\D/g, ''), [phoneNumber]);
+  const amountValue = useMemo(() => Number(amount), [amount]);
 
-  const quickAmounts = [100, 200, 500, 1000];
+  const isFormValid =
+    !!selectedProvider &&
+    sanitizedPhone.length >= 10 &&
+    Number.isFinite(amountValue) &&
+    amountValue >= 50;
 
-  const handleBuyAirtime = () => {
-    // Handle airtime purchase logic
-    console.log('Buying airtime:', { phoneNumber, amount, selectedProvider });
-    router.back();
+  const handleBuyAirtime = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Select a network, enter a valid phone number, and enter amount from ₦50.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const result = await buyAirtime({
+        network: selectedProvider,
+        phoneNumber: sanitizedPhone,
+        amount: amountValue,
+      });
+
+      const transactionId =
+        result?.transaction?._id ||
+        result?.data?.transaction?._id ||
+        result?.transactionId ||
+        result?.data?.transactionId;
+
+      if (transactionId) {
+        router.replace({
+          pathname: '/receipt/[transactionId]',
+          params: { transactionId },
+        });
+        return;
+      }
+
+      Alert.alert('Airtime Purchase Successful', 'Your airtime purchase was completed.');
+      router.back();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to complete airtime purchase right now.';
+      Alert.alert('Purchase Failed', message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -31,7 +81,6 @@ const AirtimeScreen = () => {
       </View>
 
       <View style={styles.formContainer}>
-        {/* Provider Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Network</Text>
           <View style={styles.providerGrid}>
@@ -40,14 +89,17 @@ const AirtimeScreen = () => {
                 key={provider.id}
                 style={[
                   styles.providerButton,
-                  selectedProvider === provider.id && styles.providerButtonSelected
+                  selectedProvider === provider.id && styles.providerButtonSelected,
                 ]}
                 onPress={() => setSelectedProvider(provider.id)}
+                disabled={submitting}
               >
-                <Text style={[
-                  styles.providerText,
-                  selectedProvider === provider.id && styles.providerTextSelected
-                ]}>
+                <Text
+                  style={[
+                    styles.providerText,
+                    selectedProvider === provider.id && styles.providerTextSelected,
+                  ]}
+                >
                   {provider.name}
                 </Text>
               </TouchableOpacity>
@@ -55,7 +107,6 @@ const AirtimeScreen = () => {
           </View>
         </View>
 
-        {/* Phone Number */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
@@ -64,10 +115,11 @@ const AirtimeScreen = () => {
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
+            editable={!submitting}
+            maxLength={15}
           />
         </View>
 
-        {/* Amount */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Amount (₦)</Text>
           <TextInput
@@ -76,14 +128,16 @@ const AirtimeScreen = () => {
             value={amount}
             onChangeText={setAmount}
             keyboardType="numeric"
+            editable={!submitting}
           />
-          
+
           <View style={styles.quickAmounts}>
             {quickAmounts.map(quickAmount => (
               <TouchableOpacity
                 key={quickAmount}
                 style={styles.quickAmountButton}
                 onPress={() => setAmount(quickAmount.toString())}
+                disabled={submitting}
               >
                 <Text style={styles.quickAmountText}>₦{quickAmount}</Text>
               </TouchableOpacity>
@@ -91,13 +145,16 @@ const AirtimeScreen = () => {
           </View>
         </View>
 
-        {/* Buy Button */}
         <TouchableOpacity
-          style={[styles.button, (!phoneNumber || !amount || !selectedProvider) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleBuyAirtime}
-          disabled={!phoneNumber || !amount || !selectedProvider}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Buy Airtime</Text>
+          {submitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.buttonText}>Buy Airtime</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>

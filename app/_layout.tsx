@@ -35,8 +35,8 @@ function AppContent() {
       card: theme.colors.surface,
       text: theme.colors.text,
       border: theme.colors.border,
-      primary: theme.colors.violet,
-      notification: theme.colors.pink,
+      primary: theme.colors.primary,
+      notification: theme.colors.secondaryContainer,
     },
   };
 

@@ -3,40 +3,79 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Color tokens for Light Theme
+// Color tokens for Light Theme - BluPay Theme
 export const LightTheme = {
   colors: {
-    // Brand Colors
-    primary: "#2D0057",
-    primaryLight: "#F3EFF8",
-    primaryDark: "#1a0035",
-    
-    // Accent Colors
-    mint: "#22f0c3",
-    blue: "#2db3ff",
-    violet: "#8b5cf6",
-    pink: "#ff3cac",
-    
-    // UI Colors
-    background: "#FFFFFF",
-    surface: "#FFFFFF",
-    surfaceAlt: "#FAF8FC",
-    
-    // Text Colors
-    text: "#1a0035",
-    textSecondary: "#6B7280",
-    textDisabled: "#B0A8C0",
-    
+    // Primary colors from HTML
+    primary: "#001360",
+    primaryContainer: "#002395",
+    primaryLight: "#dee1ff",
+    primaryDim: "#bac3ff",
+    primaryFixed: "#dee1ff",
+    primaryFixedDim: "#bac3ff",
+    onPrimary: "#ffffff",
+    onPrimaryContainer: "#8094ff",
+    onPrimaryFixed: "#001159",
+    onPrimaryFixedVariant: "#223aa8",
+
+    // Secondary colors
+    secondary: "#00677e",
+    secondaryContainer: "#00d2fd",
+    secondaryFixed: "#b4ebff",
+    secondaryFixedDim: "#3cd7ff",
+    onSecondary: "#ffffff",
+    onSecondaryContainer: "#005669",
+    onSecondaryFixed: "#001f27",
+    onSecondaryFixedVariant: "#004e5f",
+
+    // Tertiary colors
+    tertiary: "#080075",
+    tertiaryContainer: "#1509ad",
+    tertiaryFixed: "#e1e0ff",
+    tertiaryFixedDim: "#c0c1ff",
+    onTertiary: "#ffffff",
+    onTertiaryContainer: "#8e91ff",
+    onTertiaryFixed: "#07006c",
+    onTertiaryFixedVariant: "#2f2ebe",
+
+    // Surface colors
+    background: "#faf8ff",
+    surface: "#faf8ff",
+    surfaceDim: "#d2d9f4",
+    surfaceBright: "#faf8ff",
+    surfaceContainer: "#eaedff",
+    surfaceContainerLow: "#f2f3ff",
+    surfaceContainerLowest: "#ffffff",
+    surfaceContainerHigh: "#e2e7ff",
+    surfaceContainerHighest: "#dae2fd",
+    surfaceVariant: "#dae2fd",
+    surfaceTint: "#3e54c1",
+    inverseSurface: "#283044",
+    inverseOnSurface: "#eef0ff",
+    inversePrimary: "#bac3ff",
+
+    // Text colors
+    text: "#131b2e",
+    textSecondary: "#444653",
+    textDisabled: "#757684",
+    onBackground: "#131b2e",
+    onSurface: "#131b2e",
+    onSurfaceVariant: "#444653",
+
     // Border & Status
-    border: "#E8E0F0",
-    error: "#ef4444",
-    success: "#22f0c3",
+    border: "#c5c5d5",
+    outline: "#757684",
+    outlineVariant: "#c5c5d5",
+    error: "#ba1a1a",
+    errorContainer: "#ffdad6",
+    onError: "#ffffff",
+    onErrorContainer: "#93000a",
+    success: "#00d2fd",
     warning: "#f59e0b",
-    info: "#2db3ff",
-    
-    // Gradients
-    gradientPrimary: ["#2D0057", "#8b5cf6"],
-    gradientAccent: ["#22f0c3", "#2db3ff", "#8b5cf6", "#ff3cac"],
+    info: "#3e54c1",
+
+    // Gradient for splash
+    gradientSplash: ["#002395", "#001360"],
   },
   spacing: {
     xs: 4,
@@ -47,19 +86,23 @@ export const LightTheme = {
     xxl: 48,
   },
   typography: {
-    h1: { fontSize: 32, fontWeight: '800' as const, lineHeight: 40 },
-    h2: { fontSize: 28, fontWeight: '800' as const, lineHeight: 36 },
-    h3: { fontSize: 24, fontWeight: '700' as const, lineHeight: 32 },
-    h4: { fontSize: 20, fontWeight: '700' as const, lineHeight: 28 },
+    h1: { fontSize: 32, fontWeight: '700' as const, lineHeight: 40 },
+    h2: { fontSize: 24, fontWeight: '600' as const, lineHeight: 32 },
+    h3: { fontSize: 20, fontWeight: '600' as const, lineHeight: 28 },
+    h4: { fontSize: 18, fontWeight: '600' as const, lineHeight: 28 },
     body: { fontSize: 16, fontWeight: '400' as const, lineHeight: 24 },
     bodySmall: { fontSize: 14, fontWeight: '400' as const, lineHeight: 20 },
+    bodyLarge: { fontSize: 18, fontWeight: '400' as const, lineHeight: 28 },
     caption: { fontSize: 12, fontWeight: '500' as const, lineHeight: 16 },
+    labelSmall: { fontSize: 12, fontWeight: '500' as const, lineHeight: 16, letterSpacing: 0.04 },
+    labelMedium: { fontSize: 14, fontWeight: '600' as const, lineHeight: 16, letterSpacing: 0.02 },
+    display: { fontSize: 48, fontWeight: '800' as const, lineHeight: 56, letterSpacing: -0.02 },
   },
   borderRadius: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
     xxl: 24,
     round: 999,
   },
@@ -68,41 +111,83 @@ export const LightTheme = {
 // Dark Theme
 export const DarkTheme = {
   colors: {
-    primary: "#8b5cf6",
-    primaryLight: "#2D0057",
-    primaryDark: "#F3EFF8",
-    
-    mint: "#22f0c3",
-    blue: "#2db3ff",
-    violet: "#a78bfa",
-    pink: "#ff3cac",
-    
-    background: "#0a0a0a",
-    surface: "#1a1a1a",
-    surfaceAlt: "#2a2a2a",
-    
-    text: "#FFFFFF",
-    textSecondary: "#9ca3af",
-    textDisabled: "#6b7280",
-    
-    border: "#2a2a2a",
-    error: "#ef4444",
-    success: "#22f0c3",
+    primary: "#bac3ff",
+    primaryContainer: "#223aa8",
+    primaryLight: "#001360",
+    primaryDim: "#8094ff",
+    primaryFixed: "#dee1ff",
+    primaryFixedDim: "#bac3ff",
+    onPrimary: "#001159",
+    onPrimaryContainer: "#dee1ff",
+    onPrimaryFixed: "#001159",
+    onPrimaryFixedVariant: "#223aa8",
+
+    secondary: "#3cd7ff",
+    secondaryContainer: "#004e5f",
+    secondaryFixed: "#b4ebff",
+    secondaryFixedDim: "#3cd7ff",
+    onSecondary: "#001f27",
+    onSecondaryContainer: "#b4ebff",
+    onSecondaryFixed: "#001f27",
+    onSecondaryFixedVariant: "#004e5f",
+
+    tertiary: "#c0c1ff",
+    tertiaryContainer: "#2f2ebe",
+    tertiaryFixed: "#e1e0ff",
+    tertiaryFixedDim: "#c0c1ff",
+    onTertiary: "#07006c",
+    onTertiaryContainer: "#e1e0ff",
+    onTertiaryFixed: "#07006c",
+    onTertiaryFixedVariant: "#2f2ebe",
+
+    background: "#131b2e",
+    surface: "#1a2035",
+    surfaceDim: "#131b2e",
+    surfaceBright: "#283044",
+    surfaceContainer: "#1e2540",
+    surfaceContainerLow: "#181f33",
+    surfaceContainerLowest: "#0f1525",
+    surfaceContainerHigh: "#232b45",
+    surfaceContainerHighest: "#2d3650",
+    surfaceVariant: "#283044",
+    surfaceTint: "#bac3ff",
+    inverseSurface: "#eaedff",
+    inverseOnSurface: "#131b2e",
+    inversePrimary: "#001360",
+
+    text: "#eef0ff",
+    textSecondary: "#c5c5d5",
+    textDisabled: "#757684",
+    onBackground: "#eef0ff",
+    onSurface: "#eef0ff",
+    onSurfaceVariant: "#c5c5d5",
+
+    border: "#283044",
+    outline: "#757684",
+    outlineVariant: "#444653",
+    error: "#ffb4ab",
+    errorContainer: "#93000a",
+    onError: "#690005",
+    onErrorContainer: "#ffdad6",
+    success: "#3cd7ff",
     warning: "#f59e0b",
-    info: "#2db3ff",
-    
-    gradientPrimary: ["#8b5cf6", "#2D0057"],
-    gradientAccent: ["#22f0c3", "#2db3ff", "#8b5cf6", "#ff3cac"],
+    info: "#bac3ff",
+
+    gradientSplash: ["#001360", "#002395"],
   },
   spacing: { ...LightTheme.spacing },
   typography: {
-    h1: { ...LightTheme.typography.h1, color: "#FFFFFF" },
-    h2: { ...LightTheme.typography.h2, color: "#FFFFFF" },
-    h3: { ...LightTheme.typography.h3, color: "#FFFFFF" },
-    h4: { ...LightTheme.typography.h4, color: "#FFFFFF" },
-    body: { ...LightTheme.typography.body, color: "#e5e5e5" },
-    bodySmall: { ...LightTheme.typography.bodySmall, color: "#9ca3af" },
-    caption: { ...LightTheme.typography.caption, color: "#6b7280" },
+    h1: { ...LightTheme.typography.h1, color: "#eef0ff" },
+    h2: { ...LightTheme.typography.h2, color: "#eef0ff" },
+    h3: { ...LightTheme.typography.h3, color: "#eef0ff" },
+    h4: { ...LightTheme.typography.h4, color: "#eef0ff" },
+    body: { ...LightTheme.typography.body, color: "#eef0ff" },
+    bodySmall: { ...LightTheme.typography.bodySmall, color: "#c5c5d5" },
+    bodyLarge: { ...LightTheme.typography.bodyLarge, color: "#eef0ff" },
+    caption: { ...LightTheme.typography.caption, color: "#757684" },
+    labelSmall: { ...LightTheme.typography.labelSmall, color: "#c5c5d5" },
+    labelMedium: { ...LightTheme.typography.labelMedium, color: "#c5c5d5" },
+    display: { ...LightTheme.typography.display, color: "#eef0ff" },
   },
   borderRadius: { ...LightTheme.borderRadius },
 };
@@ -135,7 +220,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (savedTheme === 'light') {
         setIsDarkMode(false);
       } else {
-        // Use system preference
         setIsDarkMode(systemColorScheme === 'dark');
       }
     } catch (error) {
@@ -160,7 +244,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const theme = isDarkMode ? DarkTheme : LightTheme;
 
   if (isLoading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   return (
