@@ -86,6 +86,7 @@ type AuthContextType = {
   receiveViaQR: (qrData: any) => Promise<void>;
   buyAirtime: (payload: { network: string; phoneNumber: string; amount: number }) => Promise<any>;
   verifyAccount: (accountNumber: string) => Promise<{ accountName: string; bankName: string }>;
+  resetPassword: (email: string, token: string, password: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -159,6 +160,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log(`API Response Status: ${response.status}`);
 
       if (!response.ok) {
+        // Handle 401 Unauthorized - clear invalid token
+        if (response.status === 401) {
+          console.log("Token expired or invalid, clearing auth state");
+          setToken(null);
+          setUser(null);
+          await AsyncStorage.removeItem("token");
+          await AsyncStorage.removeItem("user");
+          throw new Error("401 Unauthorized - Please login again");
+        }
+
         let errorData;
         try {
           errorData = await response.json();
@@ -219,10 +230,13 @@ const fetchUserProfile = async (authToken: string) => {
     try {
       console.log("Attempting login for:", emailOrPhone);
       
+      const cleaned = emailOrPhone.trim();
+      
+      // Backend expects 'email' field for login
       const data = await apiRequest("/auth/login", {
         method: "POST",
         body: JSON.stringify({ 
-          emailOrPhone: emailOrPhone.trim(), 
+          email: cleaned, 
           password: password 
         }),
       });
@@ -303,6 +317,14 @@ const fetchUserProfile = async (authToken: string) => {
     await apiRequest("/users/change-password", {
       method: "POST",
       body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  };
+
+  const resetPassword = async (email: string, token: string, password: string) => {
+    await fetch(`https://amstapay-backend.onrender.com/api/v1/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, token, password, passwordConfirmation: password }),
     });
   };
 

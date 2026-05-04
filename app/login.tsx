@@ -153,13 +153,9 @@ export default function LoginScreen() {
   const validate = (): boolean => {
     const e: typeof errors = {};
     const cleaned = emailOrPhone.trim();
-    const isEmail = cleaned.includes("@");
-    const isPhone = /^\+?[\d\s\-()\u0020]{7,}$/.test(cleaned);
 
     if (!cleaned) {
       e.emailOrPhone = "Email or phone number is required";
-    } else if (!isEmail && !isPhone) {
-      e.emailOrPhone = "Enter a valid email or phone number";
     }
     if (!password.trim()) {
       e.password = "Password is required";

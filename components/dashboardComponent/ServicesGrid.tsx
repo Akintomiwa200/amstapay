@@ -7,7 +7,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { C } from './colors';
+import { useTheme } from '@/context/ThemeContext';
 
 type Service = {
   icon: React.ComponentType<{ size: number; color: string }>;
@@ -19,6 +19,7 @@ type Service = {
 const ServicesGrid: React.FC = () => {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
+  const { theme } = useTheme();
 
   const handleNavigation = (service: string, route?: string): void => {
     if (service === 'More' || service === 'Less') {
@@ -61,7 +62,7 @@ const ServicesGrid: React.FC = () => {
       label: isExpanded ? 'Less' : 'More',
     },
   ];
-
+  
   const additionalServices: Service[] = [
     { icon: Zap, label: 'Electricity' },
     { icon: Shield, label: 'Insurance' },
@@ -72,12 +73,12 @@ const ServicesGrid: React.FC = () => {
     { icon: Gamepad2, label: 'Gaming' },
     { icon: GraduationCap, label: 'School Fees' },
   ];
-
+  
   const allServices = isExpanded ? [...mainServices, ...additionalServices] : mainServices;
-
+  
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Services</Text>
+      <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Services</Text>
       <View style={styles.grid}>
         {allServices.map((service, index) => {
           const Icon = service.icon;
@@ -88,15 +89,15 @@ const ServicesGrid: React.FC = () => {
               onPress={() => handleNavigation(service.label, service.route)}
               activeOpacity={0.7}
             >
-              <View style={styles.iconWrapper}>
-                <Icon size={24} color={C.violet} />
+              <View style={[styles.iconWrapper, { backgroundColor: theme.colors.primaryLight }]}>
+                <Icon size={24} color={theme.colors.violet} />
                 {service.badge && (
                   <View style={[styles.badge, service.badge === 'Web3' && styles.web3Badge]}>
                     <Text style={styles.badgeText}>{service.badge}</Text>
                   </View>
                 )}
               </View>
-              <Text style={styles.label}>{service.label}</Text>
+              <Text style={[styles.label, { color: theme.colors.text }]}>{service.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -107,13 +108,12 @@ const ServicesGrid: React.FC = () => {
 
 const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 20, marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.primary, marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   item: { width: '22%', alignItems: 'center', marginBottom: 20 },
   iconWrapper: {
     width: 56,
     height: 56,
-    backgroundColor: C.primaryLight,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -124,16 +124,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -6,
     right: -6,
-    backgroundColor: C.mint,
+    backgroundColor: '#22f0c3',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
     minWidth: 30,
     alignItems: 'center',
   },
-  web3Badge: { backgroundColor: C.violet },
+  web3Badge: { backgroundColor: '#8b5cf6' },
   badgeText: { color: C.primary, fontSize: 8, fontWeight: 'bold' },
-  label: { fontSize: 11, color: C.text, textAlign: 'center', fontWeight: '500' },
+  label: { fontSize: 11, textAlign: 'center', fontWeight: '500' },
 });
 
 export default ServicesGrid;

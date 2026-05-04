@@ -1,5 +1,5 @@
 // app/settings/profile.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,26 +7,74 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Camera, User, Mail, Phone, MapPin, Save } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 import { C } from '@/components/dashboardComponent/colors';
 
 export default function ProfileSettings() {
   const router = useRouter();
+  const { user, updateProfile, refreshUser } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    fullName: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+234 801 234 5678',
-    address: '123 Main Street, Lagos, Nigeria',
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
   });
 
-  const handleSave = () => {
-    Alert.alert('Success', 'Profile updated successfully');
-    router.back();
+  useEffect(() => {
+    if (user) {
+      setForm({
+        fullName: user.fullName || '',
+        email: user.email || '',
+        phone: user.phoneNumber || '',
+        address: user.residentialAddress || '',
+      });
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!form.fullName || !form.email || !form.phone) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await updateProfile({
+        fullName: form.fullName,
+        email: form.email,
+        phoneNumber: form.phone,
+        residentialAddress: form.address,
+      });
+      await refreshUser();
+      Alert.alert('Success', 'Profile updated successfully');
+      router.back();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = ['#6C5CE7', '#00B894', '#E17055', '#0984E3', '#FDCB6E', '#E84393', '#00CEC9'];
+    const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
   };
 
   return (
@@ -37,23 +85,25 @@ export default function ProfileSettings() {
             <ChevronLeft size={24} color={C.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile Information</Text>
-          <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
-            <Save size={22} color={C.violet} />
+          <TouchableOpacity onPress={handleSave} style={styles.saveBtn} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator size="small" color={C.violet} />
+            ) : (
+              <Save size={22} color={C.violet} />
+            )}
           </TouchableOpacity>
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content}>
         <View style={styles.avatarSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <User size={48} color={C.violet} />
-            </View>
-            <TouchableOpacity style={styles.cameraBtn}>
-              <Camera size={18} color="#fff" />
-            </TouchableOpacity>
+          <View style={[styles.avatarContainer, { backgroundColor: getAvatarColor(form.fullName || 'Guest') }]}>
+            <Text style={styles.avatarText}>{getInitials(form.fullName || 'Guest')}</Text>
           </View>
-          <Text style={styles.avatarText}>Change Photo</Text>
+          <TouchableOpacity style={styles.avatarBtn}>
+            <Camera size={18} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.avatarLabel}>Change Photo</Text>
         </View>
 
         <View style={styles.form}>
@@ -66,6 +116,7 @@ export default function ProfileSettings() {
                 value={form.fullName}
                 onChangeText={(v) => setForm({ ...form, fullName: v })}
                 placeholder="Enter your full name"
+                placeholderTextColor={C.textSub}
               />
             </View>
           </View>
@@ -79,7 +130,9 @@ export default function ProfileSettings() {
                 value={form.email}
                 onChangeText={(v) => setForm({ ...form, email: v })}
                 placeholder="Enter your email"
+                placeholderTextColor={C.textSub}
                 keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
           </View>
@@ -93,6 +146,7 @@ export default function ProfileSettings() {
                 value={form.phone}
                 onChangeText={(v) => setForm({ ...form, phone: v })}
                 placeholder="Enter your phone number"
+                placeholderTextColor={C.textSub}
                 keyboardType="phone-pad"
               />
             </View>
@@ -100,14 +154,16 @@ export default function ProfileSettings() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Address</Text>
-            <View style={styles.inputWrapper}>
-              <MapPin size={18} color={C.violet} />
+            <View style={[styles.inputWrapper, styles.inputWrapperMultiline]}>
+              <MapPin size={18} color={C.violet} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.inputMultiline]}
                 value={form.address}
                 onChangeText={(v) => setForm({ ...form, address: v })}
                 placeholder="Enter your address"
+                placeholderTextColor={C.textSub}
                 multiline
+                numberOfLines={3}
               />
             </View>
           </View>
@@ -123,16 +179,19 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
   headerTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
-  saveBtn: { padding: 8 },
+  saveBtn: { padding: 8, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
-  avatarSection: { alignItems: 'center', marginBottom: 32 },
-  avatarContainer: { position: 'relative', marginBottom: 12 },
-  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  cameraBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: C.violet, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 14, color: C.violet, fontWeight: '500' },
+  avatarSection: { alignItems: 'center', marginBottom: 32, position: 'relative' },
+  avatarContainer: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
+  avatarBtn: { position: 'absolute', top: 70, right: '35%', backgroundColor: C.violet, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: C.bg },
+  avatarLabel: { fontSize: 14, color: C.violet, fontWeight: '500' },
   form: { gap: 20 },
   inputGroup: { gap: 8 },
   label: { fontSize: 14, fontWeight: '600', color: C.primary },
   inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.inputBg, borderRadius: 14, paddingHorizontal: 14, gap: 10, borderWidth: 1, borderColor: C.border },
-  input: { flex: 1, fontSize: 15, color: C.text, paddingVertical: 14 },
+  inputWrapperMultiline: { alignItems: 'flex-start', paddingVertical: 14 },
+  inputIcon: { marginTop: 2 },
+  input: { flex: 1, fontSize: 15, color: C.text, paddingVertical: 0 },
+  inputMultiline: { height: 80, textAlignVertical: 'top' },
 });

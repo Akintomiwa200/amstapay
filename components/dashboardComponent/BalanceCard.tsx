@@ -1,11 +1,11 @@
 // components/dashboardComponent/BalanceCard.tsx
 import { useRouter } from 'expo-router';
-import { ChevronRight, Wallet,Eye, EyeOff, Plus, TrendingUp, Shield } from 'lucide-react-native';
+import { ChevronRight, Wallet, Eye, EyeOff, Plus, TrendingUp, Shield } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../context/AuthContext';
-import { C } from './colors';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(false);
@@ -13,6 +13,7 @@ const BalanceCard = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { getWalletBalance } = useAuth();
+  const { theme } = useTheme();
 
   const fetchBalance = async () => {
     try {
@@ -40,11 +41,11 @@ const BalanceCard = () => {
       : balance !== null
       ? `₦${balance.toLocaleString()}`
       : '₦0.00'
-    : '•••••••';
+    : '••••••';
 
   return (
     <LinearGradient
-      colors={[C.primary, C.violet]}
+      colors={[theme.colors.primary, theme.colors.violet]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.card}
@@ -58,7 +59,7 @@ const BalanceCard = () => {
         </View>
         <TouchableOpacity style={styles.historyButton} onPress={handleOpenHistory}>
           <Text style={styles.linkText}>History</Text>
-          <ChevronRight size={14} color={C.mint} />
+          <ChevronRight size={14} color={theme.colors.mint} />
         </TouchableOpacity>
       </View>
 
@@ -73,20 +74,20 @@ const BalanceCard = () => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.addMoneyBtn} onPress={handleAddMoney}>
-          <Plus size={16} color={C.primary} />
+          <Plus size={16} color={theme.colors.primary} />
           <Text style={styles.addMoneyText}>Add Money</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <TrendingUp size={14} color={C.mint} />
+          <TrendingUp size={14} color={theme.colors.mint} />
           <Text style={styles.statLabel}>Today's Spend</Text>
           <Text style={styles.statValue}>₦0.00</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Shield size={14} color={C.mint} />
+          <Shield size={14} color={theme.colors.mint} />
           <Text style={styles.statLabel}>Locked Savings</Text>
           <Text style={styles.statValue}>₦0.00</Text>
         </View>
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 24,
     padding: 20,
-    shadowColor: C.primary,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     gap: 6 
   },
-  addMoneyText: { color: C.primary, fontSize: 13, fontWeight: '700' },
+  addMoneyText: { fontSize: 13, fontWeight: '700' },
   statsRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: 16 },
   statItem: { flex: 1, gap: 4 },
   statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 16 },

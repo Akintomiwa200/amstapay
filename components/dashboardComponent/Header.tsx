@@ -2,25 +2,25 @@
 import { useRouter } from 'expo-router';
 import { Bell, HelpCircle, User, Wallet, Shield, Award, CheckCircle } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { C } from './colors';
 
 const Header = () => {
   const { user, token, loading } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0);
   
-  // Extract real user data from the database structure
   const fullName =
-  user?.fullName ||
-  user?.name ||
-  (user?.email ? user.email.split("@")[0] : null) ||
-  user?.phoneNumber ||
-  "Valued Customer";
+    user?.fullName ||
+    user?.name ||
+    (user?.email ? user.email.split("@")[0] : null) ||
+    user?.phoneNumber ||
+    "Valued Customer";
   const firstName = fullName.split(' ')[0] || "User";
   const userInitial = firstName.charAt(0).toUpperCase();
   const accountNumber = user?.amstapayAccountNumber || user?.accountNumber || "N/A";
@@ -28,78 +28,69 @@ const Header = () => {
   const isVerified = user?.isVerified || false;
   const accountType = user?.accountType || "personal";
   
-  // Get KYC level display
   const getKYCLevelDisplay = () => {
     switch(kycLevel) {
       case 0:
-        return { text: "KYC Pending", color: "#ef4444", icon: null };
+        return { text: "KYC Pending", color: theme.colors.error, icon: null };
       case 1:
-        return { text: "Basic KYC", color: "#f59e0b", icon: null };
+        return { text: "Basic KYC", color: theme.colors.warning, icon: null };
       case 2:
-        return { text: "Verified", color: "#10b981", icon: CheckCircle };
+        return { text: "Verified", color: theme.colors.success, icon: CheckCircle };
       case 3:
-        return { text: "Premium", color: "#8b5cf6", icon: Award };
+        return { text: "Premium", color: theme.colors.violet, icon: Award };
       default:
-        return { text: "KYC Pending", color: "#ef4444", icon: null };
+        return { text: "KYC Pending", color: theme.colors.error, icon: null };
     }
   };
   
   const kycInfo = getKYCLevelDisplay();
   const KycIcon = kycInfo.icon;
   
-  // Get profile picture or generate avatar based on user initials
   const getUserImageSource = () => {
     if (user?.passportPhoto) {
       return { uri: user.passportPhoto };
     }
-    // Generate avatar with full name
     const nameForAvatar = encodeURIComponent(fullName);
     return { uri: `https://ui-avatars.com/api/?name=${nameForAvatar}&background=6366f1&color=fff&size=100&rounded=true&bold=true` };
   };
-
-  // Fetch real wallet balance
+  
   useEffect(() => {
     if (token) {
-      
       fetchUnreadNotificationsCount();
-     
     }
   }, [token]);
-
- 
+  
   const fetchUnreadNotificationsCount = async () => {
     try {
-      // You can implement notifications endpoint later
       setUnreadCount(0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       setUnreadCount(0);
     }
   };
-
+  
   const handleHelpPress = () => {
     router.push({
       pathname: '/help-support',
       params: { userId: user?._id }
     });
   };
-
+  
   const handleNotificationPress = () => {
     setUnreadCount(0);
     router.push('/notification');
   };
-
+  
   const handleProfilePress = () => {
     router.push({
       pathname: '/me',
       params: { userId: user?._id }
     });
   };
-
- 
+  
   return (
     <LinearGradient
-      colors={[C.primaryLight, C.bg]}
+      colors={[theme.colors.primaryLight, theme.colors.background]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.container}
@@ -112,8 +103,8 @@ const Header = () => {
         accessibilityRole="button"
       >
         {imageError ? (
-          <View style={[styles.userImage, styles.avatarFallback]}>
-            <Text style={styles.avatarText}>{userInitial}</Text>
+          <View style={[styles.userImage, styles.avatarFallback, { backgroundColor: `${theme.colors.violet}20` }]}>
+            <Text style={[styles.avatarText, { color: theme.colors.violet }]}>{userInitial}</Text>
           </View>
         ) : (
           <Image 
@@ -125,18 +116,14 @@ const Header = () => {
         
         <View style={styles.userInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.greetingTop}>Welcome back,</Text>
-            <Text style={styles.greeting} numberOfLines={1}>
+            <Text style={[styles.greetingTop, { color: theme.colors.textSub }]}>Welcome back,</Text>
+            <Text style={[styles.greeting, { color: theme.colors.text }]} numberOfLines={1}>
               {firstName}
             </Text>
           </View>
-          
-     
-          
-        
         </View>
       </TouchableOpacity>
-
+      
       <View style={styles.iconRow}>
         <TouchableOpacity 
           style={styles.iconWrapper} 
@@ -144,7 +131,7 @@ const Header = () => {
           accessibilityLabel="Help and support"
           accessibilityRole="button"
         >
-          <HelpCircle size={22} color={C.primary} />
+          <HelpCircle size={22} color={theme.colors.primary} />
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -153,16 +140,15 @@ const Header = () => {
           accessibilityLabel="Notifications"
           accessibilityRole="button"
         >
-          <Bell size={22} color={C.primary} />
+          <Bell size={22} color={theme.colors.primary} />
           {unreadCount > 0 && (
-            <View style={[styles.badge, styles.badgeRed]}>
+            <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
               <Text style={styles.badgeText}>
                 {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
             </View>
           )}
         </TouchableOpacity>
-
       </View>
     </LinearGradient>
   );
@@ -190,7 +176,7 @@ const styles = StyleSheet.create({
   },
   nameRow: {
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6,
     marginBottom: 4,
     flexWrap: 'wrap',
@@ -205,23 +191,19 @@ const styles = StyleSheet.create({
   },
   avatarFallback: { 
     alignItems: 'center', 
-    justifyContent: 'center',
-    backgroundColor: C.violet + '20',
+    justifyContent: 'center', 
   },
   avatarText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: C.violet,
   },
   greetingTop: { 
     fontSize: 12, 
-    color: C.textSub, 
     fontWeight: '500',
   },
   greeting: { 
     fontSize: 18, 
     fontWeight: '700', 
-    color: C.primary,
     letterSpacing: 0.3,
   },
   iconRow: { 
@@ -245,9 +227,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderWidth: 1.5,
     borderColor: '#fff',
-  },
-  badgeRed: { 
-    backgroundColor: C.error,
   },
   badgeText: { 
     color: '#fff', 

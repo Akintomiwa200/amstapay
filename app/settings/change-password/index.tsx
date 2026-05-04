@@ -1,21 +1,24 @@
 // app/settings/change-password/index.tsx - Change Password Screen
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Eye, EyeOff, Lock, Shield, ArrowRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 import { C } from '@/components/dashboardComponent/colors';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
+  const { changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = () => {
+  const handleChange = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -28,9 +31,18 @@ export default function ChangePasswordScreen() {
       Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
-    Alert.alert('Success', 'Password changed successfully', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+
+    setLoading(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      Alert.alert('Success', 'Password changed successfully', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const requirements = [
@@ -72,6 +84,7 @@ export default function ChangePasswordScreen() {
               secureTextEntry={!showCurrent}
               value={currentPassword}
               onChangeText={setCurrentPassword}
+              autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} style={styles.eyeBtn}>
               {showCurrent ? <EyeOff size={20} color={C.textSub} /> : <Eye size={20} color={C.textSub} />}
@@ -90,6 +103,7 @@ export default function ChangePasswordScreen() {
               secureTextEntry={!showNew}
               value={newPassword}
               onChangeText={setNewPassword}
+              autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowNew(!showNew)} style={styles.eyeBtn}>
               {showNew ? <EyeOff size={20} color={C.textSub} /> : <Eye size={20} color={C.textSub} />}
@@ -120,6 +134,7 @@ export default function ChangePasswordScreen() {
               secureTextEntry={!showConfirm}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
+              autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
               {showConfirm ? <EyeOff size={20} color={C.textSub} /> : <Eye size={20} color={C.textSub} />}
@@ -130,10 +145,16 @@ export default function ChangePasswordScreen() {
 
       {/* Submit */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.submitBtn} onPress={handleChange} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.submitBtn} onPress={handleChange} activeOpacity={0.85} disabled={loading}>
           <LinearGradient colors={[C.violet, C.primary]} style={styles.submitGradient}>
-            <Text style={styles.submitText}>Update Password</Text>
-            <ArrowRight size={20} color="#fff" />
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.submitText}>Update Password</Text>
+                <ArrowRight size={20} color="#fff" />
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>
