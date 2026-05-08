@@ -48,7 +48,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { C } from "@/components/dashboardComponent/colors";
 import { BiometricAuth } from "@/utils/biometric";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -57,6 +56,7 @@ const { width } = Dimensions.get("window");
 const Me = () => {
   const { user, logout } = useAuth();
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const c = theme.colors;
   const router = useRouter();
 
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -160,9 +160,9 @@ const Me = () => {
   ];
 
   const quickStats = [
-    { label: "Total Spent", value: "₦245,800", icon: Wallet, color: C.violet },
-    { label: "Points Earned", value: "1,250", icon: Award, color: C.mint },
-    { label: "Referrals", value: "3", icon: User, color: C.blue },
+    { label: "Total Spent", value: "₦245,800", icon: Wallet, color: c.violet },
+    { label: "Points Earned", value: "1,250", icon: Award, color: c.mint },
+    { label: "Referrals", value: "3", icon: User, color: c.blue },
   ];
 
   const handleLogout = async () => {
@@ -225,14 +225,14 @@ const Me = () => {
 
   return (
     <>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: c.bg }]} edges={["top"]}>
         <ScrollView
-          style={styles.container}
+          style={[styles.container, { backgroundColor: c.bg }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Profile Header with Gradient */}
           <LinearGradient
-            colors={[C.primary, C.violet]}
+            colors={[c.primary, c.violet]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.profileHeader}
@@ -268,7 +268,7 @@ const Me = () => {
                   </View>
                 )}
                 {profileUser.verified && (
-                  <View style={styles.verifiedBadge}>
+                  <View style={[styles.verifiedBadge, { backgroundColor: c.success }]}>
                     <Shield size={12} color="#fff" />
                   </View>
                 )}
@@ -291,7 +291,7 @@ const Me = () => {
             {quickStats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <View key={index} style={styles.statCard}>
+                <View key={index} style={[styles.statCard, { backgroundColor: c.bg, borderColor: c.border, shadowColor: c.primary }]}>
                   <View
                     style={[
                       styles.statIcon,
@@ -300,8 +300,8 @@ const Me = () => {
                   >
                     <Icon size={20} color={stat.color} />
                   </View>
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                  <Text style={styles.statLabel}>{stat.label}</Text>
+                  <Text style={[styles.statValue, { color: c.text }]}>{stat.value}</Text>
+                  <Text style={[styles.statLabel, { color: c.textSub }]}>{stat.label}</Text>
                 </View>
               );
             })}
@@ -309,93 +309,93 @@ const Me = () => {
 
           {/* Rewards Summary Card */}
           <LinearGradient
-            colors={[C.primaryLight, C.bg]}
+            colors={[c.primaryLight, c.bg]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.rewardsSummary}
+            style={[styles.rewardsSummary, { borderColor: c.border }]}
           >
             <View style={styles.pointsContainer}>
-              <Text style={styles.pointsLabel}>Available Points</Text>
-              <Text style={styles.pointsValue}>{profileUser.points}</Text>
+              <Text style={[styles.pointsLabel, { color: c.textSub }]}>Available Points</Text>
+              <Text style={[styles.pointsValue, { color: c.violet }]}>{profileUser.points}</Text>
               <TouchableOpacity
                 style={styles.redeemBtn}
                 onPress={() => navigateTo("/rewards")}
               >
-                <Text style={styles.redeemText}>Redeem →</Text>
+                <Text style={[styles.redeemText, { color: c.violet }]}>Redeem →</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
             <View style={styles.rewardsActions}>
               <TouchableOpacity
                 style={styles.rewardAction}
                 onPress={() => navigateTo("/rewards")}
               >
-                <Gift size={20} color={C.violet} />
-                <Text style={styles.rewardActionText}>Redeem</Text>
+                <Gift size={20} color={c.violet} />
+                <Text style={[styles.rewardActionText, { color: c.text }]}>Redeem</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.rewardAction}
                 onPress={() => navigateTo("/earn-points")}
               >
-                <Star size={20} color={C.violet} />
-                <Text style={styles.rewardActionText}>Earn More</Text>
+                <Star size={20} color={c.violet} />
+                <Text style={[styles.rewardActionText, { color: c.text }]}>Earn More</Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>
 
           {/* Personal Information Section */}
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={() => toggleSection("personalInfo")}
             >
-              <Text style={styles.sectionTitle}>Personal Information</Text>
+              <Text style={[styles.sectionTitle, { color: c.primary }]}>Personal Information</Text>
               {personalInfoExpanded ? (
-                <ChevronDown size={20} color={C.textSub} />
+                <ChevronDown size={20} color={c.textSub} />
               ) : (
-                <ChevronRight size={20} color={C.textSub} />
+                <ChevronRight size={20} color={c.textSub} />
               )}
             </TouchableOpacity>
 
             {personalInfoExpanded && (
               <>
                 <ProfileItem
-                  icon={<User size={20} color={C.violet} />}
+                  icon={<User size={20} color={c.violet} />}
                   title="Full Name"
                   value={profileUser.name}
                 />
                 <ProfileItem
-                  icon={<Mail size={20} color={C.violet} />}
+                  icon={<Mail size={20} color={c.violet} />}
                   title="Email Address"
                   value={profileUser.email}
                 />
                 <ProfileItem
-                  icon={<Phone size={20} color={C.violet} />}
+                  icon={<Phone size={20} color={c.violet} />}
                   title="Phone Number"
                   value={profileUser.phone}
                 />
                 <ProfileItem
-                  icon={<MapPin size={20} color={C.violet} />}
+                  icon={<MapPin size={20} color={c.violet} />}
                   title="Address"
                   value={profileUser.address}
                 />
 
-                <View style={styles.paymentMethods}>
-                  <Text style={styles.subSectionTitle}>Payment Methods</Text>
+                <View style={[styles.paymentMethods, { borderTopColor: c.border }]}>
+                  <Text style={[styles.subSectionTitle, { color: c.primary }]}>Payment Methods</Text>
                   {paymentMethods.map((method) => (
                     <View key={method.id} style={styles.paymentMethod}>
-                      <CreditCard size={16} color={C.textSub} />
-                      <Text style={styles.paymentText}>
+                      <CreditCard size={16} color={c.textSub} />
+                      <Text style={[styles.paymentText, { color: c.text }]}>
                         {method.type} •••• {method.last4} (Expires{" "}
                         {method.expiry})
                       </Text>
                     </View>
                   ))}
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={[styles.addButton, { backgroundColor: c.primaryLight }]}
                     onPress={() => navigateTo("/settings/payment-methods")}
                   >
-                    <Text style={styles.addButtonText}>
+                    <Text style={[styles.addButtonText, { color: c.violet }]}>
                       + Add Payment Method
                     </Text>
                   </TouchableOpacity>
@@ -405,16 +405,16 @@ const Me = () => {
           </View>
 
           {/* Rewards Section */}
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={() => toggleSection("rewards")}
             >
-              <Text style={styles.sectionTitle}>Earn More Points</Text>
+              <Text style={[styles.sectionTitle, { color: c.primary }]}>Earn More Points</Text>
               {rewardsExpanded ? (
-                <ChevronDown size={20} color={C.textSub} />
+                <ChevronDown size={20} color={c.textSub} />
               ) : (
-                <ChevronRight size={20} color={C.textSub} />
+                <ChevronRight size={20} color={c.textSub} />
               )}
             </TouchableOpacity>
 
@@ -423,55 +423,54 @@ const Me = () => {
                 {rewards.map((reward) => {
                   const Icon = reward.icon;
                   return (
-                    <TouchableOpacity key={reward.id} style={styles.rewardCard}>
+<TouchableOpacity key={reward.id} style={[styles.rewardCard, { backgroundColor: c.primaryLight }]}>
                       <View
                         style={[
                           styles.rewardIcon,
-                          reward.achieved && styles.rewardIconAchieved,
+                          { backgroundColor: reward.achieved ? c.success + '20' : c.bg },
                         ]}
                       >
                         <Icon
                           size={20}
-                          color={reward.achieved ? C.success : C.violet}
+                          color={reward.achieved ? c.success : c.violet}
                         />
                       </View>
                       <View style={styles.rewardInfo}>
-                        <Text style={styles.rewardTitle}>{reward.title}</Text>
-                        <Text style={styles.rewardPoints}>
+                        <Text style={[styles.rewardTitle, { color: c.text }]}>{reward.title}</Text>
+                        <Text style={[styles.rewardPoints, { color: c.textSub }]}>
                           {reward.points} points
                         </Text>
                       </View>
                       {reward.achieved ? (
-                        <View style={styles.achievedBadge}>
-                          <Text style={styles.achievedText}>Earned</Text>
+                        <View style={[styles.achievedBadge, { backgroundColor: c.success + '20' }]}>
+                          <Text style={[styles.achievedText, { color: c.success }]}>Earned</Text>
                         </View>
                       ) : (
-                        <ChevronRight size={18} color={C.textSub} />
+                        <ChevronRight size={18} color={c.textSub} />
                       )}
                     </TouchableOpacity>
-                  );
-                })}
-                <TouchableOpacity
-                  style={styles.seeAllButton}
-                  onPress={() => navigateTo("/rewards")}
-                >
-                  <Text style={styles.seeAllText}>View All Rewards</Text>
+                  ))}
+                  <TouchableOpacity
+                    style={[styles.seeAllButton, { backgroundColor: c.primaryLight }]}
+                    onPress={() => navigateTo("/rewards")}
+                  >
+                    <Text style={[styles.seeAllText, { color: c.violet }]}>View All Rewards</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
 
           {/* Account Actions */}
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={() => toggleSection("account")}
             >
-              <Text style={styles.sectionTitle}>Account</Text>
+              <Text style={[styles.sectionTitle, { color: c.primary }]}>Account</Text>
               {accountExpanded ? (
-                <ChevronDown size={20} color={C.textSub} />
+                <ChevronDown size={20} color={c.textSub} />
               ) : (
-                <ChevronRight size={20} color={C.textSub} />
+                <ChevronRight size={20} color={c.textSub} />
               )}
             </TouchableOpacity>
 
@@ -529,7 +528,7 @@ const Me = () => {
           ]}
         >
           <LinearGradient
-            colors={[C.primary, C.violet]}
+            colors={[c.primary, c.violet]}
             style={styles.modalHeader}
           >
             <Text style={styles.modalTitle}>Settings</Text>
@@ -681,15 +680,19 @@ const ProfileItem = ({
   icon: React.ReactNode;
   title: string;
   value: string;
-}) => (
-  <View style={styles.profileItem}>
-    <View style={styles.itemIcon}>{icon}</View>
+}) => {
+  const { theme } = useTheme();
+  const c = theme.colors;
+  return (
+  <View style={[styles.profileItem, { borderBottomColor: c.border }]}>
+    <View style={[styles.itemIcon, { backgroundColor: c.primaryLight }]}>{icon}</View>
     <View style={styles.itemInfo}>
-      <Text style={styles.itemTitle}>{title}</Text>
-      <Text style={styles.itemValue}>{value}</Text>
+      <Text style={[styles.itemTitle, { color: c.textSub }]}>{title}</Text>
+      <Text style={[styles.itemValue, { color: c.text }]}>{value}</Text>
     </View>
   </View>
-);
+  );
+};
 
 const AccountAction = ({
   icon: Icon,
@@ -697,31 +700,39 @@ const AccountAction = ({
   onPress,
   isDanger,
   disabled,
-}: any) => (
+}: any) => {
+  const { theme } = useTheme();
+  const c = theme.colors;
+  return (
   <TouchableOpacity
     style={styles.accountAction}
     onPress={onPress}
     disabled={disabled}
   >
-    <View style={[styles.actionIcon, isDanger && styles.actionIconDanger]}>
-      <Icon size={20} color={isDanger ? C.error : C.violet} />
+    <View style={[styles.actionIcon, { backgroundColor: isDanger ? c.error + '10' : c.primaryLight }]}>
+      <Icon size={20} color={isDanger ? c.error : c.violet} />
     </View>
-    <Text style={[styles.actionText, isDanger && styles.actionTextDanger]}>
+    <Text style={[styles.actionText, { color: isDanger ? c.error : c.text }]}>
       {label}
     </Text>
-    {!disabled && <ChevronRight size={18} color={C.textSub} />}
+    {!disabled && <ChevronRight size={18} color={c.textSub} />}
   </TouchableOpacity>
-);
+  );
+};
 
-const SettingsSection = ({ title, icon: Icon, children }: any) => (
+const SettingsSection = ({ title, icon: Icon, children }: any) => {
+  const { theme } = useTheme();
+  const c = theme.colors;
+  return (
   <View style={styles.settingsSection}>
     <View style={styles.settingsSectionHeader}>
-      <Icon size={20} color={C.violet} />
-      <Text style={styles.settingsSectionTitle}>{title}</Text>
+      <Icon size={20} color={c.violet} />
+      <Text style={[styles.settingsSectionTitle, { color: c.primary }]}>{title}</Text>
     </View>
-    <View style={styles.settingsSectionContent}>{children}</View>
+    <View style={[styles.settingsSectionContent, { backgroundColor: c.primaryLight }]}>{children}</View>
   </View>
-);
+  );
+};
 
 const SettingsItem = ({
   label,
@@ -731,38 +742,40 @@ const SettingsItem = ({
   onPress,
   onValueChange,
 }: any) => {
+  const { theme } = useTheme();
+  const c = theme.colors;
   const ItemIcon = Icon;
   if (type === "switch") {
     return (
-      <View style={styles.settingsItem}>
+      <View style={[styles.settingsItem, { borderBottomColor: c.border }]}>
         <View style={styles.settingsItemLeft}>
-          <ItemIcon size={18} color={C.textSub} />
-          <Text style={styles.settingsItemText}>{label}</Text>
+          <ItemIcon size={18} color={c.textSub} />
+          <Text style={[styles.settingsItemText, { color: c.text }]}>{label}</Text>
         </View>
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: C.border, true: C.violet + "50" }}
-          thumbColor={value ? C.violet : "#fff"}
+          trackColor={{ false: c.border, true: c.violet + "50" }}
+          thumbColor={value ? c.violet : "#fff"}
         />
       </View>
     );
   }
   return (
-    <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
+    <TouchableOpacity style={[styles.settingsItem, { borderBottomColor: c.border }]} onPress={onPress}>
       <View style={styles.settingsItemLeft}>
-        <ItemIcon size={18} color={C.textSub} />
-        <Text style={styles.settingsItemText}>{label}</Text>
+        <ItemIcon size={18} color={c.textSub} />
+        <Text style={[styles.settingsItemText, { color: c.text }]}>{label}</Text>
       </View>
-      {value && <Text style={styles.settingsItemValue}>{value}</Text>}
-      <ChevronRight size={16} color={C.textSub} />
+      {value && <Text style={[styles.settingsItemValue, { color: c.textSub }]}>{value}</Text>}
+      <ChevronRight size={16} color={c.textSub} />
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: C.bg },
-  container: { flex: 1, backgroundColor: C.bg },
+  safeArea: { flex: 1 },
+  container: { flex: 1 },
 
   profileHeader: { paddingTop: 20, paddingHorizontal: 20, paddingBottom: 32 },
   headerTop: {
@@ -800,7 +813,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: C.success,
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -829,13 +841,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: C.bg,
     borderRadius: 16,
     padding: 12,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: C.border,
-    shadowColor: C.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -852,10 +861,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: "700",
-    color: C.text,
     marginBottom: 4,
   },
-  statLabel: { fontSize: 11, color: C.textSub },
+  statLabel: { fontSize: 11 },
 
   rewardsSummary: {
     marginHorizontal: 20,
@@ -863,32 +871,28 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: "row",
     borderWidth: 1,
-    borderColor: C.border,
     marginBottom: 20,
   },
   pointsContainer: { flex: 1 },
-  pointsLabel: { fontSize: 12, color: C.textSub, marginBottom: 4 },
+  pointsLabel: { fontSize: 12, marginBottom: 4 },
   pointsValue: {
     fontSize: 28,
     fontWeight: "800",
-    color: C.violet,
     marginBottom: 8,
   },
   redeemBtn: { alignSelf: "flex-start" },
-  redeemText: { fontSize: 12, color: C.violet, fontWeight: "600" },
-  divider: { width: 1, backgroundColor: C.border, marginHorizontal: 16 },
+  redeemText: { fontSize: 12, fontWeight: "600" },
+  divider: { width: 1, marginHorizontal: 16 },
   rewardsActions: { flex: 1, justifyContent: "space-around" },
   rewardAction: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rewardActionText: { fontSize: 13, color: C.text, fontWeight: "500" },
+  rewardActionText: { fontSize: 13, fontWeight: "500" },
 
   section: {
-    backgroundColor: C.bg,
     marginHorizontal: 20,
     marginBottom: 16,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: C.border,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -896,38 +900,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: C.primary },
+  sectionTitle: { fontSize: 18, fontWeight: "700" },
 
   profileItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
   },
   itemIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: C.primaryLight,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
   },
   itemInfo: { flex: 1 },
-  itemTitle: { fontSize: 12, color: C.textSub, marginBottom: 2 },
-  itemValue: { fontSize: 15, fontWeight: "500", color: C.text },
+  itemTitle: { fontSize: 12, marginBottom: 2 },
+  itemValue: { fontSize: 15, fontWeight: "500" },
 
   paymentMethods: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: C.border,
   },
   subSectionTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: C.primary,
     marginBottom: 12,
   },
   paymentMethod: {
@@ -936,20 +936,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
   },
-  paymentText: { fontSize: 13, color: C.text },
+  paymentText: { fontSize: 13 },
   addButton: {
     marginTop: 8,
     padding: 12,
-    backgroundColor: C.primaryLight,
     borderRadius: 12,
     alignItems: "center",
   },
-  addButtonText: { fontSize: 14, fontWeight: "600", color: C.violet },
+  addButtonText: { fontSize: 14, fontWeight: "600" },
 
   rewardCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: C.primaryLight,
     borderRadius: 14,
     padding: 12,
     marginBottom: 12,
@@ -958,35 +956,30 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: C.bg,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  rewardIconAchieved: { backgroundColor: C.success + "20" },
   rewardInfo: { flex: 1 },
   rewardTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: C.text,
     marginBottom: 2,
   },
-  rewardPoints: { fontSize: 12, color: C.textSub },
+  rewardPoints: { fontSize: 12 },
   achievedBadge: {
-    backgroundColor: C.success + "20",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  achievedText: { fontSize: 10, fontWeight: "600", color: C.success },
+  achievedText: { fontSize: 10, fontWeight: "600" },
   seeAllButton: {
     marginTop: 8,
     padding: 12,
-    backgroundColor: C.primaryLight,
     borderRadius: 12,
     alignItems: "center",
   },
-  seeAllText: { fontSize: 14, fontWeight: "600", color: C.violet },
+  seeAllText: { fontSize: 14, fontWeight: "600" },
 
   accountAction: {
     flexDirection: "row",
@@ -997,17 +990,13 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: C.primaryLight,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
   },
-  actionIconDanger: { backgroundColor: C.error + "10" },
-  actionText: { flex: 1, fontSize: 15, fontWeight: "500", color: C.text },
-  actionTextDanger: { color: C.error },
 
   // Modal Styles
-  modalContainer: { flex: 1, backgroundColor: C.bg },
+  modalContainer: { flex: 1 },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1027,9 +1016,8 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
   },
-  settingsSectionTitle: { fontSize: 18, fontWeight: "700", color: C.primary },
+  settingsSectionTitle: { fontSize: 18, fontWeight: "700" },
   settingsSectionContent: {
-    backgroundColor: C.primaryLight,
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -1040,7 +1028,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
   },
   settingsItemLeft: {
     flexDirection: "row",
@@ -1048,8 +1035,8 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
-  settingsItemText: { fontSize: 15, color: C.text, flex: 1 },
-  settingsItemValue: { fontSize: 13, color: C.textSub, marginRight: 8 },
+  settingsItemText: { fontSize: 15, flex: 1 },
+  settingsItemValue: { fontSize: 13, marginRight: 8 },
 });
 
 export default Me;

@@ -1,68 +1,37 @@
-import { apiRequest } from './api';
+import { apiClient } from '@/lib/api';
+import { ENDPOINTS } from '@/lib/endpoints';
+import type {
+  AirtimeInput, DataInput, ElectricityInput, Bill,
+} from '@/lib/models';
 
-export const buyAirtime = async (
-  payload: { network: string; phoneNumber: string; amount: number },
-  token: string
-) => {
-  const endpoints = ['/bills/airtime', '/airtime/purchase', '/airtime'];
-  let lastError: unknown;
-
-  for (const endpoint of endpoints) {
-    try {
-      return await apiRequest(endpoint, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      }, token);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error('Airtime purchase failed');
-};
-
-export const verifyAccount = async (
-  accountNumber: string,
-  token: string
-): Promise<{ accountName: string; bankName: string }> => {
-  try {
-    const data = await apiRequest(
-      '/accounts/verify',
-      {
-        method: 'POST',
-        body: JSON.stringify({ accountNumber }),
-      },
-      token
+export const billsService = {
+  buyAirtime(input: AirtimeInput) {
+    return apiClient.post<{ success: boolean; data: { bill: Bill; balance: number } }>(
+      ENDPOINTS.BILLS.AIRTIME, input,
     );
+  },
 
-    return {
-      accountName: data.accountName || data.account_name || data.name || '',
-      bankName: data.bankName || data.bank_name || data.bank || '',
-    };
-  } catch (error) {
-    console.error('Account verification failed:', error);
-    return { accountName: '', bankName: '' };
-  }
-};
+  buyData(input: DataInput) {
+    return apiClient.post<{ success: boolean; data: { plan: string; balance: number } }>(
+      ENDPOINTS.BILLS.DATA, input,
+    );
+  },
 
-export const sendViaQR = async (qrData: any, amount: number, token: string) => {
-  return apiRequest(
-    '/payments/send',
-    {
-      method: 'POST',
-      body: JSON.stringify({ qrData, amount }),
-    },
-    token
-  );
-};
+  payElectricity(input: ElectricityInput) {
+    return apiClient.post<{ success: boolean; data: { token: string; balance: number } }>(
+      ENDPOINTS.BILLS.ELECTRICITY, input,
+    );
+  },
 
-export const receiveViaQR = async (qrData: any, token: string) => {
-  return apiRequest(
-    '/payments/receive',
-    {
-      method: 'POST',
-      body: JSON.stringify({ qrData }),
-    },
-    token
-  );
+  paySchoolFees(data: { studentId: string; amount: number; schoolName: string; session?: string; term?: string }) {
+    return apiClient.post<{ success: boolean; data: { receiptNumber: string; balance: number } }>(
+      ENDPOINTS.BILLS.SCHOOL_FEES, data,
+    );
+  },
+
+  payTransport(data: { amount: number; transportType: string; route?: string; bookingReference?: string }) {
+    return apiClient.post<{ success: boolean; data: { ticketNumber: string; balance: number } }>(
+      ENDPOINTS.BILLS.TRANSPORT, data,
+    );
+  },
 };

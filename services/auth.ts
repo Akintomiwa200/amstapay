@@ -1,57 +1,64 @@
-import { apiRequest } from './api';
+import { apiClient } from '@/lib/api';
+import { ENDPOINTS } from '@/lib/endpoints';
+import type {
+  AuthResponse, LoginInput, SignupInput,
+} from '@/lib/models';
 
-export interface LoginCredentials {
-  emailOrPhone: string;
-  password: string;
-}
+export const authService = {
+  login(input: LoginInput) {
+    return apiClient.post<AuthResponse>(ENDPOINTS.AUTH.LOGIN, {
+      emailOrPhone: input.emailOrPhone.trim(),
+      password: input.password,
+    });
+  },
 
-export interface User {
-  _id: string;
-  fullName?: string;
-  email?: string;
-  phoneNumber?: string;
-  accountType?: string;
-  isVerified?: boolean;
-  role?: string;
-  amstapayAccountNumber?: string;
-  kycLevel?: number;
-}
+  signup(input: SignupInput) {
+    return apiClient.post<AuthResponse>(ENDPOINTS.AUTH.SIGNUP, input);
+  },
 
-export const login = async (credentials: LoginCredentials) => {
-  return apiRequest('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({
-      emailOrPhone: credentials.emailOrPhone.trim(),
-      password: credentials.password,
-    }),
-  });
-};
+  verifyEmail(email: string, code: string) {
+    return apiClient.post<{ success: boolean }>(ENDPOINTS.AUTH.VERIFY, { email, code });
+  },
 
-export const fetchUserProfile = async (token: string) => {
-  const data = await apiRequest('/users/me', {
-    headers: { Authorization: `Bearer ${token}` },
-  }, token);
-  return data.user || data.data || data;
-};
+  forgotPassword(emailOrPhone: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.FORGOT_PASSWORD, { emailOrPhone });
+  },
 
-export const updateProfile = async (userData: Partial<User>, token: string) => {
-  return apiRequest('/users/me', {
-    method: 'PUT',
-    body: JSON.stringify(userData),
-  }, token);
-};
+  resetPassword(emailOrPhone: string, code: string, newPassword: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.RESET_PASSWORD, {
+      emailOrPhone, code, newPassword,
+    });
+  },
 
-export const changePassword = async (
-  currentPassword: string,
-  newPassword: string,
-  token: string
-) => {
-  return apiRequest('/users/change-password', {
-    method: 'POST',
-    body: JSON.stringify({ currentPassword, newPassword }),
-  }, token);
-};
+  forgotPin(emailOrPhone: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.FORGOT_PIN, { emailOrPhone });
+  },
 
-export const deleteAccount = async (token: string) => {
-  return apiRequest('/users/delete', { method: 'DELETE' }, token);
+  verifyPinResetCode(emailOrPhone: string, code: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.VERIFY_PIN_RESET_CODE, { emailOrPhone, code });
+  },
+
+  resetPin(emailOrPhone: string, code: string, newPin: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.RESET_PIN, { emailOrPhone, code, newPin });
+  },
+
+  changePin(currentPin: string, newPin: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.CHANGE_PIN, { currentPin, newPin });
+  },
+
+  refreshToken(refreshToken: string) {
+    return apiClient.post<{ token: string; refreshToken?: string }>(ENDPOINTS.AUTH.REFRESH_TOKEN, { refreshToken });
+  },
+
+  logout() {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.LOGOUT);
+  },
+
+  uploadDocuments(formData: FormData) {
+    return apiClient.post<{ message: string; data: unknown }>(
+      ENDPOINTS.AUTH.UPLOAD_DOCUMENTS,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+  },
 };

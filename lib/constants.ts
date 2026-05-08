@@ -1,59 +1,39 @@
-// App-wide constants
+import { Platform } from 'react-native';
+
+const DEV_API_URL = Platform.select({
+  android: 'http://10.0.2.2:3000',
+  ios: 'http://localhost:3000',
+  default: 'http://localhost:3000',
+});
+
+const PROD_API_URL = 'https://api.amstapay.com';
+
 export const APP_NAME = 'AmstaPay';
 export const APP_VERSION = '1.0.0';
 
-// API
-export const API_BASE_URL = 'https://amstapay-backend.onrender.com/api/v1';
-// export const API_BASE_URL = 'http://localhost:3000/api'; // Local development
+export const API_BASE_URL = __DEV__ ? DEV_API_URL : PROD_API_URL;
 
-// Storage keys
+export const API = {
+  BASE_URL: API_BASE_URL,
+  PREFIX: '/api/v1',
+  TIMEOUT: 15000,
+  RETRY_COUNT: 2,
+};
+
 export const STORAGE_KEYS = {
   TOKEN: 'token',
+  REFRESH_TOKEN: 'refreshToken',
   USER: 'user',
   BIOMETRIC_ENABLED: 'biometricEnabled',
-  THEME: 'theme',
+  THEME: 'themePreference',
   CURRENCY: 'currency',
+  ONBOARDING_COMPLETE: 'onboardingComplete',
 } as const;
 
-// Default values
 export const DEFAULT_CURRENCY = 'NGN';
 export const DEFAULT_LOCALE = 'en-NG';
 
-// Transaction types
-export const TRANSACTION_TYPES = {
-  TRANSFER: 'transfer',
-  PAYMENT: 'payment',
-  DEPOSIT: 'deposit',
-  WITHDRAWAL: 'withdrawal',
-  BILL_PAYMENT: 'bill_payment',
-  AIRTIME: 'airtime',
-  DATA: 'data',
-} as const;
-
-// Transaction status
-export const TRANSACTION_STATUS = {
-  PENDING: 'pending',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
-  CANCELLED: 'cancelled',
-} as const;
-
-// Account types
-export const ACCOUNT_TYPES = {
-  PERSONAL: 'personal',
-  BUSINESS: 'business',
-} as const;
-
-// KYC levels
-export const KYC_LEVELS = {
-  NONE: 0,
-  BASIC: 1,
-  INTERMEDIATE: 2,
-  FULL: 3,
-} as const;
-
-// Timeout values (in milliseconds)
-export const TIMEOUT = {
-  API_REQUEST: 10000,
-  REFRESH_TOKEN: 5000,
-} as const;
+export const PAGINATION = {
+  DEFAULT_PAGE: 1,
+  DEFAULT_LIMIT: 20,
+};

@@ -1,4 +1,4 @@
-// app/settings/index.tsx
+﻿// app/settings/index.tsx
 import { useRouter } from 'expo-router';
 import {
   Bell,
@@ -36,11 +36,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { C } from '@/components/dashboardComponent/colors';
 import { useTheme } from '@/context/ThemeContext';
 import { BiometricAuth } from '@/utils/biometric';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/hooks';
+import { useAuth } from '@/context/AuthContext';
 
 type SettingItemProps = {
   icon: React.ComponentType<{ size: number; color: string }>;
@@ -67,12 +66,16 @@ const SettingItem: React.FC<SettingItemProps> = ({
   switchValue = false,
   onSwitchChange,
   onPress,
-  iconColor = C.violet,
+  iconColor: iconColorProp,
   showDivider = true,
   isDanger = false,
   isFirst = false,
   isLast = false,
 }) => {
+  const { theme } = useTheme();
+  const c = theme.colors;
+  const iconColor = iconColorProp ?? c.violet;
+
   return (
     <>
       <TouchableOpacity
@@ -88,15 +91,15 @@ const SettingItem: React.FC<SettingItemProps> = ({
         <View style={styles.settingLeft}>
           <View style={[
             styles.iconContainer, 
-            { backgroundColor: isDanger ? `${C.error}15` : `${iconColor}15` }
+            { backgroundColor: isDanger ? `${c.error}15` : `${iconColor}15` }
           ]}>
-            <Icon size={20} color={isDanger ? C.error : iconColor} />
+            <Icon size={20} color={isDanger ? c.error : iconColor} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={[styles.settingTitle, isDanger && styles.settingTitleDanger]}>
+            <Text style={[styles.settingTitle, isDanger && { color: c.error }, !isDanger && { color: c.text }]}>
               {title}
             </Text>
-            {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+            {subtitle && <Text style={[styles.settingSubtitle, { color: c.textSub }]}>{subtitle}</Text>}
           </View>
         </View>
         <View style={styles.settingRight}>
@@ -104,15 +107,15 @@ const SettingItem: React.FC<SettingItemProps> = ({
             <Switch
               value={switchValue}
               onValueChange={onSwitchChange}
-              trackColor={{ false: C.border, true: C.violet }}
+              trackColor={{ false: c.border, true: c.violet }}
               thumbColor={switchValue ? '#fff' : '#fff'}
             />
           ) : (
-            showArrow && <ChevronRight size={20} color={C.textSub} />
+            showArrow && <ChevronRight size={20} color={c.textSub} />
           )}
         </View>
       </TouchableOpacity>
-      {showDivider && <View style={styles.divider} />}
+      {showDivider && <View style={[styles.divider, { backgroundColor: c.border }]} />}
     </>
   );
 };
@@ -120,6 +123,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
 const Settings: React.FC = () => {
   const router = useRouter();
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const c = theme.colors;
   const { user, logout } = useAuth();
   
   const [expandedSections, setExpandedSections] = useState({
@@ -257,7 +261,7 @@ const Settings: React.FC = () => {
       >
         {/* Header with Gradient */}
         <LinearGradient
-          colors={[C.primary, C.violet]}
+          colors={[c.primary, c.violet]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.header}
@@ -279,15 +283,15 @@ const Settings: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.sectionHeaderLeft}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${C.violet}15` }]}>
-                <User size={18} color={C.violet} />
+              <View style={[styles.sectionIcon, { backgroundColor: `${c.violet}15` }]}>
+                <User size={18} color={c.violet} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Account</Text>
             </View>
             {expandedSections.account ? (
-              <ChevronRight size={20} color={C.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
+              <ChevronRight size={20} color={c.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
             ) : (
-              <ChevronRight size={20} color={C.textSub} />
+              <ChevronRight size={20} color={c.textSub} />
             )}
           </TouchableOpacity>
           
@@ -326,15 +330,15 @@ const Settings: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.sectionHeaderLeft}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${C.blue}15` }]}>
-                {isDarkMode ? <Moon size={18} color={C.blue} /> : <Sun size={18} color={C.blue} />}
+              <View style={[styles.sectionIcon, { backgroundColor: `${c.blue}15` }]}>
+                {isDarkMode ? <Moon size={18} color={c.blue} /> : <Sun size={18} color={c.blue} />}
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Preferences</Text>
             </View>
             {expandedSections.preferences ? (
-              <ChevronRight size={20} color={C.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
+              <ChevronRight size={20} color={c.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
             ) : (
-              <ChevronRight size={20} color={C.textSub} />
+              <ChevronRight size={20} color={c.textSub} />
             )}
           </TouchableOpacity>
           
@@ -376,15 +380,15 @@ const Settings: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.sectionHeaderLeft}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${C.mint}15` }]}>
-                <Bell size={18} color={C.mint} />
+              <View style={[styles.sectionIcon, { backgroundColor: `${c.mint}15` }]}>
+                <Bell size={18} color={c.mint} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Notifications</Text>
             </View>
             {expandedSections.notifications ? (
-              <ChevronRight size={20} color={C.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
+              <ChevronRight size={20} color={c.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
             ) : (
-              <ChevronRight size={20} color={C.textSub} />
+              <ChevronRight size={20} color={c.textSub} />
             )}
           </TouchableOpacity>
           
@@ -431,15 +435,15 @@ const Settings: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.sectionHeaderLeft}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${C.pink}15` }]}>
-                <Shield size={18} color={C.pink} />
+              <View style={[styles.sectionIcon, { backgroundColor: `${c.pink}15` }]}>
+                <Shield size={18} color={c.pink} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Security & Privacy</Text>
             </View>
             {expandedSections.security ? (
-              <ChevronRight size={20} color={C.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
+              <ChevronRight size={20} color={c.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
             ) : (
-              <ChevronRight size={20} color={C.textSub} />
+              <ChevronRight size={20} color={c.textSub} />
             )}
           </TouchableOpacity>
           
@@ -502,15 +506,15 @@ const Settings: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.sectionHeaderLeft}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${C.blue}15` }]}>
-                <HelpCircle size={18} color={C.blue} />
+              <View style={[styles.sectionIcon, { backgroundColor: `${c.blue}15` }]}>
+                <HelpCircle size={18} color={c.blue} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Support</Text>
             </View>
             {expandedSections.support ? (
-              <ChevronRight size={20} color={C.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
+              <ChevronRight size={20} color={c.textSub} style={{ transform: [{ rotate: '90deg' }] }} />
             ) : (
-              <ChevronRight size={20} color={C.textSub} />
+              <ChevronRight size={20} color={c.textSub} />
             )}
           </TouchableOpacity>
           
@@ -550,17 +554,17 @@ const Settings: React.FC = () => {
         {/* Logout Button */}
         <View style={styles.logoutContainer}>
           <TouchableOpacity 
-            style={[styles.logoutButton, { borderColor: C.error }]}
+            style={[styles.logoutButton, { borderColor: c.error }]}
             onPress={handleLogout}
             disabled={loading}
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={C.error} />
+              <ActivityIndicator size="small" color={c.error} />
             ) : (
               <>
-                <LogOut size={20} color={C.error} />
-                <Text style={[styles.logoutText, { color: C.error }]}>Logout</Text>
+                <LogOut size={20} color={c.error} />
+                <Text style={[styles.logoutText, { color: c.error }]}>Logout</Text>
               </>
             )}
           </TouchableOpacity>
@@ -688,22 +692,17 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: C.text,
     marginBottom: 2,
   },
-  settingTitleDanger: {
-    color: C.error,
-  },
+  settingTitleDanger: {},
   settingSubtitle: {
     fontSize: 12,
-    color: C.textSub,
   },
   settingRight: {
     marginLeft: 12,
   },
   divider: {
     height: 1,
-    backgroundColor: C.border,
     marginLeft: 70,
   },
   logoutContainer: {

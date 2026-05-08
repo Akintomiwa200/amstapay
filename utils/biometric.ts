@@ -1,31 +1,28 @@
-// utils/biometric.ts
 import * as LocalAuthentication from 'expo-local-authentication';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '@/lib/storage';
+import { STORAGE_KEYS } from '@/lib/constants';
 
-export const BiometricAuth = {
-  // Check if device has biometric hardware and is enrolled
+export const biometricAuth = {
   isAvailable: async (): Promise<boolean> => {
     try {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      const [hasHardware, isEnrolled] = await Promise.all([
+        LocalAuthentication.hasHardwareAsync(),
+        LocalAuthentication.isEnrolledAsync(),
+      ]);
       return hasHardware && isEnrolled;
-    } catch (error) {
-      console.error('Error checking biometric availability:', error);
+    } catch {
       return false;
     }
   },
 
-  // Get supported authentication types
   getSupportedTypes: async (): Promise<LocalAuthentication.AuthenticationType[]> => {
     try {
       return await LocalAuthentication.supportedAuthenticationTypesAsync();
-    } catch (error) {
-      console.error('Error getting supported types:', error);
+    } catch {
       return [];
     }
   },
 
-  // Authenticate with biometrics
   authenticate: async (promptMessage = 'Authenticate to continue'): Promise<boolean> => {
     try {
       const result = await LocalAuthentication.authenticateAsync({
@@ -35,41 +32,28 @@ export const BiometricAuth = {
         disableDeviceFallback: false,
       });
       return result.success;
-    } catch (error) {
-      console.error('Error during authentication:', error);
+    } catch {
       return false;
     }
   },
 
-  // Check if biometric is enabled in app settings
   isEnabled: async (): Promise<boolean> => {
-    try {
-      const enabled = await AsyncStorage.getItem('biometricEnabled');
-      return enabled === 'true';
-    } catch (error) {
-      console.error('Error checking biometric setting:', error);
-      return false;
-    }
+    const enabled = await storage.get<string>(STORAGE_KEYS.BIOMETRIC_ENABLED);
+    return enabled === 'true';
   },
 
-  // Enable/disable biometric in app settings
   setEnabled: async (enabled: boolean): Promise<void> => {
-    try {
-      await AsyncStorage.setItem('biometricEnabled', enabled.toString());
-    } catch (error) {
-      console.error('Error saving biometric setting:', error);
-    }
+    await storage.set(STORAGE_KEYS.BIOMETRIC_ENABLED, enabled.toString());
   },
 
-  // Get biometric type name for display
   getTypeName: (type: LocalAuthentication.AuthenticationType): string => {
     switch (type) {
       case LocalAuthentication.AuthenticationType.FINGERPRINT:
         return 'Fingerprint';
       case LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION:
-        return 'Face Recognition';
+        return 'Face ID';
       case LocalAuthentication.AuthenticationType.IRIS:
-        return 'Iris Scanner';
+        return 'Iris';
       default:
         return 'Biometric';
     }

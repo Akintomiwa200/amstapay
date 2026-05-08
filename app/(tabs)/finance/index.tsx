@@ -1,4 +1,4 @@
-// app/finance/index.tsx
+﻿// app/finance/index.tsx
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,17 +8,19 @@ import {
   Receipt, BarChart3, Sparkles, Shield, Plus 
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const Finance = () => {
+  const { theme } = useTheme();
+  const c = theme.colors;
   const router = useRouter();
 
   const accounts = [
-    { id: 1, name: 'Main Account', balance: '245,800', type: 'bank', color: C.violet },
-    { id: 2, name: 'Savings', balance: '150,000', type: 'savings', color: C.mint },
-    { id: 3, name: 'Investment', balance: '89,500', type: 'investment', color: C.blue },
+    { id: 1, name: 'Main Account', balance: '245,800', type: 'bank', color: c.violet },
+    { id: 2, name: 'Savings', balance: '150,000', type: 'savings', color: c.mint },
+    { id: 3, name: 'Investment', balance: '89,500', type: 'investment', color: c.blue },
   ];
 
   const transactions = [
@@ -30,10 +32,10 @@ const Finance = () => {
   ];
 
   const quickActions = [
-    { id: 1, title: 'Transfer', icon: Send, route: '/send-money', color: C.violet },
-    { id: 2, title: 'Pay Bill', icon: Receipt, route: '/bill-payment', color: C.blue },
-    { id: 3, title: 'Invest', icon: TrendingUp, route: '/invest', color: C.mint },
-    { id: 4, title: 'Loans', icon: Shield, route: '/loan', color: C.pink },
+    { id: 1, title: 'Transfer', icon: Send, route: '/send-money', color: c.violet },
+    { id: 2, title: 'Pay Bill', icon: Receipt, route: '/bill-payment', color: c.blue },
+    { id: 3, title: 'Invest', icon: TrendingUp, route: '/invest', color: c.mint },
+    { id: 4, title: 'Loans', icon: Shield, route: '/loan', color: c.pink },
   ];
 
   const totalBalance = 485300;
@@ -45,10 +47,10 @@ const Finance = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: c.bg }]} showsVerticalScrollIndicator={false}>
       {/* Header with Gradient */}
       <LinearGradient
-        colors={[C.primary, C.violet]}
+        colors={[c.primary, c.violet]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -57,19 +59,19 @@ const Finance = () => {
         
         <View style={styles.balanceContainer}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>₦{totalBalance.toLocaleString()}</Text>
+          <Text style={styles.balanceAmount}>â‚¦{totalBalance.toLocaleString()}</Text>
           
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <ArrowDownRight size={16} color={C.mint} />
+              <ArrowDownRight size={16} color={c.mint} />
               <Text style={styles.statLabel}>Income</Text>
-              <Text style={styles.statValue}>+₦{totalIncome.toLocaleString()}</Text>
+              <Text style={styles.statValue}>+â‚¦{totalIncome.toLocaleString()}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <ArrowUpRight size={16} color={C.pink} />
+              <ArrowUpRight size={16} color={c.pink} />
               <Text style={styles.statLabel}>Expenses</Text>
-              <Text style={styles.statValue}>-₦{totalExpenses.toLocaleString()}</Text>
+              <Text style={styles.statValue}>-â‚¦{totalExpenses.toLocaleString()}</Text>
             </View>
           </View>
         </View>
@@ -87,30 +89,30 @@ const Finance = () => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[C.primaryLight, C.bg]}
-                style={styles.quickActionIcon}
+                colors={[c.primaryLight, c.bg]}
+                style={[styles.quickActionIcon, { backgroundColor: c.bg, shadowColor: c.primary }]}
               >
                 <Icon size={22} color={action.color} />
               </LinearGradient>
-              <Text style={styles.quickActionText}>{action.title}</Text>
+              <Text style={[styles.quickActionText, { color: c.text }]}>{action.title}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
       {/* Accounts Section */}
-      <View style={styles.section}>
+      <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>My Accounts</Text>
+          <Text style={[styles.sectionTitle, { color: c.primary }]}>My Accounts</Text>
           <TouchableOpacity onPress={() => navigateTo('/accounts')}>
-            <Text style={styles.seeAll}>See All</Text>
+            <Text style={[styles.seeAll, { color: c.violet }]}>See All</Text>
           </TouchableOpacity>
         </View>
         
         {accounts.map((account) => (
           <TouchableOpacity 
             key={account.id} 
-            style={styles.accountCard}
+            style={[styles.accountCard, { borderBottomColor: c.border }]}
             onPress={() => navigateTo(`/account/${account.id}`)}
             activeOpacity={0.7}
           >
@@ -120,39 +122,39 @@ const Finance = () => {
                <Wallet size={20} color={account.color} />}
             </View>
             <View style={styles.accountInfo}>
-              <Text style={styles.accountName}>{account.name}</Text>
-              <Text style={styles.accountType}>{account.type}</Text>
+              <Text style={[styles.accountName, { color: c.text }]}>{account.name}</Text>
+              <Text style={[styles.accountType, { color: c.textSub }]}>{account.type}</Text>
             </View>
-            <Text style={styles.accountBalance}>₦{account.balance.toLocaleString()}</Text>
-            <ChevronRight size={18} color={C.textSub} />
+            <Text style={[styles.accountBalance, { color: c.text }]}>â‚¦{account.balance.toLocaleString()}</Text>
+            <ChevronRight size={18} color={c.textSub} />
           </TouchableOpacity>
         ))}
         
         <TouchableOpacity style={styles.addAccountBtn} onPress={() => navigateTo('/add-account')}>
-          <Plus size={18} color={C.violet} />
-          <Text style={styles.addAccountText}>Add New Account</Text>
+          <Plus size={18} color={c.violet} />
+          <Text style={[styles.addAccountText, { color: c.violet }]}>Add New Account</Text>
         </TouchableOpacity>
       </View>
 
       {/* Recent Transactions */}
-      <View style={styles.section}>
+      <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <Text style={[styles.sectionTitle, { color: c.primary }]}>Recent Transactions</Text>
           <TouchableOpacity onPress={() => navigateTo('/transactions')}>
-            <Text style={styles.seeAll}>See All</Text>
+            <Text style={[styles.seeAll, { color: c.violet }]}>See All</Text>
           </TouchableOpacity>
         </View>
         
         {transactions.slice(0, 3).map((txn) => (
           <TouchableOpacity 
             key={txn.id} 
-            style={styles.transactionCard}
+            style={[styles.transactionCard, { borderBottomColor: c.border }]}
             onPress={() => navigateTo(`/transaction/${txn.id}`)}
             activeOpacity={0.7}
           >
             <View style={[
               styles.transactionIcon,
-              txn.category === 'income' ? styles.incomeBg : styles.expenseBg
+              { backgroundColor: txn.category === 'income' ? c.success : c.error }
             ]}>
               {txn.category === 'income' ? 
                 <ArrowDownRight size={16} color="#fff" /> : 
@@ -160,33 +162,33 @@ const Finance = () => {
               }
             </View>
             <View style={styles.transactionInfo}>
-              <Text style={styles.transactionType}>{txn.type}</Text>
-              <Text style={styles.transactionDate}>{txn.date}</Text>
-              <Text style={styles.transactionFrom}>{txn.from}</Text>
+              <Text style={[styles.transactionType, { color: c.text }]}>{txn.type}</Text>
+              <Text style={[styles.transactionDate, { color: c.textSub }]}>{txn.date}</Text>
+              <Text style={[styles.transactionFrom, { color: c.violet }]}>{txn.from}</Text>
             </View>
             <Text 
               style={[
                 styles.transactionAmount,
-                txn.category === 'income' ? styles.positiveAmount : styles.negativeAmount
+                { color: txn.category === 'income' ? c.success : c.error }
               ]}
             >
-              {txn.amount.startsWith('+') ? `+₦${parseInt(txn.amount).toLocaleString()}` : `-₦${parseInt(txn.amount).toLocaleString()}`}
+              {txn.amount.startsWith('+') ? `+â‚¦${parseInt(txn.amount).toLocaleString()}` : `-â‚¦${parseInt(txn.amount).toLocaleString()}`}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Financial Insights */}
-      <View style={styles.section}>
+      <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Financial Insights</Text>
+          <Text style={[styles.sectionTitle, { color: c.primary }]}>Financial Insights</Text>
           <TouchableOpacity onPress={() => navigateTo('/insights')}>
-            <Text style={styles.seeAll}>See All</Text>
+            <Text style={[styles.seeAll, { color: c.violet }]}>See All</Text>
           </TouchableOpacity>
         </View>
         
         <LinearGradient
-          colors={[C.violet, C.primary]}
+          colors={[c.violet, c.primary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.insightCard}
@@ -198,21 +200,21 @@ const Finance = () => {
             <Text style={styles.insightTitle}>Spending Analysis</Text>
             <Text style={styles.insightText}>Your expenses increased by 12% this month</Text>
             <View style={styles.insightProgress}>
-              <View style={[styles.insightProgressBar, { width: '65%' }]} />
+              <View style={[styles.insightProgressBar, { backgroundColor: c.mint, width: '65%' }]} />
             </View>
           </View>
           <ChevronRight size={18} color="rgba(255,255,255,0.7)" />
         </LinearGradient>
 
-        <TouchableOpacity style={styles.insightCardSecondary} onPress={() => navigateTo('/budget')}>
-          <View style={styles.insightIconSecondary}>
-            <Sparkles size={20} color={C.violet} />
+        <TouchableOpacity style={[styles.insightCardSecondary, { backgroundColor: c.primaryLight }]} onPress={() => navigateTo('/budget')}>
+          <View style={[styles.insightIconSecondary, { backgroundColor: c.bg }]}>
+            <Sparkles size={20} color={c.violet} />
           </View>
           <View style={styles.insightContent}>
-            <Text style={styles.insightTitleSecondary}>Budget Summary</Text>
-            <Text style={styles.insightTextSecondary}>You've used 45% of your monthly budget</Text>
+            <Text style={[styles.insightTitleSecondary, { color: c.text }]}>Budget Summary</Text>
+            <Text style={[styles.insightTextSecondary, { color: c.textSub }]}>You've used 45% of your monthly budget</Text>
           </View>
-          <ChevronRight size={18} color={C.textSub} />
+          <ChevronRight size={18} color={c.textSub} />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -222,7 +224,6 @@ const Finance = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
   },
   header: {
     paddingTop: 60,
@@ -280,10 +281,8 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: C.bg,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: C.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -292,16 +291,13 @@ const styles = StyleSheet.create({
   quickActionText: {
     fontSize: 12,
     fontWeight: '500',
-    color: C.text,
   },
   section: {
-    backgroundColor: C.bg,
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: C.border,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -312,10 +308,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.primary,
   },
   seeAll: {
-    color: C.violet,
     fontWeight: '600',
     fontSize: 13,
   },
@@ -324,7 +318,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
   },
   accountIcon: {
     width: 48,
@@ -340,18 +333,15 @@ const styles = StyleSheet.create({
   accountName: {
     fontSize: 16,
     fontWeight: '600',
-    color: C.text,
     marginBottom: 4,
   },
   accountType: {
     fontSize: 12,
-    color: C.textSub,
     textTransform: 'capitalize',
   },
   accountBalance: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.text,
     marginRight: 8,
   },
   addAccountBtn: {
@@ -363,7 +353,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   addAccountText: {
-    color: C.violet,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -372,7 +361,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
   },
   transactionIcon: {
     width: 44,
@@ -382,15 +370,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
   },
-  incomeBg: { backgroundColor: C.success },
-  expenseBg: { backgroundColor: C.error },
   transactionInfo: { flex: 1 },
-  transactionType: { fontSize: 15, fontWeight: '600', color: C.text, marginBottom: 2 },
-  transactionDate: { fontSize: 11, color: C.textSub },
-  transactionFrom: { fontSize: 11, color: C.violet, marginTop: 2 },
+  transactionType: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
+  transactionDate: { fontSize: 11 },
+  transactionFrom: { fontSize: 11, marginTop: 2 },
   transactionAmount: { fontSize: 15, fontWeight: '700' },
-  positiveAmount: { color: C.success },
-  negativeAmount: { color: C.error },
   insightCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -411,11 +395,10 @@ const styles = StyleSheet.create({
   insightTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 4 },
   insightText: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
   insightProgress: { height: 4, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, marginTop: 8, width: '80%' },
-  insightProgressBar: { height: 4, backgroundColor: C.mint, borderRadius: 2 },
+  insightProgressBar: { height: 4, borderRadius: 2 },
   insightCardSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.primaryLight,  
     borderRadius: 16,
     padding: 16,
   },
@@ -423,13 +406,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: C.bg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  insightTitleSecondary: { fontSize: 15, fontWeight: '600', color: C.text, marginBottom: 4 },
-  insightTextSecondary: { fontSize: 12, color: C.textSub },
+  insightTitleSecondary: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  insightTextSecondary: { fontSize: 12 },
 });
 
 export default Finance;

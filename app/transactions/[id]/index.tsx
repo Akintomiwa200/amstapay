@@ -4,11 +4,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ArrowUpRight, ArrowDownRight, Calendar, Clock, MapPin, Receipt, Copy, Share2 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function TransactionDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { theme } = useTheme();
+  const c = theme.colors;
 
   const transaction = {
     id: id,
@@ -27,104 +29,104 @@ export default function TransactionDetailScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Transaction Details</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Transaction Details</Text>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content}>
-        <View style={styles.amountCard}>
-          <View style={[styles.iconCircle, transaction.category === 'income' ? styles.incomeBg : styles.expenseBg]}>
+        <View style={[styles.amountCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+          <View style={[styles.iconCircle, transaction.category === 'income' ? { backgroundColor: c.success } : { backgroundColor: c.error }]}>
             {transaction.category === 'income' ? 
               <ArrowDownRight size={32} color="#fff" /> : 
               <ArrowUpRight size={32} color="#fff" />
             }
           </View>
-          <Text style={styles.amountLabel}>{transaction.type}</Text>
-          <Text style={[styles.amount, transaction.category === 'income' ? styles.positiveAmount : styles.negativeAmount]}>
+          <Text style={[styles.amountLabel, { color: c.textSub }]}>{transaction.type}</Text>
+          <Text style={[styles.amount, transaction.category === 'income' ? { color: c.success } : { color: c.error }]}>
             {transaction.amount}
           </Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{transaction.status}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: c.success + '20' }]}>
+            <Text style={[styles.statusText, { color: c.success }]}>{transaction.status}</Text>
           </View>
         </View>
 
-        <View style={styles.detailsCard}>
+        <View style={[styles.detailsCard, { backgroundColor: c.bg, borderColor: c.border }]}>
           <View style={styles.detailRow}>
             <View style={styles.detailIcon}>
-              <Calendar size={18} color={C.violet} />
+              <Calendar size={18} color={c.violet} />
             </View>
             <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Date</Text>
-              <Text style={styles.detailValue}>{transaction.date}</Text>
+              <Text style={[styles.detailLabel, { color: c.textSub }]}>Date</Text>
+              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.date}</Text>
             </View>
           </View>
 
           <View style={styles.detailRow}>
             <View style={styles.detailIcon}>
-              <Clock size={18} color={C.violet} />
+              <Clock size={18} color={c.violet} />
             </View>
             <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Time</Text>
-              <Text style={styles.detailValue}>{transaction.time}</Text>
+              <Text style={[styles.detailLabel, { color: c.textSub }]}>Time</Text>
+              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.time}</Text>
             </View>
           </View>
 
           <View style={styles.detailRow}>
             <View style={styles.detailIcon}>
-              <MapPin size={18} color={C.violet} />
+              <MapPin size={18} color={c.violet} />
             </View>
             <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>From</Text>
-              <Text style={styles.detailValue}>{transaction.from}</Text>
+              <Text style={[styles.detailLabel, { color: c.textSub }]}>From</Text>
+              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.from}</Text>
             </View>
           </View>
 
           <View style={styles.detailRow}>
             <View style={styles.detailIcon}>
-              <Receipt size={18} color={C.violet} />
+              <Receipt size={18} color={c.violet} />
             </View>
             <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Reference</Text>
+              <Text style={[styles.detailLabel, { color: c.textSub }]}>Reference</Text>
               <View style={styles.referenceRow}>
-                <Text style={styles.referenceValue}>{transaction.reference}</Text>
+                <Text style={[styles.referenceValue, { color: c.text }]}>{transaction.reference}</Text>
                 <TouchableOpacity>
-                  <Copy size={16} color={C.violet} />
+                  <Copy size={16} color={c.violet} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Summary</Text>
+        <View style={[styles.summaryCard, { backgroundColor: c.primaryLight }]}>
+          <Text style={[styles.summaryTitle, { color: c.primary }]}>Summary</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Amount</Text>
-            <Text style={styles.summaryValue}>{transaction.amount}</Text>
+            <Text style={[styles.summaryLabel, { color: c.textSub }]}>Amount</Text>
+            <Text style={[styles.summaryValue, { color: c.text }]}>{transaction.amount}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Fee</Text>
-            <Text style={styles.summaryValue}>{transaction.fee}</Text>
+            <Text style={[styles.summaryLabel, { color: c.textSub }]}>Fee</Text>
+            <Text style={[styles.summaryValue, { color: c.text }]}>{transaction.fee}</Text>
           </View>
-          <View style={[styles.summaryRow, styles.totalRow]}>
+          <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: c.border }]}>
             <Text style={styles.summaryLabel}>Balance After</Text>
-            <Text style={styles.totalValue}>{transaction.balanceAfter}</Text>
+            <Text style={[styles.totalValue, { color: c.primary }]}>{transaction.balanceAfter}</Text>
           </View>
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.shareBtn}>
-            <Share2 size={18} color={C.violet} />
-            <Text style={styles.shareText}>Share Receipt</Text>
+          <TouchableOpacity style={[styles.shareBtn, { backgroundColor: c.primaryLight }]}>
+            <Share2 size={18} color={c.violet} />
+            <Text style={[styles.shareText, { color: c.violet }]}>Share Receipt</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.reportBtn}>
-            <Text style={styles.reportText}>Report Issue</Text>
+          <TouchableOpacity style={[styles.reportBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <Text style={[styles.reportText, { color: c.error }]}>Report Issue</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -133,40 +135,36 @@ export default function TransactionDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
-  amountCard: { alignItems: 'center', backgroundColor: C.bg, borderRadius: 24, padding: 24, borderWidth: 1, borderColor: C.border, marginBottom: 20 },
+  amountCard: { alignItems: 'center', borderRadius: 24, padding: 24, borderWidth: 1, marginBottom: 20 },
   iconCircle: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  incomeBg: { backgroundColor: C.success },
-  expenseBg: { backgroundColor: C.error },
-  amountLabel: { fontSize: 14, color: C.textSub, marginBottom: 8 },
+  amountLabel: { fontSize: 14, marginBottom: 8 },
   amount: { fontSize: 32, fontWeight: '800', marginBottom: 12 },
-  positiveAmount: { color: C.success },
-  negativeAmount: { color: C.error },
-  statusBadge: { backgroundColor: C.success + '20', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  statusText: { fontSize: 12, fontWeight: '600', color: C.success },
-  detailsCard: { backgroundColor: C.bg, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: C.border, marginBottom: 20 },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  statusText: { fontSize: 12, fontWeight: '600' },
+  detailsCard: { borderRadius: 20, padding: 20, borderWidth: 1, marginBottom: 20 },
   detailRow: { flexDirection: 'row', marginBottom: 20 },
   detailIcon: { width: 40, alignItems: 'center' },
   detailContent: { flex: 1 },
-  detailLabel: { fontSize: 12, color: C.textSub, marginBottom: 4 },
-  detailValue: { fontSize: 15, fontWeight: '500', color: C.text },
+  detailLabel: { fontSize: 12, marginBottom: 4 },
+  detailValue: { fontSize: 15, fontWeight: '500' },
   referenceRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  referenceValue: { fontSize: 14, color: C.text, flex: 1 },
-  summaryCard: { backgroundColor: C.primaryLight, borderRadius: 20, padding: 20, marginBottom: 20 },
-  summaryTitle: { fontSize: 16, fontWeight: '700', color: C.primary, marginBottom: 16 },
+  referenceValue: { fontSize: 14, flex: 1 },
+  summaryCard: { borderRadius: 20, padding: 20, marginBottom: 20 },
+  summaryTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  summaryLabel: { fontSize: 14, color: C.textSub },
-  summaryValue: { fontSize: 14, fontWeight: '500', color: C.text },
-  totalRow: { marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
-  totalValue: { fontSize: 16, fontWeight: '700', color: C.primary },
+  summaryLabel: { fontSize: 14 },
+  summaryValue: { fontSize: 14, fontWeight: '500' },
+  totalRow: { marginTop: 8, paddingTop: 12, borderTopWidth: 1 },
+  totalValue: { fontSize: 16, fontWeight: '700' },
   actionButtons: { flexDirection: 'row', gap: 12, marginBottom: 40 },
-  shareBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, backgroundColor: C.primaryLight, borderRadius: 14 },
-  shareText: { fontSize: 14, fontWeight: '600', color: C.violet },
-  reportBtn: { flex: 1, paddingVertical: 14, backgroundColor: C.bg, borderRadius: 14, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
-  reportText: { fontSize: 14, fontWeight: '500', color: C.error },
+  shareBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
+  shareText: { fontSize: 14, fontWeight: '600' },
+  reportBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
+  reportText: { fontSize: 14, fontWeight: '500' },
 });

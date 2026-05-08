@@ -1,13 +1,15 @@
-// app/settings/terms/index.tsx - Terms of Service Screen
+﻿// app/settings/terms/index.tsx - Terms of Service Screen
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function TermsScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const c = theme.colors;
 
   const sections = [
     {
@@ -53,30 +55,30 @@ export default function TermsScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Terms of Service</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Terms of Service</Text>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.lastUpdated}>Last Updated: March 2024</Text>
+        <Text style={[styles.lastUpdated, { color: c.textSub }]}>Last Updated: March 2024</Text>
 
         {sections.map((section, i) => (
           <View key={i} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.sectionContent}>{section.content}</Text>
+            <Text style={[styles.sectionTitle, { color: c.primary }]}>{section.title}</Text>
+            <Text style={[styles.sectionContent, { color: c.textSub }]}>{section.content}</Text>
           </View>
         ))}
 
-        <View style={styles.contactSection}>
-          <Text style={styles.contactTitle}>Questions?</Text>
-          <Text style={styles.contactText}>
+        <View style={[styles.contactSection, { backgroundColor: c.primaryLight }]}>
+          <Text style={[styles.contactTitle, { color: c.primary }]}>Questions?</Text>
+          <Text style={[styles.contactText, { color: c.textSub }]}>
             If you have any questions about these Terms of Service, please contact us at support@amstapay.com
           </Text>
         </View>
@@ -86,17 +88,17 @@ export default function TermsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
-  lastUpdated: { fontSize: 13, color: C.textSub, marginBottom: 20, fontStyle: 'italic' },
+  lastUpdated: { fontSize: 13, marginBottom: 20, fontStyle: 'italic' },
   section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.primary, marginBottom: 8 },
-  sectionContent: { fontSize: 14, color: C.textSub, lineHeight: 22 },
-  contactSection: { backgroundColor: C.primaryLight, borderRadius: 16, padding: 20, marginTop: 8, marginBottom: 40 },
-  contactTitle: { fontSize: 16, fontWeight: '700', color: C.primary, marginBottom: 8 },
-  contactText: { fontSize: 14, color: C.textSub, lineHeight: 22 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
+  sectionContent: { fontSize: 14, lineHeight: 22 },
+  contactSection: { borderRadius: 16, padding: 20, marginTop: 8, marginBottom: 40 },
+  contactTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
+  contactText: { fontSize: 14, lineHeight: 22 },
 });

@@ -1,4 +1,4 @@
-// app/settings/help-support.tsx
+﻿// app/settings/help-support.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -16,10 +16,12 @@ import {
   ChevronDown, ChevronRight, Send, FileText, Globe 
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function HelpSupport() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const c = theme.colors;
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [message, setMessage] = useState('');
 
@@ -49,95 +51,95 @@ export default function HelpSupport() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Help & Support</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Help & Support</Text>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content}>
         <View style={styles.contactGrid}>
-          <TouchableOpacity style={styles.contactCard} onPress={() => handleContact('email')}>
-            <View style={styles.contactIcon}>
-              <Mail size={24} color={C.violet} />
+          <TouchableOpacity style={[styles.contactCard, { backgroundColor: c.primaryLight, borderColor: c.border }]} onPress={() => handleContact('email')}>
+            <View style={[styles.contactIcon, { backgroundColor: c.bg }]}>
+              <Mail size={24} color={c.violet} />
             </View>
-            <Text style={styles.contactTitle}>Email Us</Text>
-            <Text style={styles.contactSubtitle}>support@amstapay.com</Text>
+            <Text style={[styles.contactTitle, { color: c.text }]}>Email Us</Text>
+            <Text style={[styles.contactSubtitle, { color: c.textSub }]}>support@amstapay.com</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.contactCard} onPress={() => handleContact('phone')}>
-            <View style={styles.contactIcon}>
-              <Phone size={24} color={C.violet} />
+          <TouchableOpacity style={[styles.contactCard, { backgroundColor: c.primaryLight, borderColor: c.border }]} onPress={() => handleContact('phone')}>
+            <View style={[styles.contactIcon, { backgroundColor: c.bg }]}>
+              <Phone size={24} color={c.violet} />
             </View>
-            <Text style={styles.contactTitle}>Call Us</Text>
-            <Text style={styles.contactSubtitle}>+234 800 123 4567</Text>
+            <Text style={[styles.contactTitle, { color: c.text }]}>Call Us</Text>
+            <Text style={[styles.contactSubtitle, { color: c.textSub }]}>+234 800 123 4567</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.contactCard} onPress={() => handleContact('whatsapp')}>
-            <View style={styles.contactIcon}>
-              <MessageCircle size={24} color={C.violet} />
+          <TouchableOpacity style={[styles.contactCard, { backgroundColor: c.primaryLight, borderColor: c.border }]} onPress={() => handleContact('whatsapp')}>
+            <View style={[styles.contactIcon, { backgroundColor: c.bg }]}>
+              <MessageCircle size={24} color={c.violet} />
             </View>
-            <Text style={styles.contactTitle}>WhatsApp</Text>
-            <Text style={styles.contactSubtitle}>Chat with us</Text>
+            <Text style={[styles.contactTitle, { color: c.text }]}>WhatsApp</Text>
+            <Text style={[styles.contactSubtitle, { color: c.textSub }]}>Chat with us</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+          <Text style={[styles.sectionTitle, { color: c.primary }]}>Frequently Asked Questions</Text>
           {faqs.map((faq) => (
             <View key={faq.id}>
               <TouchableOpacity
-                style={styles.faqItem}
+                style={[styles.faqItem, { borderBottomColor: c.border }]}
                 onPress={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
               >
-                <Text style={styles.faqQuestion}>{faq.question}</Text>
+                <Text style={[styles.faqQuestion, { color: c.text }]}>{faq.question}</Text>
                 {expandedFaq === faq.id ? (
-                  <ChevronDown size={20} color={C.textSub} />
+                  <ChevronDown size={20} color={c.textSub} />
                 ) : (
-                  <ChevronRight size={20} color={C.textSub} />
+                  <ChevronRight size={20} color={c.textSub} />
                 )}
               </TouchableOpacity>
               {expandedFaq === faq.id && (
-                <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                <Text style={[styles.faqAnswer, { color: c.textSub }]}>{faq.answer}</Text>
               )}
             </View>
           ))}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Send us a Message</Text>
+          <Text style={[styles.sectionTitle, { color: c.primary }]}>Send us a Message</Text>
           <View style={styles.messageInputContainer}>
             <TextInput
-              style={styles.messageInput}
+              style={[styles.messageInput, { backgroundColor: c.inputBg, color: c.text, borderColor: c.border }]}
               placeholder="Type your message here..."
-              placeholderTextColor={C.textSub}
+              placeholderTextColor={c.textSub}
               value={message}
               onChangeText={setMessage}
               multiline
               numberOfLines={4}
             />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+            <TouchableOpacity style={[styles.sendButton, { backgroundColor: c.violet }]} onPress={handleSendMessage}>
               <Send size={20} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.resourcesSection}>
-          <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity style={styles.resourceItem}>
-            <FileText size={20} color={C.violet} />
-            <Text style={styles.resourceText}>User Guide</Text>
-            <ChevronRight size={18} color={C.textSub} />
+          <Text style={[styles.sectionTitle, { color: c.primary }]}>Resources</Text>
+          <TouchableOpacity style={[styles.resourceItem, { borderBottomColor: c.border }]}>
+            <FileText size={20} color={c.violet} />
+            <Text style={[styles.resourceText, { color: c.text }]}>User Guide</Text>
+            <ChevronRight size={18} color={c.textSub} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.resourceItem}>
-            <Globe size={20} color={C.violet} />
-            <Text style={styles.resourceText}>Visit Website</Text>
-            <ChevronRight size={18} color={C.textSub} />
+          <TouchableOpacity style={[styles.resourceItem, { borderBottomColor: c.border }]}>
+            <Globe size={20} color={c.violet} />
+            <Text style={[styles.resourceText, { color: c.text }]}>Visit Website</Text>
+            <ChevronRight size={18} color={c.textSub} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -146,26 +148,26 @@ export default function HelpSupport() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
   contactGrid: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  contactCard: { flex: 1, backgroundColor: C.primaryLight, borderRadius: 16, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: C.border },
-  contactIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  contactTitle: { fontSize: 14, fontWeight: '600', color: C.text, marginBottom: 4 },
-  contactSubtitle: { fontSize: 11, color: C.textSub },
+  contactCard: { flex: 1, borderRadius: 16, padding: 16, alignItems: 'center', borderWidth: 1 },
+  contactIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  contactTitle: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  contactSubtitle: { fontSize: 11 },
   section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.primary, marginBottom: 16 },
-  faqItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
-  faqQuestion: { fontSize: 15, fontWeight: '500', color: C.text, flex: 1, marginRight: 12 },
-  faqAnswer: { fontSize: 13, color: C.textSub, paddingVertical: 12, paddingHorizontal: 4, lineHeight: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  faqItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
+  faqQuestion: { fontSize: 15, fontWeight: '500', flex: 1, marginRight: 12 },
+  faqAnswer: { fontSize: 13, paddingVertical: 12, paddingHorizontal: 4, lineHeight: 20 },
   messageInputContainer: { position: 'relative' },
-  messageInput: { backgroundColor: C.inputBg, borderRadius: 16, padding: 14, fontSize: 14, color: C.text, borderWidth: 1, borderColor: C.border, minHeight: 100, textAlignVertical: 'top' },
-  sendButton: { position: 'absolute', bottom: 12, right: 12, backgroundColor: C.violet, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  messageInput: { borderRadius: 16, padding: 14, fontSize: 14, borderWidth: 1, minHeight: 100, textAlignVertical: 'top' },
+  sendButton: { position: 'absolute', bottom: 12, right: 12, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   resourcesSection: { marginBottom: 40 },
-  resourceItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
-  resourceText: { flex: 1, fontSize: 15, color: C.text },
+  resourceItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: 1 },
+  resourceText: { flex: 1, fontSize: 15 },
 });

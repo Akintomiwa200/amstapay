@@ -4,11 +4,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, TrendingUp, Calendar, Clock, Shield, ArrowUpRight, AlertCircle } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function InvestmentDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { theme } = useTheme();
+  const c = theme.colors;
 
   const investment = {
     id: id,
@@ -33,8 +35,8 @@ export default function InvestmentDetailScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primary, C.violet]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primary, c.violet]} style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft size={24} color="#fff" />
@@ -45,46 +47,46 @@ export default function InvestmentDetailScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content}>
-        <View style={styles.valueCard}>
-          <Text style={styles.valueLabel}>Current Value</Text>
-          <Text style={styles.valueAmount}>₦{parseInt(investment.currentValue).toLocaleString()}</Text>
+        <View style={[styles.valueCard, { backgroundColor: c.primaryLight }]}>
+          <Text style={[styles.valueLabel, { color: c.textSub }]}>Current Value</Text>
+          <Text style={[styles.valueAmount, { color: c.primary }]}>₦{parseInt(investment.currentValue).toLocaleString()}</Text>
           <View style={styles.returnRow}>
-            <TrendingUp size={16} color={C.success} />
-            <Text style={styles.returnText}>{investment.returns} ({investment.returnPercentage})</Text>
+            <TrendingUp size={16} color={c.success} />
+            <Text style={[styles.returnText, { color: c.success }]}>{investment.returns} ({investment.returnPercentage})</Text>
           </View>
         </View>
 
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Calendar size={20} color={C.violet} />
-            <Text style={styles.statLabel}>Start Date</Text>
-            <Text style={styles.statValue}>{investment.startDate}</Text>
+          <View style={[styles.statCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <Calendar size={20} color={c.violet} />
+            <Text style={[styles.statLabel, { color: c.textSub }]}>Start Date</Text>
+            <Text style={[styles.statValue, { color: c.text }]}>{investment.startDate}</Text>
           </View>
-          <View style={styles.statCard}>
-            <Clock size={20} color={C.violet} />
-            <Text style={styles.statLabel}>Maturity Date</Text>
-            <Text style={styles.statValue}>{investment.maturityDate}</Text>
+          <View style={[styles.statCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <Clock size={20} color={c.violet} />
+            <Text style={[styles.statLabel, { color: c.textSub }]}>Maturity Date</Text>
+            <Text style={[styles.statValue, { color: c.text }]}>{investment.maturityDate}</Text>
           </View>
-          <View style={styles.statCard}>
-            <Shield size={20} color={C.violet} />
-            <Text style={styles.statLabel}>Risk Level</Text>
-            <Text style={styles.statValue}>{investment.risk}</Text>
+          <View style={[styles.statCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <Shield size={20} color={c.violet} />
+            <Text style={[styles.statLabel, { color: c.textSub }]}>Risk Level</Text>
+            <Text style={[styles.statValue, { color: c.text }]}>{investment.risk}</Text>
           </View>
-          <View style={styles.statCard}>
-            <TrendingUp size={20} color={C.violet} />
-            <Text style={styles.statLabel}>Duration</Text>
-            <Text style={styles.statValue}>{investment.duration}</Text>
+          <View style={[styles.statCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <TrendingUp size={20} color={c.violet} />
+            <Text style={[styles.statLabel, { color: c.textSub }]}>Duration</Text>
+            <Text style={[styles.statValue, { color: c.text }]}>{investment.duration}</Text>
           </View>
         </View>
 
-        <View style={styles.performanceCard}>
-          <Text style={styles.performanceTitle}>Performance</Text>
+        <View style={[styles.performanceCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+          <Text style={[styles.performanceTitle, { color: c.primary }]}>Performance</Text>
           {/* Add chart component here */}
           <View style={styles.performancePreview}>
             {investment.performance.map((item, index) => (
               <View key={index} style={styles.monthBar}>
-                <View style={[styles.bar, { height: (item.value / 53125) * 80 }]} />
-                <Text style={styles.monthLabel}>{item.month}</Text>
+                <View style={[styles.bar, { height: (item.value / 53125) * 80, backgroundColor: c.violet }]} />
+                <Text style={[styles.monthLabel, { color: c.textSub }]}>{item.month}</Text>
               </View>
             ))}
           </View>
@@ -92,18 +94,18 @@ export default function InvestmentDetailScreen() {
 
         <View style={styles.actionsCard}>
           <TouchableOpacity style={styles.withdrawBtn}>
-            <LinearGradient colors={[C.mint, C.blue, C.violet]} style={styles.withdrawGradient}>
+            <LinearGradient colors={[c.mint, c.blue, c.violet]} style={styles.withdrawGradient}>
               <Text style={styles.withdrawText}>Withdraw Investment</Text>
             </LinearGradient>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.reinvestBtn}>
-            <Text style={styles.reinvestText}>Reinvest Returns</Text>
+          <TouchableOpacity style={[styles.reinvestBtn, { backgroundColor: c.primaryLight }]}>
+            <Text style={[styles.reinvestText, { color: c.violet }]}>Reinvest Returns</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.infoCard}>
-          <AlertCircle size={16} color={C.warning} />
-          <Text style={styles.infoText}>Early withdrawal may incur a 5% penalty fee</Text>
+          <AlertCircle size={16} color={c.warning} />
+          <Text style={[styles.infoText, { color: c.warning }]}>Early withdrawal may incur a 5% penalty fee</Text>
         </View>
       </ScrollView>
     </View>
@@ -111,33 +113,33 @@ export default function InvestmentDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
-  valueCard: { backgroundColor: C.primaryLight, borderRadius: 20, padding: 20, alignItems: 'center', marginBottom: 20 },
-  valueLabel: { fontSize: 14, color: C.textSub, marginBottom: 8 },
-  valueAmount: { fontSize: 36, fontWeight: '800', color: C.primary, marginBottom: 8 },
+  valueCard: { borderRadius: 20, padding: 20, alignItems: 'center', marginBottom: 20 },
+  valueLabel: { fontSize: 14, marginBottom: 8 },
+  valueAmount: { fontSize: 36, fontWeight: '800', marginBottom: 8 },
   returnRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  returnText: { fontSize: 14, fontWeight: '600', color: C.success },
+  returnText: { fontSize: 14, fontWeight: '600' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
-  statCard: { flex: 1, minWidth: '45%', backgroundColor: C.bg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
-  statLabel: { fontSize: 12, color: C.textSub, marginTop: 8, marginBottom: 4 },
-  statValue: { fontSize: 14, fontWeight: '600', color: C.text },
-  performanceCard: { backgroundColor: C.bg, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: C.border, marginBottom: 20 },
-  performanceTitle: { fontSize: 16, fontWeight: '700', color: C.primary, marginBottom: 16 },
+  statCard: { flex: 1, minWidth: '45%', borderRadius: 16, padding: 16, borderWidth: 1, alignItems: 'center' },
+  statLabel: { fontSize: 12, marginTop: 8, marginBottom: 4 },
+  statValue: { fontSize: 14, fontWeight: '600' },
+  performanceCard: { borderRadius: 20, padding: 20, borderWidth: 1, marginBottom: 20 },
+  performanceTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
   performancePreview: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', height: 120 },
   monthBar: { alignItems: 'center', gap: 8 },
-  bar: { width: 30, backgroundColor: C.violet, borderRadius: 4 },
-  monthLabel: { fontSize: 11, color: C.textSub },
+  bar: { width: 30, borderRadius: 4 },
+  monthLabel: { fontSize: 11 },
   actionsCard: { gap: 12, marginBottom: 20 },
   withdrawBtn: { borderRadius: 14, overflow: 'hidden' },
   withdrawGradient: { paddingVertical: 14, alignItems: 'center' },
   withdrawText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  reinvestBtn: { backgroundColor: C.primaryLight, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  reinvestText: { fontSize: 16, fontWeight: '600', color: C.violet },
-  infoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.warning + '10', padding: 16, borderRadius: 12, marginBottom: 40 },
-  infoText: { flex: 1, fontSize: 13, color: C.warning },
+  reinvestBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  reinvestText: { fontSize: 16, fontWeight: '600' },
+  infoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, marginBottom: 40 },
+  infoText: { flex: 1, fontSize: 13 },
 });

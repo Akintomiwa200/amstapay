@@ -1,11 +1,11 @@
-import { Tabs } from 'expo-router/tabs';
+﻿import { Tabs } from 'expo-router/tabs';
 import { useTheme } from '@/context/ThemeContext';
-import { C } from '@/components/dashboardComponent/colors';
 import { Home, DollarSign, CreditCard, Gift, User } from 'lucide-react-native';
 import { View, Text, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
   const { theme, isDarkMode } = useTheme();
+  const c = theme.colors;
 
   return (
     <Tabs
@@ -20,7 +20,7 @@ export default function TabLayout() {
           backgroundColor: theme.colors.surface,
           borderRadius: 30,
           paddingHorizontal: 12,
-          shadowColor: C.primary,
+          shadowColor: c.primary,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.1,
           shadowRadius: 16,
@@ -32,8 +32,8 @@ export default function TabLayout() {
           paddingVertical: 8,
         },
         tabBarShowLabel: false,
-        tabBarActiveTintColor: C.violet,
-        tabBarInactiveTintColor: C.textSub,
+        tabBarActiveTintColor: c.violet,
+        tabBarInactiveTintColor: c.textSub,
       }}
     >
       <Tabs.Screen
@@ -86,11 +86,13 @@ export default function TabLayout() {
 }
 
 function TabIcon({ Icon, color, size, focused, label }: any) {
+  const { theme } = useTheme();
+  const c = theme.colors;
   if (focused) {
     return (
-      <View style={styles.pill}>
+      <View style={[styles.pill, { backgroundColor: c.primaryLight }]}>
         <Icon size={size} color={color} strokeWidth={2} />
-        <Text style={styles.pillLabel}>{label}</Text>
+        <Text style={[styles.pillLabel, { color: c.violet }]}>{label}</Text>
       </View>
     );
   }
@@ -101,14 +103,12 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.primaryLight,
     borderRadius: 50,
     paddingVertical: 8,
     paddingHorizontal: 14,
     gap: 6,
   },
   pillLabel: {
-    color: C.violet,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.1,

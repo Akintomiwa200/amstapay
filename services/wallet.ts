@@ -1,46 +1,40 @@
-import { apiRequest } from './api';
+import { apiClient } from '@/lib/api';
+import { ENDPOINTS } from '@/lib/endpoints';
+import type {
+  FundWalletInput, WithdrawInput, TransferInput,
+  Wallet, CurrencyWallet, Transaction,
+} from '@/lib/models';
 
-export interface WalletBalance {
-  balance: number;
-}
+export const walletService = {
+  getBalance() {
+    return apiClient.get<{ balance: number }>(ENDPOINTS.WALLETS.BALANCE);
+  },
 
-export const getWalletBalance = async (token: string): Promise<WalletBalance> => {
-  return apiRequest('/wallets/balance', {}, token);
-};
+  fund(input: FundWalletInput) {
+    return apiClient.post<{ message: string; balance: number }>(ENDPOINTS.WALLETS.FUND, input);
+  },
 
-export const fundWallet = async (
-  amount: number,
-  paymentMethod: string,
-  token: string
-) => {
-  return apiRequest('/wallets/fund', {
-    method: 'POST',
-    body: JSON.stringify({ amount, paymentMethod }),
-  }, token);
-};
+  withdraw(input: WithdrawInput) {
+    return apiClient.post<{ message: string; balance: number }>(ENDPOINTS.WALLETS.WITHDRAW, input);
+  },
 
-export const withdrawFromWallet = async (
-  amount: number,
-  accountDetails: any,
-  token: string
-) => {
-  return apiRequest('/wallets/withdraw', {
-    method: 'POST',
-    body: JSON.stringify({ amount, accountDetails }),
-  }, token);
-};
+  transfer(input: TransferInput) {
+    return apiClient.post<{ message: string; balance: number }>(ENDPOINTS.WALLETS.TRANSFER, input);
+  },
 
-export const transferToWallet = async (
-  amount: number,
-  recipient: string,
-  token: string
-) => {
-  return apiRequest('/wallets/transfer', {
-    method: 'POST',
-    body: JSON.stringify({ amount, recipient }),
-  }, token);
-};
+  getTransactions() {
+    return apiClient.get<Transaction[]>(ENDPOINTS.WALLETS.TRANSACTIONS);
+  },
 
-export const getWalletTransactions = async (token: string) => {
-  return apiRequest('/wallets/transactions', {}, token);
+  getMultiCurrencyBalances() {
+    return apiClient.get<CurrencyWallet[]>(ENDPOINTS.WALLETS.CURRENCIES);
+  },
+
+  fundCurrencyWallet(currency: string, amount: number) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.WALLETS.CURRENCIES_FUND, { currency, amount });
+  },
+
+  withdrawCurrencyWallet(currency: string, amount: number) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.WALLETS.CURRENCIES_WITHDRAW, { currency, amount });
+  },
 };

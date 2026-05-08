@@ -1,16 +1,18 @@
-// app/budget/create.tsx - Create Budget Screen
+﻿// app/budget/create.tsx - Create Budget Screen
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Plus, Calendar, ChevronDown } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function CreateBudgetScreen() {
   const router = useRouter();
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [period, setPeriod] = useState('monthly');
+  const { theme } = useTheme();
+  const c = theme.colors;
 
   const categories = [
     'Food & Dining', 'Transportation', 'Shopping', 'Entertainment',
@@ -28,8 +30,8 @@ export default function CreateBudgetScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primary, C.violet]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primary, c.violet]} style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft size={24} color="#fff" />
@@ -41,28 +43,28 @@ export default function CreateBudgetScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Category Selection */}
-        <Text style={styles.label}>Category</Text>
+        <Text style={[styles.label, { color: c.primary }]}>Category</Text>
         <View style={styles.categoryGrid}>
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat}
-              style={[styles.categoryChip, category === cat && styles.categoryChipActive]}
+              style={[styles.categoryChip, { backgroundColor: c.primaryLight, borderColor: c.border }, category === cat && { backgroundColor: c.violet, borderColor: c.violet }]}
               onPress={() => setCategory(cat)}
             >
-              <Text style={[styles.categoryText, category === cat && styles.categoryTextActive]}>{cat}</Text>
+              <Text style={[styles.categoryText, { color: c.text }, category === cat && styles.categoryTextActive]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Budget Amount */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Budget Amount</Text>
-          <View style={styles.amountInput}>
-            <Text style={styles.currency}>₦</Text>
+          <Text style={[styles.label, { color: c.primary }]}>Budget Amount</Text>
+          <View style={[styles.amountInput, { backgroundColor: c.inputBg, borderColor: c.border }]}>
+            <Text style={[styles.currency, { color: c.primary }]}>₦</Text>
             <TextInput
-              style={styles.amountField}
+              style={[styles.amountField, { color: c.text }]}
               placeholder="0.00"
-              placeholderTextColor={C.textSub}
+              placeholderTextColor={c.textSub}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -72,15 +74,15 @@ export default function CreateBudgetScreen() {
 
         {/* Period */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Budget Period</Text>
+          <Text style={[styles.label, { color: c.primary }]}>Budget Period</Text>
           <View style={styles.periodRow}>
             {['weekly', 'monthly', 'yearly'].map((p) => (
               <TouchableOpacity
                 key={p}
-                style={[styles.periodBtn, period === p && styles.periodBtnActive]}
+                style={[styles.periodBtn, { backgroundColor: c.primaryLight, borderColor: c.border }, period === p && { backgroundColor: c.violet, borderColor: c.violet }]}
                 onPress={() => setPeriod(p)}
               >
-                <Text style={[styles.periodText, period === p && styles.periodTextActive]}>
+                <Text style={[styles.periodText, { color: c.text }, period === p && styles.periodTextActive]}>
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </Text>
               </TouchableOpacity>
@@ -90,28 +92,28 @@ export default function CreateBudgetScreen() {
 
         {/* Summary */}
         {category && amount ? (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Budget Summary</Text>
+          <View style={[styles.summaryCard, { backgroundColor: c.primaryLight, borderColor: c.border }]}>
+            <Text style={[styles.summaryTitle, { color: c.primary }]}>Budget Summary</Text>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Category</Text>
-              <Text style={styles.summaryValue}>{category}</Text>
+              <Text style={[styles.summaryLabel, { color: c.textSub }]}>Category</Text>
+              <Text style={[styles.summaryValue, { color: c.text }]}>{category}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Amount</Text>
-              <Text style={styles.summaryValue}>₦{parseInt(amount || '0').toLocaleString()}</Text>
+              <Text style={[styles.summaryLabel, { color: c.textSub }]}>Amount</Text>
+              <Text style={[styles.summaryValue, { color: c.text }]}>₦{parseInt(amount || '0').toLocaleString()}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Period</Text>
-              <Text style={styles.summaryValue}>{period}</Text>
+              <Text style={[styles.summaryLabel, { color: c.textSub }]}>Period</Text>
+              <Text style={[styles.summaryValue, { color: c.text }]}>{period}</Text>
             </View>
           </View>
         ) : null}
       </ScrollView>
 
       {/* Create Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: c.border }]}>
         <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.85}>
-          <LinearGradient colors={[C.violet, C.primary]} style={styles.createGradient}>
+          <LinearGradient colors={[c.violet, c.primary]} style={styles.createGradient}>
             <Plus size={20} color="#fff" />
             <Text style={styles.createText}>Create Budget</Text>
           </LinearGradient>
@@ -122,33 +124,31 @@ export default function CreateBudgetScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
   content: { paddingHorizontal: 20, paddingTop: 24 },
-  label: { fontSize: 14, fontWeight: '600', color: C.primary, marginBottom: 10 },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 10 },
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
-  categoryChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: C.primaryLight, borderWidth: 1, borderColor: C.border },
-  categoryChipActive: { backgroundColor: C.violet, borderColor: C.violet },
-  categoryText: { fontSize: 13, fontWeight: '500', color: C.text },
+  categoryChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1 },
+  categoryText: { fontSize: 13, fontWeight: '500' },
   categoryTextActive: { color: '#fff' },
   inputGroup: { marginBottom: 24 },
-  amountInput: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.inputBg, borderRadius: 16, paddingHorizontal: 20, paddingVertical: 16, borderWidth: 1, borderColor: C.border },
-  currency: { fontSize: 28, fontWeight: '800', color: C.primary, marginRight: 8 },
-  amountField: { flex: 1, fontSize: 28, fontWeight: '700', color: C.text },
+  amountInput: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, paddingHorizontal: 20, paddingVertical: 16, borderWidth: 1 },
+  currency: { fontSize: 28, fontWeight: '800', marginRight: 8 },
+  amountField: { flex: 1, fontSize: 28, fontWeight: '700' },
   periodRow: { flexDirection: 'row', gap: 8 },
-  periodBtn: { flex: 1, paddingVertical: 12, borderRadius: 14, backgroundColor: C.primaryLight, alignItems: 'center', borderWidth: 1, borderColor: C.border },
-  periodBtnActive: { backgroundColor: C.violet, borderColor: C.violet },
-  periodText: { fontSize: 14, fontWeight: '600', color: C.text },
+  periodBtn: { flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: 'center', borderWidth: 1 },
+  periodText: { fontSize: 14, fontWeight: '600' },
   periodTextActive: { color: '#fff' },
-  summaryCard: { backgroundColor: C.primaryLight, borderRadius: 18, padding: 20, borderWidth: 1, borderColor: C.border, gap: 12 },
-  summaryTitle: { fontSize: 16, fontWeight: '700', color: C.primary },
+  summaryCard: { borderRadius: 18, padding: 20, borderWidth: 1, gap: 12 },
+  summaryTitle: { fontSize: 16, fontWeight: '700' },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  summaryLabel: { fontSize: 13, color: C.textSub },
-  summaryValue: { fontSize: 14, fontWeight: '600', color: C.text },
-  footer: { paddingHorizontal: 20, paddingBottom: 34, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
+  summaryLabel: { fontSize: 13 },
+  summaryValue: { fontSize: 14, fontWeight: '600' },
+  footer: { paddingHorizontal: 20, paddingBottom: 34, paddingTop: 12, borderTopWidth: 1 },
   createBtn: { borderRadius: 16, overflow: 'hidden' },
   createGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
   createText: { fontSize: 16, fontWeight: '700', color: '#fff' },

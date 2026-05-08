@@ -1,13 +1,15 @@
-// app/settings/payment-methods/index.tsx - Payment Methods Settings Screen
+﻿// app/settings/payment-methods/index.tsx - Payment Methods Settings Screen
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, CreditCard, Building, Plus, Trash2, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const c = theme.colors;
 
   const cards = [
     { id: 1, type: 'Visa', last4: '1234', expiry: '12/26', isDefault: true },
@@ -27,13 +29,13 @@ export default function PaymentMethodsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Payment Methods</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Payment Methods</Text>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -42,28 +44,28 @@ export default function PaymentMethodsScreen() {
         {/* Cards */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Cards</Text>
+            <Text style={[styles.sectionTitle, { color: c.primary }]}>Cards</Text>
             <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/add-account' as any)}>
-              <Plus size={16} color={C.violet} />
-              <Text style={styles.addText}>Add Card</Text>
+              <Plus size={16} color={c.violet} />
+              <Text style={[styles.addText, { color: c.violet }]}>Add Card</Text>
             </TouchableOpacity>
           </View>
           {cards.map((card) => (
-            <View key={card.id} style={styles.methodCard}>
-              <View style={styles.cardIcon}>
-                <CreditCard size={22} color={C.violet} />
+            <View key={card.id} style={[styles.methodCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+              <View style={[styles.cardIcon, { backgroundColor: c.primaryLight }]}>
+                <CreditCard size={22} color={c.violet} />
               </View>
               <View style={styles.methodInfo}>
-                <Text style={styles.methodTitle}>{card.type} •••• {card.last4}</Text>
-                <Text style={styles.methodSub}>Expires {card.expiry}</Text>
+                <Text style={[styles.methodTitle, { color: c.text }]}>{card.type} •••• {card.last4}</Text>
+                <Text style={[styles.methodSub, { color: c.textSub }]}>Expires {card.expiry}</Text>
               </View>
               {card.isDefault && (
-                <View style={styles.defaultBadge}>
-                  <Text style={styles.defaultText}>Default</Text>
+                <View style={[styles.defaultBadge, { backgroundColor: c.mint + '20' }]}>
+                  <Text style={[styles.defaultText, { color: c.mint }]}>Default</Text>
                 </View>
               )}
               <TouchableOpacity onPress={() => handleDelete('card', card.id)} style={styles.deleteBtn}>
-                <Trash2 size={16} color={C.error} />
+                <Trash2 size={16} color={c.error} />
               </TouchableOpacity>
             </View>
           ))}
@@ -72,28 +74,28 @@ export default function PaymentMethodsScreen() {
         {/* Bank Accounts */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Bank Accounts</Text>
+            <Text style={[styles.sectionTitle, { color: c.primary }]}>Bank Accounts</Text>
             <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/add-account' as any)}>
-              <Plus size={16} color={C.violet} />
-              <Text style={styles.addText}>Add Account</Text>
+              <Plus size={16} color={c.violet} />
+              <Text style={[styles.addText, { color: c.violet }]}>Add Account</Text>
             </TouchableOpacity>
           </View>
           {bankAccounts.map((account) => (
-            <View key={account.id} style={styles.methodCard}>
-              <View style={styles.bankIcon}>
-                <Building size={22} color={C.blue} />
+            <View key={account.id} style={[styles.methodCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+              <View style={[styles.bankIcon, { backgroundColor: c.blue + '15' }]}>
+                <Building size={22} color={c.blue} />
               </View>
               <View style={styles.methodInfo}>
-                <Text style={styles.methodTitle}>{account.bank}</Text>
-                <Text style={styles.methodSub}>{account.name} • {account.account}</Text>
+                <Text style={[styles.methodTitle, { color: c.text }]}>{account.bank}</Text>
+                <Text style={[styles.methodSub, { color: c.textSub }]}>{account.name} • {account.account}</Text>
               </View>
               {account.isDefault && (
-                <View style={styles.defaultBadge}>
-                  <Text style={styles.defaultText}>Default</Text>
+                <View style={[styles.defaultBadge, { backgroundColor: c.mint + '20' }]}>
+                  <Text style={[styles.defaultText, { color: c.mint }]}>Default</Text>
                 </View>
               )}
               <TouchableOpacity onPress={() => handleDelete('account', account.id)} style={styles.deleteBtn}>
-                <Trash2 size={16} color={C.error} />
+                <Trash2 size={16} color={c.error} />
               </TouchableOpacity>
             </View>
           ))}
@@ -104,24 +106,24 @@ export default function PaymentMethodsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
   section: { marginBottom: 28 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
+  sectionTitle: { fontSize: 18, fontWeight: '700' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  addText: { fontSize: 13, fontWeight: '600', color: C.violet },
-  methodCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border, marginBottom: 10 },
-  cardIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
-  bankIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: C.blue + '15', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  addText: { fontSize: 13, fontWeight: '600' },
+  methodCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 10 },
+  cardIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  bankIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   methodInfo: { flex: 1 },
-  methodTitle: { fontSize: 15, fontWeight: '600', color: C.text },
-  methodSub: { fontSize: 12, color: C.textSub, marginTop: 2 },
-  defaultBadge: { backgroundColor: C.mint + '20', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 8 },
-  defaultText: { fontSize: 10, fontWeight: '600', color: C.mint },
+  methodTitle: { fontSize: 15, fontWeight: '600' },
+  methodSub: { fontSize: 12, marginTop: 2 },
+  defaultBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 8 },
+  defaultText: { fontSize: 10, fontWeight: '600' },
   deleteBtn: { padding: 8 },
 });

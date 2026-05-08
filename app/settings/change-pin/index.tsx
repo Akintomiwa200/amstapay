@@ -1,4 +1,4 @@
-// app/settings/change-pin.tsx
+﻿// app/settings/change-pin.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -11,10 +11,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Shield, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function ChangePin() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const c = theme.colors;
   const [step, setStep] = useState(1);
   const [oldPin, setOldPin] = useState('');
   const [newPin, setNewPin] = useState('');
@@ -37,9 +39,14 @@ export default function ChangePin() {
   const renderPinInput = (value: string, onChange: (v: string) => void, placeholder: string) => (
     <View style={styles.pinContainer}>
       {[0, 1, 2, 3].map((i) => (
-        <View key={i} style={[styles.pinBox, value.length > i && styles.pinBoxFilled]}>
+        <View key={i} style={[
+          styles.pinBox,
+          value.length > i && styles.pinBoxFilled,
+          { borderColor: value.length > i ? c.violet : c.border },
+          value.length > i && { backgroundColor: c.primaryLight }
+        ]}>
           {value.length > i && (
-            <View style={styles.pinDot} />
+            <View style={[styles.pinDot, { backgroundColor: c.violet }]} />
           )}
         </View>
       ))}
@@ -55,26 +62,26 @@ export default function ChangePin() {
   );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Change PIN</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Change PIN</Text>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
       <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Shield size={48} color={C.violet} />
+        <View style={[styles.iconContainer, { backgroundColor: c.primaryLight }]}>
+          <Shield size={48} color={c.violet} />
         </View>
 
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: c.primary }]}>
           {step === 1 ? 'Enter Current PIN' : 'Create New PIN'}
         </Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: c.textSub }]}>
           {step === 1 
             ? 'Please enter your current 4-digit transaction PIN' 
             : 'Create a new 4-digit PIN for transactions'}
@@ -92,7 +99,7 @@ export default function ChangePin() {
             else if (step === 3) handleChangePin();
           }}
         >
-          <LinearGradient colors={[C.mint, C.blue, C.violet]} style={styles.buttonGradient}>
+          <LinearGradient colors={[c.mint, c.blue, c.violet]} style={styles.buttonGradient}>
             <Text style={styles.buttonText}>
               {step === 3 ? 'Confirm' : 'Continue'}
             </Text>
@@ -104,19 +111,19 @@ export default function ChangePin() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 40, alignItems: 'center' },
-  iconContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
-  title: { fontSize: 22, fontWeight: '700', color: C.primary, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: C.textSub, textAlign: 'center', marginBottom: 40 },
+  iconContainer: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  title: { fontSize: 22, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 14, textAlign: 'center', marginBottom: 40 },
   pinContainer: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 40, position: 'relative' },
-  pinBox: { width: 60, height: 60, borderRadius: 12, borderWidth: 2, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
-  pinBoxFilled: { borderColor: C.violet, backgroundColor: C.primaryLight },
-  pinDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: C.violet },
+  pinBox: { width: 60, height: 60, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  pinBoxFilled: {},
+  pinDot: { width: 12, height: 12, borderRadius: 6 },
   hiddenInput: { position: 'absolute', opacity: 0, width: '100%', height: '100%' },
   button: { width: '100%', borderRadius: 14, overflow: 'hidden' },
   buttonGradient: { paddingVertical: 16, alignItems: 'center' },

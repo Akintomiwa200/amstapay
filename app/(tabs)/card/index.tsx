@@ -1,12 +1,14 @@
-// app/card/index.tsx
+﻿// app/card/index.tsx
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CreditCard, Clock, Bell, Plus, Shield, Zap, Globe } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 const Cards = () => {
+  const { theme } = useTheme();
+  const c = theme.colors;
   const router = useRouter();
 
   const features = [
@@ -16,11 +18,11 @@ const Cards = () => {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header with Gradient */}
         <LinearGradient
-          colors={[C.primary, C.violet]}
+          colors={[c.primary, c.violet]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.header}
@@ -30,20 +32,20 @@ const Cards = () => {
         </LinearGradient>
 
         {/* Main Content Area with White Background */}
-        <View style={styles.contentArea}>
+        <View style={[styles.contentArea, { backgroundColor: c.bg }]}>
           {/* Card Preview - Now on white background */}
           <View style={styles.cardPreviewContainer}>
             <LinearGradient
-              colors={[C.primary, C.violet]}
+              colors={[c.primary, c.violet]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.cardPreview}
+              style={[styles.cardPreview, { shadowColor: c.primary }]}
             >
               <View style={styles.cardHeader}>
                 <CreditCard size={28} color="#fff" />
                 <Text style={styles.cardType}>Debit Card</Text>
               </View>
-              <Text style={styles.cardNumber}>•••• •••• •••• 2024</Text>
+              <Text style={styles.cardNumber}>â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ 2024</Text>
               <View style={styles.cardFooter}>
                 <View>
                   <Text style={styles.cardLabel}>Card Holder</Text>
@@ -57,7 +59,7 @@ const Cards = () => {
             </LinearGradient>
             
             {/* Coming Soon Badge */}
-            <View style={styles.comingSoonBadge}>
+            <View style={[styles.comingSoonBadge, { backgroundColor: c.warning }]}>
               <Clock size={16} color="#fff" />
               <Text style={styles.comingSoonText}>Coming Soon</Text>
             </View>
@@ -65,9 +67,9 @@ const Cards = () => {
 
           {/* Content */}
           <View style={styles.content}>
-            <Text style={styles.title}>Virtual & Physical Cards</Text>
+            <Text style={[styles.title, { color: c.primary }]}>Virtual & Physical Cards</Text>
             
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: c.textSub }]}>
               Get ready to experience seamless payments with AmstaPay cards
             </Text>
 
@@ -76,47 +78,47 @@ const Cards = () => {
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <View key={index} style={styles.featureCard}>
-                    <View style={[styles.featureIcon, { backgroundColor: `${C.violet}15` }]}>
-                      <Icon size={24} color={C.violet} />
+                  <View key={index} style={[styles.featureCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+                    <View style={[styles.featureIcon, { backgroundColor: `${c.violet}15` }]}>
+                      <Icon size={24} color={c.violet} />
                     </View>
-                    <Text style={styles.featureTitle}>{feature.title}</Text>
-                    <Text style={styles.featureDescription}>{feature.description}</Text>
+                    <Text style={[styles.featureTitle, { color: c.text }]}>{feature.title}</Text>
+                    <Text style={[styles.featureDescription, { color: c.textSub }]}>{feature.description}</Text>
                   </View>
                 );
               })}
             </View>
 
             {/* Benefits List */}
-            <View style={styles.benefitsContainer}>
-              <Text style={styles.benefitsTitle}>What you'll get:</Text>
+            <View style={[styles.benefitsContainer, { backgroundColor: c.primaryLight }]}>
+              <Text style={[styles.benefitsTitle, { color: c.primary }]}>What you'll get:</Text>
               
               <View style={styles.benefitItem}>
-                <View style={styles.benefitDot} />
-                <Text style={styles.benefitText}>Instant virtual card upon request</Text>
+                <View style={[styles.benefitDot, { backgroundColor: c.violet }]} />
+                <Text style={[styles.benefitText, { color: c.text }]}>Instant virtual card upon request</Text>
               </View>
               <View style={styles.benefitItem}>
-                <View style={styles.benefitDot} />
-                <Text style={styles.benefitText}>Physical card delivered to your doorstep</Text>
+                <View style={[styles.benefitDot, { backgroundColor: c.violet }]} />
+                <Text style={[styles.benefitText, { color: c.text }]}>Physical card delivered to your doorstep</Text>
               </View>
               <View style={styles.benefitItem}>
-                <View style={styles.benefitDot} />
-                <Text style={styles.benefitText}>No annual fees for the first year</Text>
+                <View style={[styles.benefitDot, { backgroundColor: c.violet }]} />
+                <Text style={[styles.benefitText, { color: c.text }]}>No annual fees for the first year</Text>
               </View>
               <View style={styles.benefitItem}>
-                <View style={styles.benefitDot} />
-                <Text style={styles.benefitText}>Up to 2% cashback on all purchases</Text>
+                <View style={[styles.benefitDot, { backgroundColor: c.violet }]} />
+                <Text style={[styles.benefitText, { color: c.text }]}>Up to 2% cashback on all purchases</Text>
               </View>
               <View style={styles.benefitItem}>
-                <View style={styles.benefitDot} />
-                <Text style={styles.benefitText}>Free ATM withdrawals (first 3 monthly)</Text>
+                <View style={[styles.benefitDot, { backgroundColor: c.violet }]} />
+                <Text style={[styles.benefitText, { color: c.text }]}>Free ATM withdrawals (first 3 monthly)</Text>
               </View>
             </View>
 
             {/* Notify Button */}
             <TouchableOpacity style={styles.notifyButton}>
               <LinearGradient
-                colors={[C.mint, C.blue, C.violet, C.pink]}
+                colors={[c.mint, c.blue, c.violet, c.pink]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.notifyGradient}
@@ -127,7 +129,7 @@ const Cards = () => {
             </TouchableOpacity>
 
             {/* Footer Note */}
-            <Text style={styles.footerNote}>
+            <Text style={[styles.footerNote, { color: c.textSub }]}>
               Cards are issued in partnership with licensed financial institutions
             </Text>
           </View>
@@ -142,7 +144,6 @@ export default Cards;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
   },
   scrollContent: {
     paddingBottom: 40,
@@ -164,7 +165,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
   },
   contentArea: {
-    backgroundColor: C.bg,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     marginTop: -20,
@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 20,
     padding: 20,
-    shadowColor: C.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
@@ -226,7 +225,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: C.warning,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -247,14 +245,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: C.primary,
     letterSpacing: -0.5,
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 15,
-    color: C.textSub,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 22,
@@ -268,12 +264,10 @@ const styles = StyleSheet.create({
   featureCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: C.bg,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: C.border,
   },
   featureIcon: {
     width: 56,
@@ -286,18 +280,15 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.text,
     marginBottom: 6,
     textAlign: 'center',
   },
   featureDescription: {
     fontSize: 11,
-    color: C.textSub,
     textAlign: 'center',
     lineHeight: 15,
   },
   benefitsContainer: {
-    backgroundColor: C.primaryLight,
     borderRadius: 20,
     padding: 20,
     marginBottom: 32,
@@ -305,7 +296,6 @@ const styles = StyleSheet.create({
   benefitsTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.primary,
     marginBottom: 16,
   },
   benefitItem: {
@@ -317,12 +307,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: C.violet,
     marginRight: 12,
   },
   benefitText: {
     fontSize: 14,
-    color: C.text,
   },
   notifyButton: {
     borderRadius: 14,
@@ -343,7 +331,6 @@ const styles = StyleSheet.create({
   },
   footerNote: {
     fontSize: 11,
-    color: C.textSub,
     textAlign: 'center',
     lineHeight: 16,
   },

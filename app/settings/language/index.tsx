@@ -1,4 +1,4 @@
-// app/settings/language.tsx
+﻿// app/settings/language.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -10,10 +10,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Check, Globe } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function LanguageSettings() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const c = theme.colors;
   const [selectedLanguage, setSelectedLanguage] = useState('en');
 
   const languages = [
@@ -27,28 +29,27 @@ export default function LanguageSettings() {
 
   const handleSelect = (code: string) => {
     setSelectedLanguage(code);
-    // Save language preference
     setTimeout(() => {
       router.back();
     }, 500);
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Language</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Language</Text>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content}>
-        <View style={styles.infoCard}>
-          <Globe size={24} color={C.violet} />
-          <Text style={styles.infoText}>
+        <View style={[styles.infoCard, { backgroundColor: c.primaryLight }]}>
+          <Globe size={24} color={c.violet} />
+          <Text style={[styles.infoText, { color: c.textSub }]}>
             Choose your preferred language for the app interface
           </Text>
         </View>
@@ -56,15 +57,15 @@ export default function LanguageSettings() {
         {languages.map((lang) => (
           <TouchableOpacity
             key={lang.code}
-            style={styles.languageItem}
+            style={[styles.languageItem, { borderBottomColor: c.border }]}
             onPress={() => handleSelect(lang.code)}
           >
             <View>
-              <Text style={styles.languageName}>{lang.name}</Text>
-              <Text style={styles.languageNative}>{lang.nativeName}</Text>
+              <Text style={[styles.languageName, { color: c.text }]}>{lang.name}</Text>
+              <Text style={[styles.languageNative, { color: c.textSub }]}>{lang.nativeName}</Text>
             </View>
             {selectedLanguage === lang.code && (
-              <View style={styles.checkCircle}>
+              <View style={[styles.checkCircle, { backgroundColor: c.violet }]}>
                 <Check size={16} color="#fff" />
               </View>
             )}
@@ -76,16 +77,16 @@ export default function LanguageSettings() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
-  infoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.primaryLight, padding: 16, borderRadius: 16, marginBottom: 24 },
-  infoText: { flex: 1, fontSize: 13, color: C.textSub, lineHeight: 18 },
-  languageItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
-  languageName: { fontSize: 16, fontWeight: '500', color: C.text, marginBottom: 4 },
-  languageNative: { fontSize: 13, color: C.textSub },
-  checkCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: C.violet, alignItems: 'center', justifyContent: 'center' },
+  infoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, marginBottom: 24 },
+  infoText: { flex: 1, fontSize: 13, lineHeight: 18 },
+  languageItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
+  languageName: { fontSize: 16, fontWeight: '500', marginBottom: 4 },
+  languageNative: { fontSize: 13 },
+  checkCircle: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

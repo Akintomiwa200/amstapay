@@ -1,37 +1,22 @@
-import { apiRequest } from './api';
+import { apiClient } from '@/lib/api';
+import { ENDPOINTS } from '@/lib/endpoints';
+import type { Transaction } from '@/lib/models';
+import { PAGINATION } from '@/lib/constants';
 
-export interface Transaction {
-  _id: string;
-  sender: string;
-  receiverName: string;
-  receiverAccountNumber: string;
-  receiverBank: string;
-  amount: number;
-  type: string;
-  qrData?: string;
-  reference?: string;
-  merchantId?: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
-}
+export const transactionService = {
+  getAll(page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.DEFAULT_LIMIT) {
+    return apiClient.get<Transaction[]>(ENDPOINTS.TRANSACTIONS.ALL, { page, limit });
+  },
 
-export const getTransactions = async (token: string): Promise<Transaction[]> => {
-  return apiRequest('/transactions', {}, token);
-};
+  getById(id: string) {
+    return apiClient.get<Transaction>(ENDPOINTS.TRANSACTIONS.BY_ID(id));
+  },
 
-export const getTransaction = async (id: string, token: string): Promise<Transaction> => {
-  return apiRequest(`/transactions/${id}`, {}, token);
-};
+  create(data: Partial<Transaction>) {
+    return apiClient.post<Transaction>(ENDPOINTS.TRANSACTIONS.CREATE, data);
+  },
 
-export const updateTransactionStatus = async (
-  id: string,
-  status: string,
-  token: string
-) => {
-  return apiRequest(`/transactions/${id}/status`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status }),
-  }, token);
+  updateStatus(id: string, status: string) {
+    return apiClient.patch<Transaction>(ENDPOINTS.TRANSACTIONS.STATUS(id), { status });
+  },
 };

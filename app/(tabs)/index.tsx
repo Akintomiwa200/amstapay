@@ -1,8 +1,4 @@
-import BalanceCard from '@/components/dashboardComponent/BalanceCard';
-import BonusSection from '@/components/dashboardComponent/BonusSection';
-import Header from "@/components/dashboardComponent/Header";
-import QuickActions from '@/components/dashboardComponent/QuickAction';
-import ServicesGrid from '@/components/dashboardComponent/ServicesGrid';
+import { BalanceCard, BonusSection, Header, QuickActions, ServicesGrid } from '@/components/dashboard';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 

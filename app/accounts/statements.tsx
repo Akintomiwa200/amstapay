@@ -1,14 +1,16 @@
-// app/accounts/statements.tsx - Account Statements Screen
+﻿// app/accounts/statements.tsx - Account Statements Screen
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Download, Filter, ArrowDownRight, ArrowUpRight, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function StatementsScreen() {
   const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState('March 2024');
+  const { theme } = useTheme();
+  const c = theme.colors;
 
   const statements = [
     { id: 1, type: 'Salary Deposit', amount: '+₦250,000', date: 'Mar 28', category: 'income', balance: '₦485,300' },
@@ -21,8 +23,8 @@ export default function StatementsScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primary, C.violet]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primary, c.violet]} style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft size={24} color="#fff" />
@@ -42,12 +44,12 @@ export default function StatementsScreen() {
         {/* Summary */}
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <ArrowDownRight size={16} color={C.mint} />
+            <ArrowDownRight size={16} color={c.mint} />
             <Text style={styles.summaryLabel}>Income</Text>
             <Text style={styles.summaryValue}>+₦338,200</Text>
           </View>
           <View style={styles.summaryCard}>
-            <ArrowUpRight size={16} color={C.pink} />
+            <ArrowUpRight size={16} color={c.pink} />
             <Text style={styles.summaryLabel}>Expense</Text>
             <Text style={styles.summaryValue}>-₦82,500</Text>
           </View>
@@ -55,32 +57,32 @@ export default function StatementsScreen() {
       </LinearGradient>
 
       {/* Filter Bar */}
-      <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterBtn}>
-          <Filter size={16} color={C.violet} />
-          <Text style={styles.filterText}>Filter</Text>
+      <View style={[styles.filterBar, { borderBottomColor: c.border }]}>
+        <TouchableOpacity style={[styles.filterBtn, { backgroundColor: c.primaryLight }]}>
+          <Filter size={16} color={c.violet} />
+          <Text style={[styles.filterText, { color: c.violet }]}>Filter</Text>
         </TouchableOpacity>
-        <Text style={styles.resultCount}>{statements.length} transactions</Text>
+        <Text style={[styles.resultCount, { color: c.textSub }]}>{statements.length} transactions</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {statements.map((item) => (
-          <View key={item.id} style={styles.statementRow}>
-            <View style={[styles.typeIcon, item.category === 'income' ? styles.incomeBg : styles.expenseBg]}>
+          <View key={item.id} style={[styles.statementRow, { borderBottomColor: c.border }]}>
+            <View style={[styles.typeIcon, item.category === 'income' ? { backgroundColor: c.success } : { backgroundColor: c.error }]}>
               {item.category === 'income' ?
                 <ArrowDownRight size={16} color="#fff" /> :
                 <ArrowUpRight size={16} color="#fff" />
               }
             </View>
             <View style={styles.statementInfo}>
-              <Text style={styles.statementType}>{item.type}</Text>
-              <Text style={styles.statementDate}>{item.date}</Text>
+              <Text style={[styles.statementType, { color: c.text }]}>{item.type}</Text>
+              <Text style={[styles.statementDate, { color: c.textSub }]}>{item.date}</Text>
             </View>
             <View style={styles.statementRight}>
-              <Text style={[styles.statementAmount, item.category === 'income' ? styles.income : styles.expense]}>
+              <Text style={[styles.statementAmount, item.category === 'income' ? { color: c.success } : { color: c.error }]}>
                 {item.amount}
               </Text>
-              <Text style={styles.statementBalance}>Bal: {item.balance}</Text>
+              <Text style={[styles.statementBalance, { color: c.textSub }]}>Bal: {item.balance}</Text>
             </View>
           </View>
         ))}
@@ -90,7 +92,7 @@ export default function StatementsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
@@ -102,21 +104,17 @@ const styles = StyleSheet.create({
   summaryCard: { flex: 1, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 12, gap: 4 },
   summaryLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
   summaryValue: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  filterBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
-  filterBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryLight, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
-  filterText: { fontSize: 13, fontWeight: '600', color: C.violet },
-  resultCount: { fontSize: 13, color: C.textSub },
+  filterBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1 },
+  filterBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  filterText: { fontSize: 13, fontWeight: '600' },
+  resultCount: { fontSize: 13 },
   content: { paddingHorizontal: 20 },
-  statementRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
+  statementRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
   typeIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  incomeBg: { backgroundColor: C.success },
-  expenseBg: { backgroundColor: C.error },
   statementInfo: { flex: 1 },
-  statementType: { fontSize: 14, fontWeight: '600', color: C.text },
-  statementDate: { fontSize: 12, color: C.textSub, marginTop: 2 },
+  statementType: { fontSize: 14, fontWeight: '600' },
+  statementDate: { fontSize: 12, marginTop: 2 },
   statementRight: { alignItems: 'flex-end' },
   statementAmount: { fontSize: 14, fontWeight: '700' },
-  income: { color: C.success },
-  expense: { color: C.error },
-  statementBalance: { fontSize: 11, color: C.textSub, marginTop: 2 },
+  statementBalance: { fontSize: 11, marginTop: 2 },
 });

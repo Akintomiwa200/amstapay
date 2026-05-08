@@ -1,4 +1,4 @@
-// app/settings/profile.tsx
+﻿// app/settings/profile.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -14,11 +14,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Camera, User, Mail, Phone, MapPin, Save } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import { C } from '@/components/dashboardComponent/colors';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function ProfileSettings() {
   const router = useRouter();
   const { user, updateProfile, refreshUser } = useAuth();
+  const { theme } = useTheme();
+  const c = theme.colors;
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     fullName: '',
@@ -78,18 +80,18 @@ export default function ProfileSettings() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[C.primaryLight, C.bg]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <LinearGradient colors={[c.primaryLight, c.bg]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={C.primary} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
+            <ChevronLeft size={24} color={c.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile Information</Text>
+          <Text style={[styles.headerTitle, { color: c.primary }]}>Profile Information</Text>
           <TouchableOpacity onPress={handleSave} style={styles.saveBtn} disabled={loading}>
             {loading ? (
-              <ActivityIndicator size="small" color={C.violet} />
+              <ActivityIndicator size="small" color={c.violet} />
             ) : (
-              <Save size={22} color={C.violet} />
+              <Save size={22} color={c.violet} />
             )}
           </TouchableOpacity>
         </View>
@@ -100,37 +102,37 @@ export default function ProfileSettings() {
           <View style={[styles.avatarContainer, { backgroundColor: getAvatarColor(form.fullName || 'Guest') }]}>
             <Text style={styles.avatarText}>{getInitials(form.fullName || 'Guest')}</Text>
           </View>
-          <TouchableOpacity style={styles.avatarBtn}>
+          <TouchableOpacity style={[styles.avatarBtn, { backgroundColor: c.violet, borderColor: c.bg }]}>
             <Camera size={18} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.avatarLabel}>Change Photo</Text>
+          <Text style={[styles.avatarLabel, { color: c.violet }]}>Change Photo</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <View style={styles.inputWrapper}>
-              <User size={18} color={C.violet} />
+            <Text style={[styles.label, { color: c.primary }]}>Full Name</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: c.inputBg, borderColor: c.border }]}>
+              <User size={18} color={c.violet} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: c.text }]}
                 value={form.fullName}
                 onChangeText={(v) => setForm({ ...form, fullName: v })}
                 placeholder="Enter your full name"
-                placeholderTextColor={C.textSub}
+                placeholderTextColor={c.textSub}
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color={C.violet} />
+            <Text style={[styles.label, { color: c.primary }]}>Email Address</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: c.inputBg, borderColor: c.border }]}>
+              <Mail size={18} color={c.violet} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: c.text }]}
                 value={form.email}
                 onChangeText={(v) => setForm({ ...form, email: v })}
                 placeholder="Enter your email"
-                placeholderTextColor={C.textSub}
+                placeholderTextColor={c.textSub}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -138,30 +140,30 @@ export default function ProfileSettings() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <View style={styles.inputWrapper}>
-              <Phone size={18} color={C.violet} />
+            <Text style={[styles.label, { color: c.primary }]}>Phone Number</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: c.inputBg, borderColor: c.border }]}>
+              <Phone size={18} color={c.violet} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: c.text }]}
                 value={form.phone}
                 onChangeText={(v) => setForm({ ...form, phone: v })}
                 placeholder="Enter your phone number"
-                placeholderTextColor={C.textSub}
+                placeholderTextColor={c.textSub}
                 keyboardType="phone-pad"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <View style={[styles.inputWrapper, styles.inputWrapperMultiline]}>
-              <MapPin size={18} color={C.violet} style={styles.inputIcon} />
+            <Text style={[styles.label, { color: c.primary }]}>Address</Text>
+            <View style={[styles.inputWrapper, styles.inputWrapperMultiline, { backgroundColor: c.inputBg, borderColor: c.border }]}>
+              <MapPin size={18} color={c.violet} style={styles.inputIcon} />
               <TextInput
-                style={[styles.input, styles.inputMultiline]}
+                style={[styles.input, styles.inputMultiline, { color: c.text }]}
                 value={form.address}
                 onChangeText={(v) => setForm({ ...form, address: v })}
                 placeholder="Enter your address"
-                placeholderTextColor={C.textSub}
+                placeholderTextColor={c.textSub}
                 multiline
                 numberOfLines={3}
               />
@@ -174,24 +176,24 @@ export default function ProfileSettings() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: C.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
   saveBtn: { padding: 8, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingTop: 20 },
   avatarSection: { alignItems: 'center', marginBottom: 32, position: 'relative' },
   avatarContainer: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
-  avatarBtn: { position: 'absolute', top: 70, right: '35%', backgroundColor: C.violet, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: C.bg },
-  avatarLabel: { fontSize: 14, color: C.violet, fontWeight: '500' },
+  avatarBtn: { position: 'absolute', top: 70, right: '35%', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3 },
+  avatarLabel: { fontSize: 14, fontWeight: '500' },
   form: { gap: 20 },
   inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: '600', color: C.primary },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.inputBg, borderRadius: 14, paddingHorizontal: 14, gap: 10, borderWidth: 1, borderColor: C.border },
+  label: { fontSize: 14, fontWeight: '600' },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 14, gap: 10, borderWidth: 1 },
   inputWrapperMultiline: { alignItems: 'flex-start', paddingVertical: 14 },
   inputIcon: { marginTop: 2 },
-  input: { flex: 1, fontSize: 15, color: C.text, paddingVertical: 0 },
+  input: { flex: 1, fontSize: 15, paddingVertical: 0 },
   inputMultiline: { height: 80, textAlignVertical: 'top' },
 });
