@@ -456,7 +456,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ```
 MIT License
 
-Copyright (c) 2024 Amstapay
+Copyright (c) 2026 Blupay
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -483,9 +483,3 @@ copies or substantial portions of the Software.
 **Built with ❤️ by the Amstapay Team**
 
 [Website](https://amstapay.com) • [Documentation](https://docs.amstapay.com) • [Support](mailto:support@amstapay.com)
-
-<<<<<<< HEAD
-</div>
-=======
-</div>
->>>>>>> 8fbe546ad7c51c49b95217ce87c27fb4c46dba91
