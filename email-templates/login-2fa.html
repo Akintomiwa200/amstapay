@@ -1,0 +1,19 @@
+<h2 style="margin:0 0 16px;font-size:22px;color:#1f2937;font-weight:700">Confirm Your Login</h2>
+<p style="margin:0 0 16px;font-size:15px;color:#4b5563;line-height:1.6">Hi <strong>{{name}}</strong>,</p>
+<p style="margin:0 0 16px;font-size:15px;color:#4b5563;line-height:1.6">We detected a login attempt on your AmstaPay account. Use the code below to confirm it's you:</p>
+
+<div style="background:#fef2f2;border-radius:12px;padding:20px;text-align:center;margin:0 0 20px;border:1px solid #fecaca">
+  <p style="margin:0 0 8px;font-size:13px;color:#dc2626;font-weight:500">One-Time Login Code</p>
+  <p style="margin:0;font-size:36px;font-weight:800;color:#dc2626;letter-spacing:8px;font-family:monospace">{{code}}</p>
+  <p style="margin:12px 0 0;font-size:12px;color:#9ca3af">This code expires in 10 minutes</p>
+</div>
+
+<div style="background:#f9fafb;border-radius:12px;padding:16px;margin:0 0 20px;border:1px solid #e5e7eb">
+  <p style="margin:0 0 4px;font-size:13px;color:#6b7280">Device: <strong style="color:#1f2937">{{device}}</strong></p>
+  <p style="margin:0;font-size:13px;color:#6b7280">Location: <strong style="color:#1f2937">{{location}}</strong></p>
+</div>
+
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:1.5">If you did not attempt to log in, please secure your account immediately:</p>
+<p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.5">
+  <a href="{{resetPasswordLink}}" style="color:#6C5CE7;text-decoration:none;font-weight:500">Reset Password</a>
+</p>

@@ -221,7 +221,7 @@ const OnboardingCarousel = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity activeOpacity={0.85} onPress={handleNext} style={styles.buttonOuter}>
           <LinearGradient
-            colors={c.gradientSplash}
+            colors={c.gradientSplash as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.button}

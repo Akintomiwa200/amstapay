@@ -449,7 +449,8 @@ const Me = () => {
                         <ChevronRight size={18} color={c.textSub} />
                       )}
                     </TouchableOpacity>
-                  ))}
+                  );
+                })}
                   <TouchableOpacity
                     style={[styles.seeAllButton, { backgroundColor: c.primaryLight }]}
                     onPress={() => navigateTo("/rewards")}

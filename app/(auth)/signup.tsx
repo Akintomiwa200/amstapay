@@ -1,6 +1,7 @@
 // signup.tsx - Minimal 2-step signup flow
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { emailService } from "@/services/email";
 import {
   Text,
   TextInput,
@@ -448,6 +449,11 @@ export default function SignupScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Signup failed");
+      emailService.send(email.trim(), 'welcome-verify', {
+        name: fullName.trim(),
+        code: data.verificationCode || '',
+        verifyLink: `${API_BASE_URL}/auth/verify?email=${encodeURIComponent(email.trim())}&code=${data.verificationCode || ''}`,
+      });
       setSuccess(true);
     } catch (err: any) {
       Alert.alert("Error", err.message || "Something went wrong");

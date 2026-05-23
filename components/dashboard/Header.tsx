@@ -1,11 +1,11 @@
 // components/dashboard/Header.tsx
-import { useRouter } from 'expo-router';
-import { Bell, HelpCircle, User, Wallet, Shield, Award, CheckCircle } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Award, Bell, CheckCircle, HelpCircle } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const Header = () => {
   const { user, token, loading } = useAuth();
@@ -17,13 +17,12 @@ const Header = () => {
   
   const fullName =
     user?.fullName ||
-    user?.name ||
     (user?.email ? user.email.split("@")[0] : null) ||
     user?.phoneNumber ||
     "Valued Customer";
   const firstName = fullName.split(' ')[0] || "User";
   const userInitial = firstName.charAt(0).toUpperCase();
-  const accountNumber = user?.amstapayAccountNumber || user?.accountNumber || "N/A";
+  const accountNumber = user?.blupayAccountNumber || user?.accountNumber || "N/A";
   const kycLevel = user?.kycLevel || 0;
   const isVerified = user?.isVerified || false;
   const accountType = user?.accountType || "personal";

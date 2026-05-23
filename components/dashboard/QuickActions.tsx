@@ -49,7 +49,7 @@ const QuickActions = () => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={action.gradient}
+              colors={action.gradient as any}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.iconContainer}

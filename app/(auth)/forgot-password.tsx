@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { API_BASE_URL } from "@/lib/constants";
+import { emailService } from "@/services/email";
 
 function GradientButton({
   label,
@@ -78,7 +79,7 @@ export default function ForgotPasswordScreen() {
   const { theme } = useTheme();
   const c = theme.colors;
   const router = useRouter();
-  const { resetPassword } = useAuth();
+  const {} = useAuth();
   const [step, setStep] = useState<"request" | "reset" | "success">("request");
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
@@ -117,6 +118,10 @@ export default function ForgotPasswordScreen() {
 
       setSuccessMsg(data.message || "Reset code sent to your email/phone");
       setStep("reset");
+      emailService.send(email.trim(), 'forgot-password', {
+        name: email.trim().split('@')[0],
+        code: data.resetCode || '',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -155,6 +160,10 @@ export default function ForgotPasswordScreen() {
       }
 
       setStep("success");
+      emailService.send(email.trim(), 'password-changed', {
+        name: email.trim().split('@')[0],
+        time: new Date().toLocaleString(),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

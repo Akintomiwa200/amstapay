@@ -1,31 +1,31 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  TextInput, 
-  SafeAreaView,
-  StatusBar,
-  Alert
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { walletService } from '@/services/wallet';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 export default function ConfirmTransactionScreen() {
   const { recipient, amount, reference, type } = useLocalSearchParams();
   const router = useRouter();
-  
+  const { user } = useAuth();
+
   const [pinOrPassword, setPinOrPassword] = useState('');
   const [accountNumber, setAccountNumber] = useState(recipient as string || '');
   const [paymentAmount, setPaymentAmount] = useState(amount as string || '');
- 
-  const handleProviderSelect = (provider: any) => {
-    setSelectedProvider(provider.name);
-    setShowProviders(false);
-  };
+  const [loading, setLoading] = useState(false);
 
-  const handleProceedToPay = () => {
+  const handleProceedToPay = async () => {
     if (!accountNumber) {
       Alert.alert('Error', 'Please enter account or phone number');
       return;
@@ -39,21 +39,33 @@ export default function ConfirmTransactionScreen() {
       return;
     }
 
-    // Process payment logic here
-    Alert.alert(
-      'Payment Confirmation', 
-      `Proceeding with payment of ₦${paymentAmount} to ${accountNumber} `,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Confirm', 
-          onPress: () => {
-            // Navigate to success screen or process payment
-            router.push('/payment-success');
+    try {
+      setLoading(true);
+      const numericAmount = Number(paymentAmount);
+
+      // Call the real transfer API
+      const response = await walletService.transfer({
+        recipientAccountNumber: accountNumber,
+        amount: numericAmount,
+        description: reference as string || '',
+      });
+
+      Alert.alert(
+        'Success',
+        'Transfer completed successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back()
           }
-        }
-      ]
-    );
+        ]
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Transfer failed. Please try again.';
+      Alert.alert('Transfer Failed', message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const goBack = () => {
@@ -116,8 +128,12 @@ export default function ConfirmTransactionScreen() {
         </View>
 
         {/* Proceed Button */}
-        <TouchableOpacity style={styles.proceedButton} onPress={handleProceedToPay}>
-          <Text style={styles.proceedButtonText}>Proceed to Pay</Text>
+        <TouchableOpacity style={styles.proceedButton} onPress={handleProceedToPay} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.proceedButtonText}>Proceed to Pay</Text>
+          )}
         </TouchableOpacity>
 
         {/* Forgot PIN Link */}

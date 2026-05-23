@@ -12,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Shield, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
+import { emailService } from '@/services/email';
 
 export default function ChangePin() {
   const router = useRouter();
@@ -22,6 +24,8 @@ export default function ChangePin() {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
 
+  const { user } = useAuth();
+
   const handleChangePin = () => {
     if (newPin !== confirmPin) {
       Alert.alert('Error', 'PINs do not match');
@@ -30,6 +34,12 @@ export default function ChangePin() {
     if (newPin.length !== 4) {
       Alert.alert('Error', 'PIN must be 4 digits');
       return;
+    }
+    if (user?.email) {
+      emailService.send(user.email, 'pin-changed', {
+        name: user.fullName || 'User',
+        time: new Date().toLocaleString(),
+      });
     }
     Alert.alert('Success', 'PIN changed successfully', [
       { text: 'OK', onPress: () => router.back() }

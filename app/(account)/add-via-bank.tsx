@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 import * as Clipboard from 'expo-clipboard'; // <-- better than deprecated react-native Clipboard
 import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
-import { useAuth } from '@/context/AuthContext';
+import React from 'react';
+import { Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { height } = Dimensions.get('window');
 
@@ -14,7 +14,7 @@ const AddViaBankScreen = () => {
   // Replace dummy with real data
   const bankDetails = {
     bankName: 'Amstapay',
-    accountNumber: user?.amstapayAccountNumber || '----------',
+    accountNumber: user?.blupayAccountNumber || '----------',
     accountName: user?.fullName || user?.accountName || '----------',
   };
 

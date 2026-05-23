@@ -5,7 +5,18 @@ import { STORAGE_KEYS } from '@/lib/constants';
 import { apiClient } from '@/lib/api';
 import { authService } from '@/services/auth';
 import { userService } from '@/services/user';
+import { ENDPOINTS } from '@/lib/endpoints';
 import type { User, LoginInput, SignupInput } from '@/lib/models';
+
+export interface ParsedQRData {
+  type: string;
+  data?: string;
+  amount?: string;
+  recipient?: string;
+  reference?: string;
+  merchantId?: string;
+  name?: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -27,6 +38,8 @@ interface AuthContextType {
   transferToWallet?: (amount: number, recipient: string) => Promise<unknown>;
   buyAirtime?: (payload: { network: string; phoneNumber: string; amount: number }) => Promise<unknown>;
   verifyAccount?: (accountNumber: string) => Promise<{ accountName: string; bankName: string }>;
+  sendViaQR?: (qrData: ParsedQRData, amount: number) => Promise<unknown>;
+  receiveViaQR?: (qrData: ParsedQRData) => Promise<unknown>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,6 +81,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return { accountName: '', bankName: '' };
     }
+  }, []);
+
+  const sendViaQR = useCallback(async (qrData: ParsedQRData, amount: number) => {
+    logger.log('sendViaQR', { recipient: qrData.recipient, amount, merchantId: qrData.merchantId });
+    const response = await apiClient.post(ENDPOINTS.PAYMENTS.SEND, {
+      amount,
+      recipient: qrData.recipient || qrData.data,
+      reference: qrData.reference,
+      merchantId: qrData.merchantId,
+      qrData: JSON.stringify(qrData),
+      type: 'qr_payment',
+    });
+    return response;
+  }, []);
+
+  const receiveViaQR = useCallback(async (qrData: ParsedQRData) => {
+    logger.log('receiveViaQR', qrData);
+    const response = await apiClient.post(ENDPOINTS.PAYMENTS.RECEIVE, {
+      qrData: JSON.stringify(qrData),
+      reference: qrData.reference,
+      type: 'qr_payment',
+    });
+    return response;
   }, []);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -213,6 +249,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         transferToWallet,
         buyAirtime,
         verifyAccount,
+        sendViaQR,
+        receiveViaQR,
       }}
     >
       {children}

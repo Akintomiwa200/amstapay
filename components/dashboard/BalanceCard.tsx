@@ -7,6 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 
+import { useSocket } from '@/context/SocketContext';
+
 const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
@@ -14,12 +16,13 @@ const BalanceCard = () => {
   const router = useRouter();
   const { getWalletBalance } = useAuth();
   const { theme } = useTheme();
+  const { socket } = useSocket();
 
   const fetchBalance = async () => {
     try {
       setLoading(true);
-      const data = await getWalletBalance();
-      setBalance(data.balance);
+      const data = await getWalletBalance?.();
+      if (data) setBalance(data.balance);
     } catch (err) {
       console.error("Failed to fetch balance", err);
       setBalance(null);
@@ -30,7 +33,17 @@ const BalanceCard = () => {
 
   useEffect(() => {
     fetchBalance();
-  }, []);
+
+    if (socket) {
+      socket.on('wallet:update', (data: any) => {
+        setBalance(Number(data.balance));
+      });
+
+      return () => {
+        socket.off('wallet:update');
+      };
+    }
+  }, [socket]);
 
   const handleOpenHistory = () => router.push('/transactions');
   const handleAddMoney = () => router.push('/add-money');

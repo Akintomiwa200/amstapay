@@ -1,16 +1,15 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  ActivityIndicator,
-  Dimensions,
-  StatusBar,
-  StyleSheet,
-  Image,
-  Animated,
+    Animated,
+    Dimensions,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    View
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 

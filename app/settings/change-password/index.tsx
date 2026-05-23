@@ -6,10 +6,11 @@ import { ChevronLeft, Eye, EyeOff, Lock, Shield, ArrowRight } from 'lucide-react
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { emailService } from '@/services/email';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const { changePassword } = useAuth();
+  const { changePassword, user } = useAuth();
   const { theme } = useTheme();
   const c = theme.colors;
   const [currentPassword, setCurrentPassword] = useState('');
@@ -37,6 +38,12 @@ export default function ChangePasswordScreen() {
     setLoading(true);
     try {
       await changePassword(currentPassword, newPassword);
+      if (user?.email) {
+        emailService.send(user.email, 'password-changed', {
+          name: user.fullName || 'User',
+          time: new Date().toLocaleString(),
+        });
+      }
       Alert.alert('Success', 'Password changed successfully', [
         { text: 'OK', onPress: () => router.back() },
       ]);

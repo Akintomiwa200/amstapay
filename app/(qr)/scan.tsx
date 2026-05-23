@@ -1,118 +1,64 @@
-import { Ionicons } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
+import React, { useState, useCallback } from 'react';
 import {
-    Alert,
-    Dimensions,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
-import { useAuth } from "@/context/AuthContext";
+  Alert,
+  Dimensions,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useAuth, type ParsedQRData } from '@/context/AuthContext';
 
-
-const { width, height } = Dimensions.get("window");
-
-interface ParsedQRData {
-  type: string;
-  data?: string;
-  amount?: string;
-  recipient?: string;
-  reference?: string;
-  merchantId?: string;
-  name?: string;
-}
+const { width, height } = Dimensions.get('window');
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   const router = useRouter();
   const { sendViaQR, receiveViaQR, user } = useAuth();
 
-  const parseQRData = (data: string): ParsedQRData => {
+  const parseQRData = useCallback((data: string): ParsedQRData => {
     try {
       const parsed = JSON.parse(data);
       return parsed;
     } catch {
       if (
-        data.includes("pay") ||
-        data.includes("transaction") ||
-        data.includes("amount")
+        data.includes('pay') ||
+        data.includes('transaction') ||
+        data.includes('amount')
       ) {
-        return { type: "payment_url", data };
+        return { type: 'payment_url', data };
       }
-      return { type: "text", data };
+      return { type: 'text', data };
     }
-  };
+  }, []);
 
-  const handleQRPayment = async (parsedData: ParsedQRData) => {
+  const handleQRPayment = useCallback(async (parsedData: ParsedQRData) => {
     if (!parsedData.amount) {
-      Alert.alert("Error", "Payment amount not specified in QR code");
+      Alert.alert('Error', 'Payment amount not specified in QR code');
       resetScanner();
       return;
     }
 
     try {
       setProcessing(true);
-      await sendViaQR(parsedData, parseFloat(parsedData.amount));
-      
+      await sendViaQR!(parsedData, parseFloat(parsedData.amount));
+
       Alert.alert(
-        "Payment Successful",
-        `Successfully sent ₦${parsedData.amount} to ${parsedData.recipient || "recipient"}`,
+        'Payment Successful',
+        `Successfully sent N${parsedData.amount} to ${parsedData.recipient || 'recipient'}`,
         [
           {
-            text: "OK",
-            onPress: () => {
-              resetScanner();
-              router.back(); // Go back to previous screen
-            },
-          },
-        ]
-      );
-    } catch (error: any) {
-      Alert.alert(
-        "Payment Failed",
-        error.message || "Failed to process payment",
-        [
-          { text: "Cancel", onPress: resetScanner },
-          { text: "Try Again", onPress: resetScanner },
-        ]
-      );
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleMerchantPayment = (parsedData: ParsedQRData) => {
-    // Navigate to merchant payment screen for amount input
-    router.push({
-      pathname: "/merchant-payment",
-      params: {
-        merchantId: parsedData.merchantId || "",
-        merchantName: parsedData.name || "",
-        type: "merchant_payment",
-      },
-    });
-  };
-
-  const handleReceiveQR = async (parsedData: ParsedQRData) => {
-    try {
-      setProcessing(true);
-      await receiveViaQR(parsedData);
-      
-      Alert.alert(
-        "Payment Received",
-        "Successfully processed incoming payment",
-        [
-          {
-            text: "OK",
+            text: 'OK',
             onPress: () => {
               resetScanner();
               router.back();
@@ -122,32 +68,74 @@ export default function ScanScreen() {
       );
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error.message || "Failed to process received payment",
-        [{ text: "OK", onPress: resetScanner }]
+        'Payment Failed',
+        error?.message || 'Failed to process payment',
+        [
+          { text: 'Cancel', onPress: resetScanner },
+          { text: 'Try Again', onPress: resetScanner },
+        ]
       );
     } finally {
       setProcessing(false);
     }
-  };
+  }, [sendViaQR, router]);
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
+  const handleMerchantPayment = useCallback((parsedData: ParsedQRData) => {
+    router.push({
+      pathname: '/merchant-payment',
+      params: {
+        merchantId: parsedData.merchantId || '',
+        merchantName: parsedData.name || '',
+        type: 'merchant_payment',
+      },
+    });
+  }, [router]);
+
+  const handleReceiveQR = useCallback(async (parsedData: ParsedQRData) => {
+    try {
+      setProcessing(true);
+      await receiveViaQR!(parsedData);
+
+      Alert.alert(
+        'Payment Received',
+        'Successfully processed incoming payment',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              resetScanner();
+              router.back();
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error?.message || 'Failed to process received payment',
+        [{ text: 'OK', onPress: resetScanner }]
+      );
+    } finally {
+      setProcessing(false);
+    }
+  }, [receiveViaQR, router]);
+
+  const handleBarCodeScanned = useCallback(({ data }: { data: string }) => {
     if (scanned || processing) return;
 
     setScanned(true);
     const parsedData = parseQRData(data);
 
-    // Check if user is authenticated
     if (!user) {
       Alert.alert(
-        "Authentication Required",
-        "Please log in to process QR payments",
+        'Authentication Required',
+        'Please log in to process QR payments',
         [
-          { text: "Cancel", onPress: resetScanner },
+          { text: 'Cancel', onPress: resetScanner },
           {
-            text: "Login",
+            text: 'Login',
             onPress: () => {
-              router.push("/login");
+              router.push('/login');
             },
           },
         ]
@@ -155,90 +143,78 @@ export default function ScanScreen() {
       return;
     }
 
-    // Handle different QR types
-    if (parsedData.type === "payment" || parsedData.amount) {
+    // Handle different QR types with streamlined flow
+    if (parsedData.type === 'payment' || parsedData.amount) {
       Alert.alert(
-        "Payment QR Code Detected",
-        `Recipient: ${parsedData.recipient || "Unknown"}\nAmount: ₦${
-          parsedData.amount || "Not specified"
-        }`,
+        'Payment QR Code Detected',
+        `Recipient: ${parsedData.recipient || 'Unknown'}\nAmount: N${parsedData.amount || 'Not specified'}`,
         [
-          { text: "Cancel", onPress: resetScanner },
+          { text: 'Cancel', onPress: resetScanner },
           {
-            text: "Send Payment",
+            text: 'Send Payment',
             onPress: () => handleQRPayment(parsedData),
           },
         ]
       );
-    } else if (parsedData.type === "receive") {
+    } else if (parsedData.type === 'receive') {
       Alert.alert(
-        "Receive Payment QR",
-        "This QR code is for receiving a payment. Process it?",
+        'Receive Payment QR',
+        'This QR code is for receiving a payment. Process it?',
         [
-          { text: "Cancel", onPress: resetScanner },
+          { text: 'Cancel', onPress: resetScanner },
           {
-            text: "Process",
+            text: 'Process',
             onPress: () => handleReceiveQR(parsedData),
           },
         ]
       );
-    } else if (parsedData.type === "merchant") {
+    } else if (parsedData.type === 'merchant') {
       Alert.alert(
-        "Merchant QR Code",
-        `Merchant: ${parsedData.name || "Unknown Merchant"}`,
+        'Merchant QR Code',
+        `Merchant: ${parsedData.name || 'Unknown Merchant'}`,
         [
-          { text: "Cancel", onPress: resetScanner },
+          { text: 'Cancel', onPress: resetScanner },
           {
-            text: "Pay Merchant",
+            text: 'Pay Merchant',
             onPress: () => handleMerchantPayment(parsedData),
           },
         ]
       );
-    } else if (parsedData.data?.startsWith("http")) {
+    } else if (parsedData.data?.startsWith('http')) {
       Alert.alert(
-        "URL Detected",
+        'URL Detected',
         `Do you want to open this payment link?\n${parsedData.data}`,
         [
-          { text: "Cancel", onPress: resetScanner },
+          { text: 'Cancel', onPress: resetScanner },
           {
-            text: "Open",
+            text: 'Open',
             onPress: () => {
               router.push({
-                pathname: "/web-payment",
-                params: { url: parsedData.data || "" },
+                pathname: '/web-payment',
+                params: { url: parsedData.data || '' },
               });
             },
           },
         ]
       );
     } else {
-      Alert.alert("QR Code Scanned", `Data: ${parsedData.data || ""}`, [
-        { text: "Cancel", onPress: resetScanner },
-        {
-          text: "Process",
-          onPress: () => {
-            router.push({
-              pathname: "/process-qr",
-              params: { data: parsedData.data || "" },
-            });
-          },
-        },
-      ]);
+      setScanResult(parsedData.data || '');
     }
-  };
+  }, [scanned, processing, user, parseQRData, handleQRPayment, handleReceiveQR, handleMerchantPayment, router]);
 
-  const resetScanner = () => {
+  const resetScanner = useCallback(() => {
     setScanned(false);
     setProcessing(false);
-  };
+    setScanResult(null);
+  }, []);
 
-  const toggleFlash = () => {
+  const toggleFlash = useCallback(() => {
     setFlashOn((prev) => !prev);
-  };
+  }, []);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     router.back();
-  };
+  }, [router]);
 
   if (!permission) {
     return (
@@ -260,10 +236,7 @@ export default function ScanScreen() {
           <Text style={styles.subInfo}>
             Please enable camera access in your device settings to scan QR codes
           </Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={requestPermission}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={requestPermission}>
             <Text style={styles.retryButtonText}>Grant Permission</Text>
           </TouchableOpacity>
         </View>
@@ -282,11 +255,7 @@ export default function ScanScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Scan QR Code</Text>
         <TouchableOpacity onPress={toggleFlash} style={styles.flashButton}>
-          <Ionicons
-            name={flashOn ? "flash" : "flash-off"}
-            size={24}
-            color="white"
-          />
+          <Ionicons name={flashOn ? 'flash' : 'flash-off'} size={24} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -304,10 +273,8 @@ export default function ScanScreen() {
         <CameraView
           style={styles.scanner}
           facing="back"
-          flash={flashOn ? "on" : "off"}
-          barcodeScannerSettings={{
-            barcodeTypes: ["qr"],
-          }}
+          flash={flashOn ? 'on' : 'off'}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         />
 
@@ -337,13 +304,37 @@ export default function ScanScreen() {
 
       {/* Bottom Controls */}
       <View style={styles.bottomControls}>
-        {scanned && !processing && (
+        {scanResult && !processing && (
+          <View style={styles.resultBox}>
+            <Text style={styles.resultLabel}>Scanned Data:</Text>
+            <Text style={styles.resultText} numberOfLines={2}>{scanResult}</Text>
+            <View style={styles.resultActions}>
+              <TouchableOpacity style={styles.rescanButton} onPress={resetScanner}>
+                <Ionicons name="refresh" size={18} color="white" />
+                <Text style={styles.rescanButtonText}>Scan Again</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.rescanButton, { backgroundColor: '#007AFF' }]}
+                onPress={() => {
+                  router.push({
+                    pathname: '/process-qr',
+                    params: { data: scanResult },
+                  });
+                }}
+              >
+                <Text style={styles.rescanButtonText}>Process</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {scanned && !scanResult && !processing && (
           <TouchableOpacity style={styles.rescanButton} onPress={resetScanner}>
             <Ionicons name="refresh" size={20} color="white" />
             <Text style={styles.rescanButtonText}>Scan Again</Text>
           </TouchableOpacity>
         )}
-        
+
         {processing && (
           <View style={styles.processingContainer}>
             <Ionicons name="hourglass-outline" size={20} color="white" />
@@ -356,50 +347,50 @@ export default function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  container: { flex: 1, backgroundColor: '#000' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
   backButton: { padding: 5 },
-  headerTitle: { color: "white", fontSize: 18, fontWeight: "600" },
+  headerTitle: { color: 'white', fontSize: 18, fontWeight: '600' },
   flashButton: { padding: 5 },
   userInfo: {
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
   userInfoText: {
-    color: "rgba(255,255,255,0.8)",
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 14,
-    textAlign: "center",
+    textAlign: 'center',
   },
-  scannerContainer: { flex: 1, position: "relative" },
+  scannerContainer: { flex: 1, position: 'relative' },
   scanner: { ...StyleSheet.absoluteFillObject },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   scanFrame: {
     width: 250,
     height: 250,
-    position: "relative",
-    backgroundColor: "transparent",
+    position: 'relative',
+    backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: 'transparent',
   },
   corner: {
-    position: "absolute",
+    position: 'absolute',
     width: 30,
     height: 30,
-    borderColor: "#00ff00",
+    borderColor: '#00ff00',
     borderWidth: 3,
   },
   topLeft: { top: -2, left: -2, borderRightWidth: 0, borderBottomWidth: 0 },
@@ -407,85 +398,96 @@ const styles = StyleSheet.create({
   bottomLeft: { bottom: -2, left: -2, borderRightWidth: 0, borderTopWidth: 0 },
   bottomRight: { bottom: -2, right: -2, borderLeftWidth: 0, borderTopWidth: 0 },
   instructionsContainer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 100,
     left: 20,
     right: 20,
-    alignItems: "center",
+    alignItems: 'center',
   },
   instructions: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "500",
-    textAlign: "center",
+    fontWeight: '500',
+    textAlign: 'center',
     marginBottom: 8,
   },
   subInstructions: {
-    color: "rgba(255,255,255,0.7)",
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 14,
-    textAlign: "center",
+    textAlign: 'center',
   },
   processingText: {
-    color: "#00ff00",
+    color: '#00ff00',
     fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '600',
+    textAlign: 'center',
     marginTop: 10,
   },
-  bottomControls: { 
-    paddingHorizontal: 20, 
-    paddingVertical: 30, 
-    alignItems: "center" 
+  bottomControls: {
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+    alignItems: 'center',
   },
   rescanButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#00aa44",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00aa44',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
+    gap: 8,
   },
-  rescanButtonText: { 
-    color: "white", 
-    fontSize: 16, 
-    fontWeight: "600", 
-    marginLeft: 8 
+  rescanButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   processingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.2)",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
+    gap: 8,
   },
   processingButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
+    fontWeight: '600',
   },
-  info: { 
-    color: "white", 
-    fontSize: 18, 
-    fontWeight: "500", 
-    textAlign: "center", 
-    marginTop: 20 
+  info: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 20,
   },
   subInfo: {
-    color: "rgba(255,255,255,0.7)",
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 14,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 10,
     paddingHorizontal: 40,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: "#00aa44",
+    backgroundColor: '#00aa44',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
     marginTop: 30,
   },
-  retryButtonText: { color: "white", fontSize: 16, fontWeight: "600" },
+  retryButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  resultBox: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    alignItems: 'center',
+    gap: 12,
+  },
+  resultLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12 },
+  resultText: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  resultActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
 });

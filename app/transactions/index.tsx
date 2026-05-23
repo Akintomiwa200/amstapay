@@ -1,4 +1,4 @@
-﻿// app/transactions/index.tsx
+// app/transactions/index.tsx
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,7 +31,7 @@ const TransactionsScreen = () => {
   const loadTransactions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getTransactions();
+      const response: any = await getTransactions?.();
       const list = Array.isArray(response)
         ? response
         : Array.isArray((response as any)?.transactions)

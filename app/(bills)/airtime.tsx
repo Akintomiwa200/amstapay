@@ -44,7 +44,7 @@ const AirtimeScreen = () => {
     try {
       setSubmitting(true);
 
-      const result = await buyAirtime({
+      const result: any = await buyAirtime?.({
         network: selectedProvider,
         phoneNumber: sanitizedPhone,
         amount: amountValue,

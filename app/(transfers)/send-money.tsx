@@ -1,35 +1,116 @@
 ﻿// app/send-money.tsx - Send Money Screen
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Search, User, ArrowRight, Clock, Star } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { apiClient } from '@/lib/api';
+import { beneficiaryService } from '@/services/beneficiary';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { ArrowRight, ChevronLeft, Clock, User } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+const NIGERIAN_BANKS = [
+  { code: '044', name: 'Access Bank' },
+  { code: '058', name: 'GTBank' },
+  { code: '057', name: 'Zenith Bank' },
+  { code: '011', name: 'First Bank' },
+  { code: '033', name: 'UBA' },
+  { code: '070', name: 'Fidelity Bank' },
+  { code: '032', name: 'Union Bank' },
+  { code: '232', name: 'Sterling Bank' },
+  { code: '221', name: 'Stanbic IBTC' },
+  { code: '050', name: 'Ecobank' },
+  { code: '214', name: 'FCMB' },
+  { code: '030', name: 'Heritage Bank' },
+  { code: '082', name: 'Keystone Bank' },
+  { code: '076', name: 'Polaris Bank' },
+  { code: '101', name: 'Providus Bank' },
+  { code: '068', name: 'Standard Chartered' },
+  { code: '035', name: 'Wema Bank' },
+  { code: '215', name: 'Unity Bank' },
+  { code: '090', name: 'Kuda Bank' },
+];
 
 export default function SendMoneyScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
   const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [bankCode, setBankCode] = useState('');
+  const [bankName, setBankName] = useState('');
   const [note, setNote] = useState('');
+  const [recentRecipients, setRecentRecipients] = useState<any[]>([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifiedName, setVerifiedName] = useState('');
+  const [showBankPicker, setShowBankPicker] = useState(false);
 
-  const recentRecipients = [
-    { id: 1, name: 'John Doe', account: '****1234', bank: 'GTBank' },
-    { id: 2, name: 'Jane Smith', account: '****5678', bank: 'Access Bank' },
-    { id: 3, name: 'David Oke', account: '****9012', bank: 'First Bank' },
-  ];
+  useEffect(() => {
+    loadBeneficiaries();
+  }, []);
+
+  const loadBeneficiaries = async () => {
+    try {
+      setLoadingRecipients(true);
+      const data = await beneficiaryService.getAll();
+      setRecentRecipients(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load beneficiaries:', error);
+      setRecentRecipients([]);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
 
   const quickAmounts = [1000, 2000, 5000, 10000, 20000, 50000];
 
+  const handleVerifyAccount = async () => {
+    if (!bankCode || !accountNumber || accountNumber.length !== 10) {
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      const response = await apiClient.post('/bank/verify', {
+        bankCode,
+        accountNumber,
+      });
+      setVerifiedName((response as any).accountName || '');
+    } catch (error) {
+      console.error('Verification failed:', error);
+      setVerifiedName('');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  useEffect(() => {
+    if (accountNumber.length === 10 && bankCode) {
+      const timeoutId = setTimeout(() => {
+        handleVerifyAccount();
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setVerifiedName('');
+    }
+  }, [accountNumber, bankCode]);
+
   const handleSend = () => {
-    if (!amount || !recipient) {
+    if (!amount || !accountNumber || !bankCode) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
     router.push({
       pathname: '/confirm-transaction',
-      params: { amount, recipient, note, type: 'send' },
+      params: { 
+        amount, 
+        recipient: accountNumber,
+        bankCode,
+        bankName,
+        accountName: verifiedName,
+        note, 
+        type: 'send' 
+      },
     } as any);
   };
 
@@ -77,20 +158,48 @@ export default function SendMoneyScreen() {
           ))}
         </View>
 
-        {/* Recipient */}
+        {/* Bank Selection */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: c.primary }]}>Recipient</Text>
+          <Text style={[styles.label, { color: c.primary }]}>Select Bank</Text>
+          <TouchableOpacity
+            style={[styles.bankSelector, { backgroundColor: c.inputBg, borderColor: c.border }]}
+            onPress={() => setShowBankPicker(true)}
+          >
+            <Building2 size={18} color={c.textSub} />
+            <Text style={[styles.bankText, { color: bankName ? c.text : c.textSub }]}>
+              {bankName || 'Select a bank'}
+            </Text>
+            <ArrowRight size={16} color={c.textSub} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Account Number */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: c.primary }]}>Account Number</Text>
           <View style={[styles.searchInput, { backgroundColor: c.inputBg, borderColor: c.border }]}>
-            <Search size={18} color={c.textSub} />
             <TextInput
               style={[styles.searchField, { color: c.text }]}
-              placeholder="Account number or username"
+              placeholder="10-digit account number"
               placeholderTextColor={c.textSub}
-              value={recipient}
-              onChangeText={setRecipient}
+              value={accountNumber}
+              onChangeText={setAccountNumber}
+              keyboardType="numeric"
+              maxLength={10}
             />
+            {verifying && <ActivityIndicator size="small" color={c.primary} />}
           </View>
         </View>
+
+        {/* Account Name Verification */}
+        {verifiedName && (
+          <View style={[styles.verifiedContainer, { backgroundColor: c.primaryLight, borderColor: c.success }]}>
+            <Text style={[styles.checkmark, { color: c.success }]}>✓</Text>
+            <View style={styles.verifiedInfo}>
+              <Text style={[styles.verifiedLabel, { color: c.primary }]}>Account Name</Text>
+              <Text style={[styles.verifiedName, { color: c.text }]}>{verifiedName}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Note */}
         <View style={styles.inputGroup}>
@@ -110,20 +219,66 @@ export default function SendMoneyScreen() {
             <Clock size={16} color={c.violet} />
             <Text style={[styles.sectionTitle, { color: c.primary }]}>Recent Recipients</Text>
           </View>
-          {recentRecipients.map((r) => (
-            <TouchableOpacity key={r.id} style={[styles.recipientCard, { borderBottomColor: c.border }]} onPress={() => setRecipient(r.name)}>
-              <View style={[styles.recipientAvatar, { backgroundColor: c.primaryLight }]}>
-                <User size={20} color={c.violet} />
-              </View>
-              <View style={styles.recipientInfo}>
-                <Text style={[styles.recipientName, { color: c.text }]}>{r.name}</Text>
-                <Text style={[styles.recipientAccount, { color: c.textSub }]}>{r.bank} • {r.account}</Text>
-              </View>
-              <ArrowRight size={16} color={c.textSub} />
-            </TouchableOpacity>
-          ))}
+          {loadingRecipients ? (
+            <ActivityIndicator color={c.primary} style={{ paddingVertical: 20 }} />
+          ) : recentRecipients.length === 0 ? (
+            <Text style={[styles.noRecipients, { color: c.textSub }]}>No recent recipients</Text>
+          ) : (
+            recentRecipients.map((r) => (
+              <TouchableOpacity 
+                key={r._id || r.id} 
+                style={[styles.recipientCard, { borderBottomColor: c.border }]} 
+                onPress={() => {
+                  setAccountNumber(r.accountNumber || r.account || '');
+                  setBankCode(r.bankCode || '');
+                  setBankName(r.bankName || r.bank || '');
+                }}
+              >
+                <View style={[styles.recipientAvatar, { backgroundColor: c.primaryLight }]}>
+                  <User size={20} color={c.violet} />
+                </View>
+                <View style={styles.recipientInfo}>
+                  <Text style={[styles.recipientName, { color: c.text }]}>{r.name || r.nickname}</Text>
+                  <Text style={[styles.recipientAccount, { color: c.textSub }]}>
+                    {r.bankName || r.bank} • {r.accountNumber ? r.accountNumber.slice(-4) : '****'}
+                  </Text>
+                </View>
+                <ArrowRight size={16} color={c.textSub} />
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
+
+      {/* Bank Picker Modal */}
+      {showBankPicker && (
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: c.bg }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: c.text }]}>Select Bank</Text>
+              <TouchableOpacity onPress={() => setShowBankPicker(false)}>
+                <ChevronLeft size={24} color={c.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.bankList}>
+              {NIGERIAN_BANKS.map((bank) => (
+                <TouchableOpacity
+                  key={bank.code}
+                  style={[styles.bankItem, { borderBottomColor: c.border }]}
+                  onPress={() => {
+                    setBankCode(bank.code);
+                    setBankName(bank.name);
+                    setShowBankPicker(false);
+                  }}
+                >
+                  <Text style={[styles.bankItemName, { color: c.text }]}>{bank.name}</Text>
+                  {bankCode === bank.code && <Text style={[styles.checkmark, { color: c.success }]}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
 
       {/* Send Button */}
       <View style={[styles.footer, { backgroundColor: c.bg, borderTopColor: c.border }]}>
@@ -167,6 +322,21 @@ const styles = StyleSheet.create({
   recipientInfo: { flex: 1 },
   recipientName: { fontSize: 15, fontWeight: '600' },
   recipientAccount: { fontSize: 12, marginTop: 2 },
+  noRecipients: { fontSize: 14, paddingVertical: 20, textAlign: 'center' },
+  bankSelector: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1 },
+  bankText: { flex: 1, marginLeft: 8, fontSize: 15 },
+  verifiedContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, marginBottom: 20 },
+  verifiedInfo: { flex: 1, marginLeft: 12 },
+  verifiedLabel: { fontSize: 12, fontWeight: '600' },
+  verifiedName: { fontSize: 16, fontWeight: '700', marginTop: 2 },
+  checkmark: { fontSize: 20, fontWeight: 'bold' },
+  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1 },
+  modalTitle: { fontSize: 18, fontWeight: '700' },
+  bankList: { flex: 1 },
+  bankItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1 },
+  bankItemName: { fontSize: 16, fontWeight: '500' },
   footer: { paddingHorizontal: 20, paddingBottom: 34, paddingTop: 12, borderTopWidth: 1 },
   sendBtn: { borderRadius: 16, overflow: 'hidden' },
   sendGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },

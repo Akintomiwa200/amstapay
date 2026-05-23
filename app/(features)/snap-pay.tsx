@@ -31,7 +31,7 @@ export default function SnapPayScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Snap Action */}
-        <TouchableOpacity style={styles.snapCard} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.snapCard} activeOpacity={0.85} onPress={() => router.push('/scan-send')}>
           <LinearGradient colors={[c.violet, c.pink]} style={styles.snapGradient}>
             <Camera size={48} color="#fff" />
             <Text style={styles.snapTitle}>Tap to Snap</Text>

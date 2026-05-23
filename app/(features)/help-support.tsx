@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, HelpCircle, Mail, Phone, MessageCircle } from 'lucide-react-native';
+import { ArrowLeft, HelpCircle, Mail, Phone, MessageCircle, ChevronRight } from 'lucide-react-native';
 
 const HelpSupport = () => {
   const router = useRouter();
@@ -44,12 +44,22 @@ const HelpSupport = () => {
 
           {/* Contact Section */}
           <Text style={styles.sectionTitle}>Contact Support</Text>
+          <TouchableOpacity style={styles.contactCard} onPress={() => router.push('/live-chat')}>
+            <MessageCircle size={24} color="#FF8C00" />
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactTitle}>Live Support Chat</Text>
+              <Text style={styles.contactSub}>Chat with an agent in real-time</Text>
+            </View>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.contactCard} onPress={contactSupport}>
             <Mail size={24} color="#FF8C00" />
             <View style={styles.contactInfo}>
               <Text style={styles.contactTitle}>Email Support</Text>
-              <Text style={styles.contactDetail}>support@amstapay.com</Text>
+              <Text style={styles.contactSub}>support@amstapay.com</Text>
             </View>
+            <ChevronRight size={20} color="#9CA3AF" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.contactCard} onPress={callSupport}>

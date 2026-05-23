@@ -7,6 +7,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { SocketProvider } from "../context/SocketContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 import { useEffect } from "react";
@@ -15,9 +16,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <SafeAreaProvider>
-          <AppContent />
-        </SafeAreaProvider>
+        <SocketProvider>
+          <SafeAreaProvider>
+            <AppContent />
+          </SafeAreaProvider>
+        </SocketProvider>
       </AuthProvider>
     </ThemeProvider>
   );

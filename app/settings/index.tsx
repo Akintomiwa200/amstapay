@@ -1,5 +1,5 @@
 ﻿// app/settings/index.tsx
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Bell,
   ChevronRight,
@@ -21,9 +21,10 @@ import {
   Fingerprint,
   Eye,
   RefreshCw,
+  Trash2,
   Settings as SettingsIcon,
 } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -124,7 +125,7 @@ const Settings: React.FC = () => {
   const router = useRouter();
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const c = theme.colors;
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   
   const [expandedSections, setExpandedSections] = useState({
     account: true,
@@ -143,8 +144,14 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     checkBiometricStatus();
-    loadSettings();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      checkBiometricStatus();
+      loadSettings();
+    }, [])
+  );
 
   const checkBiometricStatus = async () => {
     const available = await BiometricAuth.isAvailable();
@@ -212,6 +219,32 @@ const Settings: React.FC = () => {
               router.replace('/login');
             } catch (error) {
               console.error('Logout failed:', error);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "This action is irreversible. All your data, wallet balance, and transaction history will be permanently deleted.\n\nAre you sure you want to continue?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete My Account",
+          style: "destructive",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await deleteAccount();
+              router.replace('/login');
+            } catch (error) {
+              console.error('Delete account failed:', error);
+              Alert.alert("Error", "Failed to delete account. Please try again.");
             } finally {
               setLoading(false);
             }
@@ -465,7 +498,7 @@ const Settings: React.FC = () => {
                 {
                   icon: Fingerprint,
                   title: "Biometric Authentication",
-                  subtitle: biometricAvailable ? 'Use fingerprint or face ID' : 'Not available on this device',
+                  subtitle: !biometricAvailable ? 'Not available on this device' : biometricEnabled ? 'Fingerprint or Face ID enabled' : 'Use fingerprint or face ID',
                   showSwitch: true,
                   switchValue: biometricEnabled,
                   onSwitchChange: handleBiometricToggle,
@@ -474,7 +507,7 @@ const Settings: React.FC = () => {
                 {
                   icon: Shield,
                   title: "Two-Factor Authentication",
-                  subtitle: "Add extra security layer",
+                  subtitle: twoFactorEnabled ? 'Extra security layer active' : 'Add extra security layer',
                   showSwitch: true,
                   switchValue: twoFactorEnabled,
                   onSwitchChange: handleTwoFactorToggle,
@@ -492,6 +525,13 @@ const Settings: React.FC = () => {
                   subtitle: "Read our privacy policy",
                   onPress: () => navigateTo('/settings/privacy-policy'),
                   showArrow: true,
+                },
+                {
+                  icon: Trash2,
+                  title: "Delete Account",
+                  subtitle: "Permanently delete your account and data",
+                  onPress: handleDeleteAccount,
+                  isDanger: true,
                 },
               ])}
             </View>

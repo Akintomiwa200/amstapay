@@ -4,10 +4,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Download, Clock, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useSocket } from '@/context/SocketContext';
 
 const Wallet = () => {
   const router = useRouter();
-  const { getWalletBalance, getWalletTransactions } = useAuth();
+  const { getWalletBalance, getTransactions } = useAuth();
+  const { socket } = useSocket();
 
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState(0);
@@ -17,7 +19,7 @@ const Wallet = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const [balRes, txRes] = await Promise.all([getWalletBalance(), getWalletTransactions()]);
+        const [balRes, txRes] = await Promise.all([getWalletBalance?.(), getTransactions?.()]);
 
         setBalance(Number((balRes as any)?.balance || 0));
 
@@ -39,7 +41,21 @@ const Wallet = () => {
     };
 
     load();
-  }, [getWalletBalance, getWalletTransactions]);
+
+    if (socket) {
+      socket.on('wallet:update', (data: any) => {
+        setBalance(Number(data.balance));
+      });
+      socket.on('transaction:new', (data: any) => {
+        setTransactions(prev => [data.transaction, ...prev].slice(0, 10));
+      });
+
+      return () => {
+        socket.off('wallet:update');
+        socket.off('transaction:new');
+      };
+    }
+  }, [getWalletBalance, getTransactions, socket]);
 
   const trendText = useMemo(() => (transactions.length > 0 ? `${transactions.length} recent transactions` : 'No recent transactions'), [transactions.length]);
 

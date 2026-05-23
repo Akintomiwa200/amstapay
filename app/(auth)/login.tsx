@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Eye, EyeOff, Mail, Lock, ChevronLeft } from "lucide-react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { emailService } from "@/services/email";
 
 // ─── Styled Input ─────────────────────────────────────────────────────────────
 function StyledInput({
@@ -169,7 +170,17 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setErrors({});
-      await login(emailOrPhone.trim(), password);
+      await login({ emailOrPhone: emailOrPhone.trim(), password });
+      const email = emailOrPhone.trim().includes('@') ? emailOrPhone.trim() : '';
+      if (email) {
+        emailService.send(email, 'login-confirm', {
+          name: email.split('@')[0],
+          time: new Date().toLocaleString(),
+          device: Platform.OS === 'ios' ? 'iOS' : 'Android',
+          location: 'Unknown',
+          ipAddress: 'Unknown',
+        });
+      }
       router.replace("/dashboard");
     } catch (error) {
       let msg = "Something went wrong. Please try again.";

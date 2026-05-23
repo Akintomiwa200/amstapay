@@ -1,5 +1,5 @@
 // Mock data for UI testing and development
-import type { User, Transaction } from '@/lib/models';
+import type { Transaction, User } from '@/lib/models';
 
 interface WalletBalance {
   balance: number;
@@ -13,7 +13,7 @@ export const MOCK_USER: User = {
   accountType: 'personal',
   isVerified: true,
   role: 'user',
-  amstapayAccountNumber: '1234567890',
+  blupayAccountNumber: '1234567890',
   kycLevel: 2,
 };
 
@@ -25,12 +25,12 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     receiverAccountNumber: '0987654321',
     receiverBank: 'Bank of America',
     amount: 100,
-    type: 'transfer',
+    type: 'normal_transfer',
     reference: 'REF123456',
     description: 'Dinner payment',
     createdAt: '2023-05-15T14:30:00.000Z',
     updatedAt: '2023-05-15T14:30:00.000Z',
-    status: 'completed',
+    status: 'success',
   },
   {
     _id: '2',
@@ -39,12 +39,12 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     receiverAccountNumber: '0987654321',
     receiverBank: 'Chase',
     amount: 75.5,
-    type: 'payment',
+    type: 'qr_payment',
     reference: 'REF789012',
     description: 'Online shopping',
     createdAt: '2023-05-10T10:15:00.000Z',
     updatedAt: '2023-05-10T10:15:00.000Z',
-    status: 'completed',
+    status: 'success',
   },
   {
     _id: '3',
@@ -53,12 +53,12 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     receiverAccountNumber: '1234567890',
     receiverBank: 'Chase',
     amount: 200,
-    type: 'deposit',
+    type: 'normal_transfer',
     reference: 'REF345678',
     description: 'Wallet funding',
     createdAt: '2023-05-08T09:00:00.000Z',
     updatedAt: '2023-05-08T09:00:00.000Z',
-    status: 'completed',
+    status: 'success',
   },
 ];
 

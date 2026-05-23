@@ -1,6 +1,6 @@
 import { API } from './constants';
-import { storage } from './storage';
 import { logger } from './logger';
+import { storage } from './storage';
 
 export interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -111,6 +111,7 @@ export const apiClient = {
 
       try {
         logger.debug(`API ${method} ${endpoint} (attempt ${attempt + 1})`);
+        logger.debug(`Request URL: ${buildUrl(endpoint, params)}`);
 
         const response = await fetch(buildUrl(endpoint, params), {
           method,
@@ -118,6 +119,8 @@ export const apiClient = {
           body: body instanceof FormData ? body as FormData : body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
         });
+
+        logger.debug(`Response status: ${response.status}`);
 
         clearTimeout(timeoutId);
 
@@ -174,7 +177,7 @@ export const apiClient = {
 
         if (error instanceof ApiClientError) throw error;
 
-        if (error instanceof DOMException && error.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
           throw new ApiClientError('Request timed out', 408, null, 'TIMEOUT');
         }
 

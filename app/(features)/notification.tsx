@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '@/lib/api';
+import { useSocket } from '@/context/SocketContext';
 import { 
   View, 
   Text, 
@@ -125,9 +127,36 @@ const sampleNotifications: Notification[] = [
 ];
 
 const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) => {
-  const [notifications, setNotifications] = useState<Notification[]>(sampleNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    loadNotifications();
+    
+    if (socket) {
+      socket.on('notification:new', (newNotif: any) => {
+        setNotifications(prev => [newNotif.notification || newNotif, ...prev]);
+      });
+      return () => {
+        socket.off('notification:new');
+      };
+    }
+  }, [socket]);
+
+  const loadNotifications = async () => {
+    try {
+      setLoading(true);
+      const res = await apiClient.get('/notifications');
+      setNotifications(Array.isArray(res) ? res : []);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
@@ -179,14 +208,14 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) =
     return notificationTime.toLocaleDateString();
   };
 
-  const markAsRead = (id: string): void => {
-    setNotifications(prevNotifications =>
-      prevNotifications.map(notification =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  const markAsRead = async (id: string): Promise<void> => {
+    // Optimistic update
+    setNotifications(prev => prev.map(n => n.id === id || (n as any)._id === id ? { ...n, read: true } : n));
+    try {
+      await apiClient.put(`/notifications/${id}/read`);
+    } catch (err) {
+      console.error('Failed to mark as read', err);
+    }
   };
 
   const deleteNotification = (id: string): void => {
@@ -198,20 +227,27 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) =
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            setNotifications(prevNotifications =>
-              prevNotifications.filter(notification => notification.id !== id)
-            );
+          onPress: async () => {
+            // Optimistic update
+            setNotifications(prev => prev.filter(n => n.id !== id && (n as any)._id !== id));
+            try {
+              await apiClient.delete(`/notifications/${id}`);
+            } catch (err) {
+              console.error('Failed to delete notification', err);
+            }
           }
         }
       ]
     );
   };
 
-  const markAllAsRead = (): void => {
-    setNotifications(prevNotifications =>
-      prevNotifications.map(notification => ({ ...notification, read: true }))
-    );
+  const markAllAsRead = async (): Promise<void> => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      await apiClient.put('/notifications/read-all');
+    } catch (err) {
+      console.error('Failed to mark all as read', err);
+    }
   };
 
   const clearAllNotifications = (): void => {
@@ -223,7 +259,14 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) =
         {
           text: 'Clear All',
           style: 'destructive',
-          onPress: () => setNotifications([])
+          onPress: async () => {
+            setNotifications([]);
+            try {
+              await apiClient.delete('/notifications/clear-all');
+            } catch (err) {
+              console.error('Failed to clear notifications', err);
+            }
+          }
         }
       ]
     );
@@ -248,7 +291,7 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) =
           styles.notificationCard,
           !item.read && styles.unreadCard
         ]}
-        onPress={() => markAsRead(item.id)}
+        onPress={() => markAsRead(item.id || (item as any)._id)}
         activeOpacity={0.7}
       >
         <View style={styles.notificationContent}>
@@ -303,7 +346,7 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) =
 
           <TouchableOpacity
             style={styles.deleteButton}
-            onPress={() => deleteNotification(item.id)}
+            onPress={() => deleteNotification(item.id || (item as any)._id)}
           >
             <Trash2 size={16} color="#DC2626" />
           </TouchableOpacity>
@@ -438,7 +481,7 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ navigation }) =
         {filteredNotifications.length > 0 ? (
           <FlatList
             data={filteredNotifications}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id || (item as any)._id}
             renderItem={renderNotification}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
