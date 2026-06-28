@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Zap } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess, mapDisco } from '@/lib/billPayment';
 
 const ElectricityScreen = () => {
   const [meterNumber, setMeterNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedDisco, setSelectedDisco] = useState('');
   const [meterType, setMeterType] = useState('prepaid');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const discos = [
@@ -16,12 +18,31 @@ const ElectricityScreen = () => {
     { id: 'phed', name: 'PHED (Port Harcourt)' },
     { id: 'kedco', name: 'KEDCO (Kano)' },
     { id: 'ibedc', name: 'IBEDC (Ibadan)' },
-    { id: 'eedc', name: 'EEDC (Benin)' },
+    { id: 'ibedc', name: 'IBEDC (Ibadan)' },
   ];
 
-  const handleBuyElectricity = () => {
-    console.log('Buying electricity:', { meterNumber, amount, selectedDisco, meterType });
-    router.back();
+  const amountValue = useMemo(() => Number(amount), [amount]);
+  const isFormValid = !!selectedDisco && meterNumber.length >= 6 && Number.isFinite(amountValue) && amountValue >= 100;
+
+  const handleBuyElectricity = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Select a disco, enter meter number, and amount from ₦100.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.payElectricity({
+        meterNumber,
+        amount: amountValue,
+        provider: mapDisco(selectedDisco) as 'IKEDC' | 'EKEDC' | 'PHCN' | 'ABUJA_DISCO' | 'LAGOS_DISCO',
+        meterType: meterType === 'prepaid' ? 'PREPAID' : 'POSTPAID',
+      });
+      handleBillSuccess(router, result, 'Electricity payment completed.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -117,11 +138,11 @@ const ElectricityScreen = () => {
 
         {/* Buy Button */}
         <TouchableOpacity
-          style={[styles.button, (!meterNumber || !amount || !selectedDisco) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleBuyElectricity}
-          disabled={!meterNumber || !amount || !selectedDisco}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Buy Electricity</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Buy Electricity</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

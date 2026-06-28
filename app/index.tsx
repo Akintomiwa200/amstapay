@@ -1,185 +1,198 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Image,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View
-} from "react-native";
-import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
+  Animated,
+  Dimensions,
+  Easing,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Shield, Zap, Sparkles, Camera } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { APP_NAME } from '@/lib/constants';
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get('window');
+
+const FEATURES = [
+  { icon: Zap, label: 'Instant transfers' },
+  { icon: Camera, label: 'Snap & Pay' },
+  { icon: Shield, label: 'Bank-grade security' },
+  { icon: Sparkles, label: 'AmstaWealth' },
+];
 
 export default function IndexScreen() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, initialized } = useAuth();
   const { theme } = useTheme();
-
-  const [minimumTimePassed, setMinimumTimePassed] = useState(false);
-  const progressAnim = useState(new Animated.Value(0))[0];
-
   const c = theme.colors;
 
-  useEffect(() => {
-    const timer = setTimeout(() => setMinimumTimePassed(true), 2500);
-    return () => clearTimeout(timer);
-  }, []);
+  const logoScale = useRef(new Animated.Value(0.6)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const featureOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (minimumTimePassed && !loading) {
-      router.replace(user ? "/dashboard" : "/onboarding");
-    }
-  }, [minimumTimePassed, loading, user]);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }),
+        Animated.timing(logoOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ]),
+      Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.timing(featureOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+    ]).start();
 
-  useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: 1,
-      duration: 2000,
+      duration: 2200,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.08, duration: 1200, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
+      ]),
+    ).start();
   }, []);
+
+  useEffect(() => {
+    if (!initialized || loading) return;
+    const timer = setTimeout(() => {
+      router.replace(user ? '/dashboard' : '/onboarding');
+    }, 2400);
+    return () => clearTimeout(timer);
+  }, [initialized, loading, user]);
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0%", "33%"],
+    outputRange: ['0%', '100%'],
   });
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <LinearGradient
-        colors={[c.primary, c.primaryDark]}
+        colors={[c.primaryDark, c.primary, c.violet]}
         style={StyleSheet.absoluteFillObject}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
 
-      <View style={[styles.bgLayer1, { backgroundColor: `${c.primary}33` }]} />
-      <View style={[styles.bgLayer2, { backgroundColor: `${c.violet}1A` }]} />
+      <View style={[styles.orb, styles.orbTop, { backgroundColor: `${c.mint}22` }]} />
+      <View style={[styles.orb, styles.orbBottom, { backgroundColor: `${c.pink}18` }]} />
 
       <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0w5qFByl1pS_hZYiQE4W3GrJCqCcndfj0EcQ3HX3XFeU-hO7mWib4pbar7Fo7Rr3t-wBRSHESP1aLzfwqwAwSpRm43C8gjtl1y-SBov8hqS36AIVR6SSr6khPbLO1jG5xCVyuom7Qu1sSruYIiysQKsgEFC3cOIJkhxYTu6v0IDaEPfSlvSHvJb0JqoMgEBkDLrn1uu82Cj2sljC7Kfz47f-nbr4F0y5Unx0pywlNhg5I0R_spqUF7_0Bdf26gGuziB4cStA6kJQ" }}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
+        <Animated.View
+          style={[
+            styles.logoRing,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: Animated.multiply(logoScale, pulseAnim) }],
+              borderColor: `${c.mint}55`,
+              shadowColor: c.mint,
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={[c.mint, c.blue, c.violet]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.logoInner}
+          >
+            <Text style={styles.logoLetter}>A</Text>
+          </LinearGradient>
+        </Animated.View>
 
-        <Text style={styles.appName}>BluPay</Text>
+        <Animated.View style={{ opacity: textOpacity, alignItems: 'center' }}>
+          <Text style={styles.appName}>{APP_NAME}</Text>
+          <Text style={styles.tagline}>Your money. Smarter. Safer. Nigerian.</Text>
+        </Animated.View>
 
-        <Text style={styles.tagline}>SECURE DIGITAL FINANCE</Text>
+        <Animated.View style={[styles.featuresRow, { opacity: featureOpacity }]}>
+          {FEATURES.map(({ icon: Icon, label }) => (
+            <View key={label} style={[styles.featureChip, { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
+              <Icon size={14} color={c.mint} />
+              <Text style={styles.featureText}>{label}</Text>
+            </View>
+          ))}
+        </Animated.View>
       </View>
 
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { backgroundColor: `${c.surface}1A` }]}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              { width: progressWidth, backgroundColor: c.mint, shadowColor: c.mint },
-            ]}
-          />
+      <View style={styles.footer}>
+        <View style={[styles.progressTrack, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+          <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: c.mint }]} />
         </View>
+        <Text style={styles.footerText}>Licensed · Secure · Real-time</Text>
       </View>
-
-      <Text style={[styles.bottomText, { color: `${c.surface}66` }]}>
-        Trusted by millions worldwide
-      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, overflow: 'hidden' },
+  orb: { position: 'absolute', borderRadius: width },
+  orbTop: { width: width * 0.9, height: width * 0.9, top: -width * 0.35, right: -width * 0.25 },
+  orbBottom: { width: width * 0.8, height: width * 0.8, bottom: -width * 0.3, left: -width * 0.2 },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, zIndex: 10 },
+  logoRing: {
+    width: 112,
+    height: 112,
+    borderRadius: 36,
+    borderWidth: 2,
+    padding: 4,
+    marginBottom: 28,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  logoInner: {
     flex: 1,
-    overflow: "hidden",
-  },
-  bgLayer1: {
-    position: "absolute",
-    top: "-20%",
-    left: "-10%",
-    width: "60%",
-    height: "60%",
-    borderRadius: width * 0.3,
-    opacity: 0.2,
-  },
-  bgLayer2: {
-    position: "absolute",
-    bottom: "-20%",
-    right: "-10%",
-    width: "60%",
-    height: "60%",
-    borderRadius: width * 0.3,
-    opacity: 0.1,
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-    zIndex: 10,
-  },
-  logoContainer: {
-    width: 96,
-    height: 96,
-    marginBottom: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logo: {
-    width: "100%",
-    height: "100%",
     borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  logoLetter: { fontSize: 52, fontWeight: '900', color: '#fff' },
   appName: {
-    fontSize: 42,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    textAlign: "center",
-    letterSpacing: -0.5,
+    fontSize: 40,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -1,
     marginBottom: 8,
   },
   tagline: {
-    fontSize: 10,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
-    letterSpacing: 2,
-    fontWeight: "600",
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 32,
   },
-  progressContainer: {
-    position: "absolute",
-    bottom: 64,
-    width: 192,
-    alignSelf: "center",
+  featuresRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+    maxWidth: 320,
   },
-  progressBar: {
-    width: "100%",
-    height: 2,
-    borderRadius: 999,
-    overflow: "hidden",
+  featureChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-  },
-  bottomText: {
-    position: "absolute",
-    bottom: 24,
-    alignSelf: "center",
-    fontSize: 11,
-    fontWeight: "500",
-  },
+  featureText: { color: 'rgba(255,255,255,0.9)', fontSize: 11, fontWeight: '600' },
+  footer: { position: 'absolute', bottom: 48, left: 0, right: 0, alignItems: 'center', paddingHorizontal: 48 },
+  progressTrack: { width: '100%', height: 3, borderRadius: 99, overflow: 'hidden', marginBottom: 14 },
+  progressFill: { height: '100%', borderRadius: 99 },
+  footerText: { fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: '500', letterSpacing: 0.5 },
 });

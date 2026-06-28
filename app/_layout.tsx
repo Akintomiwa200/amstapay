@@ -8,6 +8,8 @@ import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { SocketProvider } from "../context/SocketContext";
+import { PersonalizationProvider } from "../context/PersonalizationContext";
+import { AppProvider } from "../context/AppContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 import { useEffect } from "react";
@@ -17,9 +19,13 @@ export default function RootLayout() {
     <ThemeProvider>
       <AuthProvider>
         <SocketProvider>
-          <SafeAreaProvider>
-            <AppContent />
-          </SafeAreaProvider>
+          <PersonalizationProvider>
+            <AppProvider>
+              <SafeAreaProvider>
+                <AppContent />
+              </SafeAreaProvider>
+            </AppProvider>
+          </PersonalizationProvider>
         </SocketProvider>
       </AuthProvider>
     </ThemeProvider>
@@ -35,14 +41,21 @@ function AppContent() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === "(auth)" || segments[0] === "login" || segments[0] === "signup" || segments[0] === "onboarding";
+    const first = segments[0];
+    const isPublic =
+      !first ||
+      first === '(auth)' ||
+      first === 'onboarding' ||
+      first === 'login' ||
+      first === 'signup' ||
+      first === 'verify' ||
+      first === 'forgot-password' ||
+      first === 'verification-pending';
 
-    if (!user && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace("/login");
-    } else if (user && inAuthGroup) {
-      // Redirect to dashboard if already authenticated
-      router.replace("/dashboard");
+    if (!user && !isPublic) {
+      router.replace('/login');
+    } else if (user && (first === '(auth)' || first === 'login' || first === 'signup')) {
+      router.replace('/dashboard');
     }
   }, [user, loading, segments]);
 

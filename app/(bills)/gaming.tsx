@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Gamepad2 } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
 
 const GamingScreen = () => {
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [gamerTag, setGamerTag] = useState('');
   const [selectedAmount, setSelectedAmount] = useState('');
+  const [customAmount, setCustomAmount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const platforms = [
@@ -27,9 +30,31 @@ const GamingScreen = () => {
     { value: 'custom', currency: 'Custom' },
   ];
 
-  const handleTopUp = () => {
-    console.log('Topping up gaming account:', { selectedPlatform, gamerTag, selectedAmount });
-    router.back();
+  const amountValue = useMemo(() => {
+    if (selectedAmount === 'custom') return Number(customAmount);
+    return Number(selectedAmount);
+  }, [selectedAmount, customAmount]);
+
+  const isFormValid = !!selectedPlatform && !!gamerTag && Number.isFinite(amountValue) && amountValue >= 100;
+
+  const handleTopUp = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Select platform, gamer tag, and amount from ₦100.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.topUpGaming({
+        platform: selectedPlatform,
+        gamerTag,
+        amount: amountValue,
+      });
+      handleBillSuccess(router, result, 'Gaming wallet topped up successfully.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -112,11 +137,11 @@ const GamingScreen = () => {
 
         {/* Top Up Button */}
         <TouchableOpacity
-          style={[styles.button, (!gamerTag || !selectedAmount || !selectedPlatform) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleTopUp}
-          disabled={!gamerTag || !selectedAmount || !selectedPlatform}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Top Up Now</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Top Up Now</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

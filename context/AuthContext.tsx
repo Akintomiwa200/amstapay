@@ -34,8 +34,13 @@ interface AuthContextType {
   // Backward compatible methods used by existing screens
   getWalletBalance?: () => Promise<{ balance: number }>;
   getTransactions?: () => Promise<unknown>;
+  getTransaction?: (id: string) => Promise<unknown>;
   fundWallet?: (amount: number, paymentMethod: string) => Promise<unknown>;
-  transferToWallet?: (amount: number, recipient: string) => Promise<unknown>;
+  transferToWallet?: (
+    amount: number,
+    recipient: string,
+    options?: { description?: string; bankName?: string; bankCode?: string },
+  ) => Promise<unknown>;
   buyAirtime?: (payload: { network: string; phoneNumber: string; amount: number }) => Promise<unknown>;
   verifyAccount?: (accountNumber: string) => Promise<{ accountName: string; bankName: string }>;
   sendViaQR?: (qrData: ParsedQRData, amount: number) => Promise<unknown>;
@@ -56,14 +61,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return transactionService.getAll();
   }, []);
 
+  const getTransaction = useCallback(async (id: string) => {
+    const { transactionService } = await import('@/services/transactions');
+    return transactionService.getById(id);
+  }, []);
+
   const fundWallet = useCallback(async (amount: number, paymentMethod: string) => {
     const { walletService } = await import('@/services/wallet');
     return walletService.fund({ amount, paymentMethod });
   }, []);
 
-  const transferToWallet = useCallback(async (amount: number, recipient: string) => {
+  const transferToWallet = useCallback(async (
+    amount: number,
+    recipient: string,
+    options?: { description?: string; bankName?: string; bankCode?: string },
+  ) => {
     const { walletService } = await import('@/services/wallet');
-    return walletService.transfer({ amount, recipientAccountNumber: recipient });
+    return walletService.transfer({
+      amount,
+      recipientAccountNumber: recipient,
+      description: options?.description,
+    });
   }, []);
 
   const buyAirtime = useCallback(async (payload: { network: string; phoneNumber: string; amount: number }) => {
@@ -245,6 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Backward compatible methods
         getWalletBalance,
         getTransactions,
+        getTransaction,
         fundWallet,
         transferToWallet,
         buyAirtime,

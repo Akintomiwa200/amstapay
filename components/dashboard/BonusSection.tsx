@@ -2,11 +2,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Gift, ChevronRight, Target, Sparkles } from 'lucide-react-native';
+import { ChevronRight, Target, Sparkles } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 
 const BonusSection: React.FC = () => {
   const { theme } = useTheme();
+  const router = useRouter();
   
   return (
     <View style={styles.container}>
@@ -21,7 +23,7 @@ const BonusSection: React.FC = () => {
             <Sparkles size={18} color={theme.colors.violet} />
             <Text style={[styles.title, { color: theme.colors.primary }]}>Earn Your Bonus</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/betting')}>
             <ChevronRight size={18} color={theme.colors.textSub} />
           </TouchableOpacity>
         </View>
@@ -39,7 +41,7 @@ const BonusSection: React.FC = () => {
             </View>
           </View>
           
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/betting')}>
             <LinearGradient
               colors={[theme.colors.mint, theme.colors.blue, theme.colors.violet]}
               start={{ x: 0, y: 0 }}

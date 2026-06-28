@@ -1,6 +1,8 @@
 // components/dashboard/Header.tsx
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useSocket } from '@/context/SocketContext';
+import { notificationsService } from '@/services/notifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Award, Bell, CheckCircle, HelpCircle } from 'lucide-react-native';
@@ -11,6 +13,7 @@ const Header = () => {
   const { user, token, loading } = useAuth();
   const { theme } = useTheme();
   const router = useRouter();
+  const { socket } = useSocket();
   const [imageError, setImageError] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -58,13 +61,27 @@ const Header = () => {
       fetchUnreadNotificationsCount();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onNew = () => fetchUnreadNotificationsCount();
+    socket.on('notification:new', onNew);
+    return () => { socket.off('notification:new', onNew); };
+  }, [socket]);
   
   const fetchUnreadNotificationsCount = async () => {
     try {
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      setUnreadCount(0);
+      const res = await notificationsService.getAll();
+      const list = Array.isArray(res) ? res : [];
+      const unread = list.filter((n: { read?: boolean }) => !n.read).length;
+      setUnreadCount(unread);
+    } catch {
+      try {
+        const countRes = await notificationsService.getUnreadCount();
+        setUnreadCount((countRes as { count?: number })?.count || 0);
+      } catch {
+        setUnreadCount(0);
+      }
     }
   };
   

@@ -46,6 +46,14 @@ import * as SecureStore from "expo-secure-store";
 import Toast from "react-native-toast-message";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { usePersonalization } from "@/context/PersonalizationContext";
+import { useSocket } from "@/context/SocketContext";
+import { formatMoney } from "@/lib/format";
+import { walletService } from "@/services/wallet";
+import { transactionService } from "@/services/transactions";
+import { cashbackService } from "@/services/cashback";
+import { beneficiaryService } from "@/services/beneficiary";
+import { cardService } from "@/services/cards";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BiometricAuth } from "@/utils/biometric";
@@ -54,8 +62,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width } = Dimensions.get("window");
 
 const Me = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, getWalletBalance, getTransactions } = useAuth();
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { currency } = usePersonalization();
+  const { socket } = useSocket();
   const c = theme.colors;
   const router = useRouter();
 
@@ -67,6 +77,11 @@ const Me = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [balance, setBalance] = useState(0);
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [points, setPoints] = useState(0);
+  const [referralCount, setReferralCount] = useState(0);
+  const [paymentMethods, setPaymentMethods] = useState<{ id: string; type: string; last4: string; expiry?: string }[]>([]);
 
   // Settings states
   const [darkMode, setDarkMode] = useState(isDarkMode);
@@ -80,15 +95,99 @@ const Me = () => {
     phone: user?.phoneNumber || user?.phone || "Not provided",
     accountType: user?.accountType || "Personal",
     avatar: user?.avatar ? { uri: user.avatar } : null,
-    points: user?.points ?? 1250,
+    points: user?.points ?? points,
     address: user?.address || "Not provided",
     joinDate: user?.joinDate || "January 2024",
     verified: user?.verified || true,
   };
 
+  const loadProfileStats = async () => {
+    try {
+      const [balRes, txRes, cashbackRes, beneficiariesRes, cardsRes] = await Promise.allSettled([
+        getWalletBalance?.() ?? walletService.getBalance(),
+        getTransactions?.() ?? transactionService.getAll(),
+        cashbackService.getAll(),
+        beneficiaryService.getAll(),
+        cardService.getAll(),
+      ]);
+
+      if (balRes.status === 'fulfilled') {
+        const data = (balRes.value as { data?: { balance: number }; balance?: number })?.data ?? balRes.value;
+        setBalance((data as { balance?: number })?.balance ?? 0);
+      }
+
+      if (txRes.status === 'fulfilled') {
+        const txs = ((txRes.value as { data?: unknown[] })?.data ?? txRes.value) as { amount?: number; type?: string }[];
+        if (Array.isArray(txs)) {
+          const spent = txs
+            .filter((t) => t.type === 'debit' || (t.amount ?? 0) < 0)
+            .reduce((sum, t) => sum + Math.abs(t.amount ?? 0), 0);
+          setTotalSpent(spent);
+        }
+      }
+
+      if (cashbackRes.status === 'fulfilled') {
+        const cb = (cashbackRes.value as { data?: { totalPoints?: number; balance?: number } })?.data ?? cashbackRes.value;
+        const pts = (cb as { totalPoints?: number; balance?: number })?.totalPoints
+          ?? (cb as { balance?: number })?.balance ?? 0;
+        setPoints(pts);
+      }
+
+      let methodsLoaded = false;
+      if (beneficiariesRes.status === 'fulfilled') {
+        const list = ((beneficiariesRes.value as { data?: unknown[] })?.data ?? beneficiariesRes.value) as { id: string; bankName?: string; accountNumber?: string }[];
+        if (Array.isArray(list) && list.length) {
+          methodsLoaded = true;
+          setPaymentMethods(
+            list.slice(0, 3).map((b) => ({
+              id: b.id,
+              type: b.bankName || 'Bank',
+              last4: (b.accountNumber || '').slice(-4),
+            })),
+          );
+        }
+      }
+
+      if (cardsRes.status === 'fulfilled' && !methodsLoaded) {
+        const cards = ((cardsRes.value as { data?: unknown[] })?.data ?? cardsRes.value) as { id: string; brand?: string; last4?: string; expiry?: string }[];
+        if (Array.isArray(cards) && cards.length) {
+          setPaymentMethods(
+            cards.slice(0, 3).map((card) => ({
+              id: card.id,
+              type: card.brand || 'Card',
+              last4: card.last4 || '****',
+              expiry: card.expiry,
+            })),
+          );
+        }
+      }
+    } catch {
+      // keep cached values
+    }
+  };
+
   useEffect(() => {
     checkBiometricAndLoadSettings();
+    loadProfileStats();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onBalance = (payload: { balance?: number }) => {
+      if (payload.balance != null) setBalance(payload.balance);
+    };
+    const onCashback = (payload: { points?: number; totalPoints?: number }) => {
+      setPoints(payload.totalPoints ?? payload.points ?? points);
+    };
+    socket.on('wallet:balance', onBalance);
+    socket.on('cashback:update', onCashback);
+    socket.on('transaction:completed', () => loadProfileStats());
+    return () => {
+      socket.off('wallet:balance', onBalance);
+      socket.off('cashback:update', onCashback);
+      socket.off('transaction:completed', loadProfileStats);
+    };
+  }, [socket]);
 
   const checkBiometricAndLoadSettings = async () => {
     const available = await BiometricAuth.isAvailable();
@@ -129,40 +228,17 @@ const Me = () => {
     return colors[index];
   };
 
-  const paymentMethods = [
-    { id: "1", type: "Visa", last4: "1234", expiry: "12/26" },
-    { id: "2", type: "Mastercard", last4: "5678", expiry: "08/25" },
+  const quickStats = [
+    { label: "Wallet Balance", value: formatMoney(balance, currency), icon: Wallet, color: c.violet },
+    { label: "Total Spent", value: formatMoney(totalSpent, currency), icon: TrendingUp, color: c.mint },
+    { label: "Points Earned", value: points.toLocaleString(), icon: Award, color: c.blue },
   ];
 
   const rewards = [
-    { id: 1, title: "Welcome Bonus", points: 50, icon: Star, achieved: true },
-    {
-      id: 2,
-      title: "First Transaction",
-      points: 100,
-      icon: Zap,
-      achieved: true,
-    },
-    {
-      id: 3,
-      title: "Referral Bonus",
-      points: 200,
-      icon: Gift,
-      achieved: false,
-    },
-    {
-      id: 4,
-      title: "Monthly Spender",
-      points: 500,
-      icon: TrendingUp,
-      achieved: false,
-    },
-  ];
-
-  const quickStats = [
-    { label: "Total Spent", value: "₦245,800", icon: Wallet, color: c.violet },
-    { label: "Points Earned", value: "1,250", icon: Award, color: c.mint },
-    { label: "Referrals", value: "3", icon: User, color: c.blue },
+    { id: 1, title: "Welcome Bonus", points: 50, icon: Star, achieved: points >= 50 },
+    { id: 2, title: "First Transaction", points: 100, icon: Zap, achieved: totalSpent > 0 },
+    { id: 3, title: "Referral Bonus", points: 200, icon: Gift, achieved: referralCount >= 1 },
+    { id: 4, title: "Monthly Spender", points: 500, icon: TrendingUp, achieved: totalSpent >= 100000 },
   ];
 
   const handleLogout = async () => {

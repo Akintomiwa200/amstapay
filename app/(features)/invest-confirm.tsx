@@ -1,34 +1,54 @@
 ﻿// app/invest-confirm.tsx - Investment Confirmation Screen
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, TrendingUp, Shield, Clock, ArrowRight, Info } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { investmentService } from '@/services/investments';
 
 export default function InvestConfirmScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { theme } = useTheme();
   const c = theme.colors;
   const [amount, setAmount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const plan = {
-    name: 'AmstaWealth Growth Plan',
-    minAmount: 10000,
-    returns: '12-15% annually',
-    duration: '12 months',
+    id: params.planId as string,
+    name: (params.planName as string) || 'Investment Plan',
+    minAmount: Number(params.minAmount) || 10000,
+    returns: (params.returns as string) || '12',
+    duration: (params.duration as string) || '12 months',
     risk: 'Medium',
   };
 
-  const handleConfirm = () => {
-    const numAmount = parseInt(amount);
+  const handleConfirm = async () => {
+    const numAmount = parseInt(amount, 10);
     if (!numAmount || numAmount < plan.minAmount) {
       Alert.alert('Error', `Minimum investment amount is ₦${plan.minAmount.toLocaleString()}`);
       return;
     }
-    Alert.alert('Investment Confirmed', `You've invested ₦${numAmount.toLocaleString()} in ${plan.name}`, [
-      { text: 'OK', onPress: () => router.push('/dashboard') },
-    ]);
+    if (!plan.id) {
+      Alert.alert('Error', 'Invalid investment plan');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await investmentService.create({
+        planId: plan.id,
+        amount: numAmount,
+        duration: parseInt(plan.duration, 10) || 12,
+      });
+      Alert.alert('Investment Confirmed', `You've invested ₦${numAmount.toLocaleString()} in ${plan.name}`, [
+        { text: 'OK', onPress: () => router.push('/invest') },
+      ]);
+    } catch (error) {
+      Alert.alert('Investment Failed', error instanceof Error ? error.message : 'Unable to complete investment');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -124,10 +144,14 @@ export default function InvestConfirmScreen() {
 
       {/* Confirm Button */}
       <View style={[styles.footer, { borderTopColor: c.border }]}>
-        <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm} activeOpacity={0.85} disabled={submitting}>
           <LinearGradient colors={[c.violet, c.primary]} style={styles.confirmGradient}>
-            <Text style={styles.confirmText}>Confirm Investment</Text>
-            <ArrowRight size={20} color="#fff" />
+            {submitting ? <ActivityIndicator color="#fff" /> : (
+              <>
+                <Text style={styles.confirmText}>Confirm Investment</Text>
+                <ArrowRight size={20} color="#fff" />
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>

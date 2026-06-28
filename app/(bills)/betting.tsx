@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Target } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
 
 const BettingScreen = () => {
   const [selectedBookmaker, setSelectedBookmaker] = useState('');
   const [accountId, setAccountId] = useState('');
   const [amount, setAmount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const bookmakers = [
@@ -17,9 +19,27 @@ const BettingScreen = () => {
     { id: '1960bet', name: '1960Bet' },
   ];
 
-  const handleFundAccount = () => {
-    console.log('Funding betting account:', { selectedBookmaker, accountId, amount });
-    router.back();
+  const amountValue = useMemo(() => Number(amount), [amount]);
+  const isFormValid = !!selectedBookmaker && !!accountId && Number.isFinite(amountValue) && amountValue >= 100;
+
+  const handleFundAccount = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Select a bookmaker, enter account ID, and amount from ₦100.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.fundBetting({
+        provider: selectedBookmaker,
+        accountId,
+        amount: amountValue,
+      });
+      handleBillSuccess(router, result, 'Betting account funded successfully.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -29,23 +49,17 @@ const BettingScreen = () => {
       </View>
 
       <View style={styles.formContainer}>
-        {/* Bookmaker Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Bookmaker</Text>
           <View style={styles.grid}>
             {bookmakers.map(bookmaker => (
               <TouchableOpacity
                 key={bookmaker.id}
-                style={[
-                  styles.gridButton,
-                  selectedBookmaker === bookmaker.id && styles.gridButtonSelected
-                ]}
+                style={[styles.gridButton, selectedBookmaker === bookmaker.id && styles.gridButtonSelected]}
                 onPress={() => setSelectedBookmaker(bookmaker.id)}
+                disabled={submitting}
               >
-                <Text style={[
-                  styles.gridButtonText,
-                  selectedBookmaker === bookmaker.id && styles.gridButtonTextSelected
-                ]}>
+                <Text style={[styles.gridButtonText, selectedBookmaker === bookmaker.id && styles.gridButtonTextSelected]}>
                   {bookmaker.name}
                 </Text>
               </TouchableOpacity>
@@ -53,7 +67,6 @@ const BettingScreen = () => {
           </View>
         </View>
 
-        {/* Account ID */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Account ID/Username</Text>
           <TextInput
@@ -61,10 +74,10 @@ const BettingScreen = () => {
             placeholder="Enter your betting account ID"
             value={accountId}
             onChangeText={setAccountId}
+            editable={!submitting}
           />
         </View>
 
-        {/* Amount */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Amount (₦)</Text>
           <TextInput
@@ -73,16 +86,16 @@ const BettingScreen = () => {
             value={amount}
             onChangeText={setAmount}
             keyboardType="numeric"
+            editable={!submitting}
           />
         </View>
 
-        {/* Fund Button */}
         <TouchableOpacity
-          style={[styles.button, (!accountId || !amount || !selectedBookmaker) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleFundAccount}
-          disabled={!accountId || !amount || !selectedBookmaker}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Fund Account</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Fund Account</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

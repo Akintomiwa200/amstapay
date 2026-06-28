@@ -24,9 +24,10 @@ export default function ChangePin() {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
 
-  const { user } = useAuth();
+  const { user, changePin } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChangePin = () => {
+  const handleChangePin = async () => {
     if (newPin !== confirmPin) {
       Alert.alert('Error', 'PINs do not match');
       return;
@@ -35,15 +36,24 @@ export default function ChangePin() {
       Alert.alert('Error', 'PIN must be 4 digits');
       return;
     }
-    if (user?.email) {
-      emailService.send(user.email, 'pin-changed', {
-        name: user.fullName || 'User',
-        time: new Date().toLocaleString(),
-      });
+    try {
+      setSubmitting(true);
+      await changePin(oldPin, newPin);
+      if (user?.email) {
+        emailService.send(user.email, 'pin-changed', {
+          name: user.fullName || 'User',
+          time: new Date().toLocaleString(),
+        });
+      }
+      Alert.alert('Success', 'PIN changed successfully', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to change PIN';
+      Alert.alert('Error', message);
+    } finally {
+      setSubmitting(false);
     }
-    Alert.alert('Success', 'PIN changed successfully', [
-      { text: 'OK', onPress: () => router.back() }
-    ]);
   };
 
   const renderPinInput = (value: string, onChange: (v: string) => void, placeholder: string) => (
@@ -103,6 +113,7 @@ export default function ChangePin() {
 
         <TouchableOpacity
           style={styles.button}
+          disabled={submitting}
           onPress={() => {
             if (step === 1 && oldPin.length === 4) setStep(2);
             else if (step === 2 && newPin.length === 4) setStep(3);

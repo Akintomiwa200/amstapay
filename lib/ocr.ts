@@ -1,12 +1,12 @@
-// lib/ocr.ts - Shared OCR utility for account extraction
-import * as FileSystem from 'expo-file-system';
+// lib/ocr.ts - OCR utility: on-device text recognition + backend fallback
+import * as FileSystem from 'expo-file-system/legacy';
+import { ocrService } from '@/services/ocr';
 
-// Try to import TextRecognition, but handle if it's not available
-let TextRecognition: any = null;
+let TextRecognition: { recognize: (uri: string) => Promise<string[]> } | null = null;
 try {
   TextRecognition = require('react-native-text-recognition');
-} catch (error) {
-  console.warn('react-native-text-recognition not available:', error);
+} catch {
+  console.warn('react-native-text-recognition not available in this build');
 }
 
 export type AccountType = 'nigerian' | 'international' | 'crypto' | 'unknown';
@@ -15,12 +15,14 @@ export interface ExtractedAccountData {
   accountNumber: string;
   accountName: string;
   bankName: string;
+  bankCode?: string;
   confidence: number;
   type: AccountType;
   amount?: string;
+  rawText?: string;
+  source?: 'device' | 'server';
 }
 
-// Nigerian Banks Database
 export const NIGERIAN_BANKS = [
   { name: 'Access Bank', codes: ['044', 'access', 'access bank'] },
   { name: 'Guaranty Trust Bank', codes: ['058', 'gtb', 'gtbank', 'gt bank'] },
@@ -61,46 +63,36 @@ export const NIGERIAN_BANKS = [
   { name: 'Paycom (OPay)', codes: ['paycom'] },
 ] as const;
 
-// International Bank Keywords
 export const INTERNATIONAL_BANKS = [
   'Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'HSBC',
   'Barclays', 'Lloyds', 'Santander', 'Deutsche Bank', 'BNP Paribas',
-  'Standard Chartered', 'UBS', 'Credit Suisse', 'Goldman Sachs',
-  'JP Morgan', 'ICICI', 'HDFC', 'SBI', 'Axis Bank', 'PNC Bank',
-  'Capital One', 'TD Bank', 'US Bank', 'Truist', 'Ally Bank',
-  'Discover Bank', 'Fifth Third Bank', 'KeyBank', 'Regions Bank',
-  ' Huntington Bank', 'M&T Bank', 'Citizens Bank', 'Comerica',
-  'SVB', 'First Republic', 'SoFi', 'Marcus', 'Synchrony',
 ] as const;
 
-export function detectBankName(text: string): { name: string; type: 'nigerian' | 'international' | 'unknown' } {
+export function detectBankName(text: string): { name: string; code?: string; type: 'nigerian' | 'international' | 'unknown' } {
   const lowerText = text.toLowerCase();
 
-  // Check Nigerian banks first
   for (const bank of NIGERIAN_BANKS) {
     for (const code of bank.codes) {
       if (lowerText.includes(code.toLowerCase())) {
-        return { name: bank.name, type: 'nigerian' };
+        const numericCode = bank.codes.find(c => /^\d+$/.test(c));
+        return { name: bank.name, code: numericCode, type: 'nigerian' };
       }
     }
   }
 
-  // Check international banks
   for (const bank of INTERNATIONAL_BANKS) {
     if (lowerText.includes(bank.toLowerCase())) {
       return { name: bank, type: 'international' };
     }
   }
 
-  // Try to extract bank name using common patterns
   const bankPatterns = [
     /(?:bank|banking|trust|financial|microfinance)\s*[:\-]?\s*([a-z\s]{3,40})/i,
-    /(?:b(?:an)?k\.?)\s*[:\-]?\s*([a-z\s]{3,40})/i,
   ];
 
   for (const pattern of bankPatterns) {
     const match = text.match(pattern);
-    if (match && match[1]) {
+    if (match?.[1]) {
       const candidate = match[1].trim();
       if (candidate.length > 2) {
         return { name: candidate, type: 'international' };
@@ -121,167 +113,162 @@ export function detectAccountName(text: string): string {
 
   for (const pattern of namePatterns) {
     const match = text.match(pattern);
-    if (match && match[1]) {
-      return match[1].trim();
-    }
+    if (match?.[1]) return match[1].trim();
   }
-
   return '';
 }
 
 export function detectCryptoAddress(text: string): { address: string; type: string } | null {
-  // Ethereum: 0x + 40 hex chars
   const ethMatch = text.match(/\b(0x[a-fA-F0-9]{40})\b/);
   if (ethMatch) return { address: ethMatch[1], type: 'Ethereum' };
 
-  // Bitcoin: starts with 1, 3, or bc1
   const btcMatch = text.match(/\b([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})\b/);
   if (btcMatch) return { address: btcMatch[1], type: 'Bitcoin' };
-
-  // Solana: base58 string, typically 32-44 chars
-  const solMatch = text.match(/\b([1-9A-HJ-NP-Za-km-z]{32,44})\b/);
-  if (solMatch && /solana|sol/i.test(text)) {
-    return { address: solMatch[1], type: 'Solana' };
-  }
-
-  // BNB Smart Chain
-  const bscMatch = text.match(/\b(0x[a-fA-F0-9]{40})\b/);
-  if (bscMatch && /bsc|binance|bnb/i.test(text)) {
-    return { address: bscMatch[1], type: 'BNB Smart Chain' };
-  }
 
   return null;
 }
 
 export function detectAmount(text: string): string | undefined {
-  // Naira symbol amounts
   const nairaMatch = text.match(/[₦N]\s*([\d,]+(?:\.\d{2})?)/i);
   if (nairaMatch) return nairaMatch[1].replace(/,/g, '');
 
-  // Dollar amounts
   const dollarMatch = text.match(/\$\s*([\d,]+(?:\.\d{2})?)/);
   if (dollarMatch) return dollarMatch[1].replace(/,/g, '');
 
-  // Amount keyword patterns
   const amountPatterns = [
-    /(?:amount|sum|total|price|value)\s*[:\-]?\s*([\d,]+(?:\.\d{2})?)/i,
-    /(?:amt)\s*[:\-]?\s*([\d,]+(?:\.\d{2})?)/i,
+    /(?:amount|sum|total|price|value|pay(?:able)?)\s*[:\-]?\s*([\d,]+(?:\.\d{2})?)/i,
+    /\b([\d,]{3,}(?:\.\d{2})?)\s*(?:naira|ngn)/i,
   ];
 
   for (const pattern of amountPatterns) {
     const match = text.match(pattern);
-    if (match && match[1]) {
-      return match[1].replace(/,/g, '');
-    }
+    if (match?.[1]) return match[1].replace(/,/g, '');
   }
 
   return undefined;
 }
 
-export async function extractAccountData(imageUri: string): Promise<ExtractedAccountData> {
-  try {
-    // Check if TextRecognition is available
-    if (!TextRecognition || typeof TextRecognition.recognize !== 'function') {
-      throw new Error('OCR library not available. Please ensure react-native-text-recognition is properly installed.');
-    }
+export function parseRecognizedText(recognizedText: string): ExtractedAccountData {
+  const cryptoResult = detectCryptoAddress(recognizedText);
+  if (cryptoResult) {
+    return {
+      accountNumber: cryptoResult.address,
+      accountName: '',
+      bankName: `${cryptoResult.type} Wallet`,
+      confidence: 0.98,
+      type: 'crypto',
+      amount: detectAmount(recognizedText),
+      rawText: recognizedText,
+      source: 'device',
+    };
+  }
 
-    const recognizedLines = await TextRecognition.recognize(imageUri);
-    
-    if (!recognizedLines || !Array.isArray(recognizedLines)) {
-      throw new Error('OCR recognition returned invalid data');
-    }
+  const bankResult = detectBankName(recognizedText);
+  const accountName = detectAccountName(recognizedText);
+  const amount = detectAmount(recognizedText);
 
-    const recognizedText = recognizedLines.join('\n');
+  const accountRegex = /\b\d{10}\b/g;
+  const matches = recognizedText.match(accountRegex);
+  if (matches?.length) {
+    return {
+      accountNumber: matches[0],
+      accountName,
+      bankName: bankResult.name,
+      bankCode: bankResult.code,
+      confidence: 0.95,
+      type: bankResult.type === 'unknown' ? 'nigerian' : bankResult.type,
+      amount,
+      rawText: recognizedText,
+      source: 'device',
+    };
+  }
 
-    // Check for crypto wallet first
-    const cryptoResult = detectCryptoAddress(recognizedText);
-    if (cryptoResult) {
+  const flexibleRegex = /(\d[\d\s\-]{8,}\d)/g;
+  const flexibleMatches = recognizedText.match(flexibleRegex);
+  if (flexibleMatches) {
+    const cleaned = flexibleMatches[0].replace(/[\s\-]/g, '');
+    if (cleaned.length === 10) {
       return {
-        accountNumber: cryptoResult.address,
-        accountName: '',
-        bankName: cryptoResult.type + ' Wallet',
-        confidence: 0.98,
-        type: 'crypto',
-        amount: detectAmount(recognizedText),
-      };
-    }
-
-    // Detect bank name
-    const bankResult = detectBankName(recognizedText);
-
-    // Detect account name
-    const accountName = detectAccountName(recognizedText);
-
-    // Detect amount
-    const amount = detectAmount(recognizedText);
-
-    // Extract 10-digit account number (Nigerian format)
-    const accountRegex = /\b\d{10}\b/g;
-    const matches = recognizedText.match(accountRegex);
-
-    if (matches && matches.length > 0) {
-      return {
-        accountNumber: matches[0],
+        accountNumber: cleaned,
         accountName,
         bankName: bankResult.name,
-        confidence: 0.95,
+        bankCode: bankResult.code,
+        confidence: 0.85,
         type: bankResult.type === 'unknown' ? 'nigerian' : bankResult.type,
         amount,
+        rawText: recognizedText,
+        source: 'device',
       };
     }
-
-    // Try to find numbers with spaces/dashes
-    const flexibleRegex = /(\d[\d\s\-]{8,}\d)/g;
-    const flexibleMatches = recognizedText.match(flexibleRegex);
-
-    if (flexibleMatches) {
-      const cleaned = flexibleMatches[0].replace(/[\s\-]/g, '');
-      if (cleaned.length === 10) {
-        return {
-          accountNumber: cleaned,
-          accountName,
-          bankName: bankResult.name,
-          confidence: 0.85,
-          type: bankResult.type === 'unknown' ? 'nigerian' : bankResult.type,
-          amount,
-        };
-      }
-      // International account (longer numbers)
-      if (cleaned.length > 10 && cleaned.length <= 18) {
-        return {
-          accountNumber: cleaned,
-          accountName,
-          bankName: bankResult.name || 'International Bank',
-          confidence: 0.80,
-          type: 'international',
-          amount,
-        };
-      }
-      // IBAN-style (very long)
-      if (cleaned.length > 18 && cleaned.length <= 34) {
-        return {
-          accountNumber: cleaned,
-          accountName,
-          bankName: bankResult.name || 'International Bank',
-          confidence: 0.75,
-          type: 'international',
-          amount,
-        };
-      }
-    }
-
-    return {
-      accountNumber: '',
-      accountName: '',
-      bankName: '',
-      confidence: 0,
-      type: 'unknown',
-      amount,
-    };
-  } catch (error) {
-    console.error('OCR extraction failed:', error);
-    throw new Error('Failed to extract account information from image');
   }
+
+  return {
+    accountNumber: '',
+    accountName,
+    bankName: bankResult.name,
+    bankCode: bankResult.code,
+    confidence: amount ? 0.4 : 0,
+    type: 'unknown',
+    amount,
+    rawText: recognizedText,
+    source: 'device',
+  };
+}
+
+async function recognizeOnDevice(imageUri: string): Promise<string | null> {
+  if (!TextRecognition?.recognize) return null;
+  const lines = await TextRecognition.recognize(imageUri);
+  if (!lines?.length) return null;
+  return lines.join('\n');
+}
+
+async function recognizeOnServer(imageUri: string): Promise<ExtractedAccountData | null> {
+  const base64 = await FileSystem.readAsStringAsync(imageUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const mimeType = imageUri.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg';
+
+  try {
+    const snap = await ocrService.snapExtract(base64, mimeType);
+    const data = (snap as { data?: ExtractedAccountData })?.data ?? snap;
+    return { ...data, source: 'server' };
+  } catch {
+    const result = await ocrService.extractFromImage(base64, mimeType);
+    const data = (result as { data?: ExtractedAccountData })?.data ?? result;
+    return { ...data, source: 'server' };
+  }
+}
+
+export async function extractAccountData(imageUri: string): Promise<ExtractedAccountData> {
+  let recognizedText: string | null = null;
+
+  try {
+    recognizedText = await recognizeOnDevice(imageUri);
+    if (recognizedText?.trim()) {
+      const parsed = parseRecognizedText(recognizedText);
+      if (parsed.accountNumber || parsed.amount) return parsed;
+    }
+  } catch (error) {
+    console.warn('On-device OCR failed:', error);
+  }
+
+  try {
+    const serverResult = await recognizeOnServer(imageUri);
+    if (serverResult && (serverResult.accountNumber || serverResult.amount || serverResult.rawText)) {
+      if (!serverResult.rawText && recognizedText) {
+        serverResult.rawText = recognizedText;
+      }
+      return serverResult;
+    }
+  } catch (error) {
+    console.warn('Server OCR fallback failed:', error);
+  }
+
+  if (recognizedText?.trim()) {
+    return parseRecognizedText(recognizedText);
+  }
+
+  throw new Error('Could not read text from the image. Enter details manually or retake the photo.');
 }
 
 export async function cleanupImageFile(imageUri: string | null): Promise<void> {
@@ -292,7 +279,6 @@ export async function cleanupImageFile(imageUri: string | null): Promise<void> {
       await FileSystem.deleteAsync(imageUri, { idempotent: true });
     }
   } catch (error) {
-    // Silently ignore cleanup errors
     console.warn('Failed to cleanup image file:', error);
   }
 }

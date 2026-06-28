@@ -52,11 +52,30 @@ export const ENDPOINTS = {
     ELECTRICITY: '/bills/electricity',
     SCHOOL_FEES: '/bills/schoolfees',
     TRANSPORT: '/bills/transport',
+    BETTING: '/bills/betting',
+    TV: '/bills/tv',
+    INSURANCE: '/bills/insurance',
+    GIFTCARD: '/bills/giftcard',
+    GAMING: '/bills/gaming',
+  },
+
+  NOTIFICATIONS_LIST: {
+    ALL: '/notifications',
+    READ: (id: string) => `/notifications/${id}/read`,
+    READ_ALL: '/notifications/read-all',
+    CLEAR_ALL: '/notifications/clear-all',
+    DELETE: (id: string) => `/notifications/${id}`,
   },
 
   PAYMENTS: {
     SEND: '/payments/send',
     RECEIVE: '/payments/receive',
+    REQUEST: '/payments/request',
+    SNAP_EXTRACT: '/payments/snap-extract',
+  },
+
+  OCR: {
+    EXTRACT: '/ocr/extract',
   },
 
   SAVINGS: {

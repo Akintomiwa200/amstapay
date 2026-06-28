@@ -1,5 +1,6 @@
 ﻿// app/settings/language.tsx
-import React, { useState } from 'react';
+import React from 'react';
+import { usePersonalization } from '@/context/PersonalizationContext';
 import {
   View,
   Text,
@@ -16,7 +17,8 @@ export default function LanguageSettings() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const { locale, setLocale } = usePersonalization();
+  const selectedLanguage = locale.split('-')[0];
 
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
@@ -27,11 +29,9 @@ export default function LanguageSettings() {
     { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
   ];
 
-  const handleSelect = (code: string) => {
-    setSelectedLanguage(code);
-    setTimeout(() => {
-      router.back();
-    }, 500);
+  const handleSelect = async (code: string) => {
+    await setLocale(code === 'en' ? 'en-NG' : code);
+    setTimeout(() => router.back(), 300);
   };
 
   return (

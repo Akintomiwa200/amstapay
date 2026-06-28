@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Copy } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import type { Transaction } from '@/lib/models';
 
 const ReceiptScreen = () => {
   const router = useRouter();
   const { transactionId } = useLocalSearchParams(); // get :transactionId param
   const { getTransaction } = useAuth();
-  const [transaction, setTransaction] = useState<any>(null);
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,8 +20,9 @@ const ReceiptScreen = () => {
   const fetchTransaction = async (id: string) => {
     try {
       setLoading(true);
-      const data = await getTransaction(id);
-      setTransaction(data);
+      const data = await getTransaction?.(id);
+      const tx = (data as { data?: Transaction })?.data ?? (data as Transaction);
+      setTransaction(tx);
     } catch (err) {
       console.error('Failed to fetch transaction', err);
     } finally {
@@ -27,10 +30,10 @@ const ReceiptScreen = () => {
     }
   };
 
-  const copyReference = () => {
+  const copyReference = async () => {
     if (transaction?.reference) {
-      navigator.clipboard.writeText(transaction.reference);
-      alert('Reference copied!');
+      await Clipboard.setStringAsync(transaction.reference);
+      Alert.alert('Copied', 'Reference copied to clipboard');
     }
   };
 

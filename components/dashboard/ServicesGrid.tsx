@@ -39,6 +39,11 @@ const ServicesGrid: React.FC = () => {
       'Bank Transfer': '/register-account',
       'Gift Cards': '/giftcard',
       'School Fees': '/schoolfees',
+      Insurance: '/insurance',
+      Transport: '/transport',
+      'Real Estate': '/realestate',
+      Gaming: '/gaming',
+      Invitation: '/invitation',
     };
   
     const targetRoute = route || routes[service];
@@ -46,8 +51,8 @@ const ServicesGrid: React.FC = () => {
   };
   
   const mainServices: Service[] = [
-    { icon: Scan, label: 'Scan & Send', badge: 'Web3', route: '/scan-send' },
     { icon: Camera, label: 'Snap & Pay', badge: 'New', route: '/snap-pay' },
+    { icon: Scan, label: 'Scan & Send', badge: 'Web3', route: '/scan-send' },
     { icon: Send, label: 'Send Money', route: '/send-money' },
     { icon: QrCode, label: 'Receive', route: '/receive-money' },
     { icon: Smartphone, label: 'Airtime', badge: 'Up to 5%' },

@@ -1,33 +1,60 @@
 ﻿// app/add-account.tsx - Add New Account Screen
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, CreditCard, Building, Plus, ChevronDown } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { beneficiaryService } from '@/services/beneficiary';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AddAccountScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
+  const { verifyAccount } = useAuth();
   const [accountType, setAccountType] = useState('bank');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const accountTypes = [
     { key: 'bank', label: 'Bank Account', icon: Building },
     { key: 'card', label: 'Debit/Credit Card', icon: CreditCard },
   ];
 
-  const handleAdd = () => {
+  const handleVerify = async () => {
+    if (accountNumber.length !== 10) return;
+    try {
+      const result = await verifyAccount?.(accountNumber);
+      if (result?.accountName) setAccountName(result.accountName);
+      if (result?.bankName && !bankName) setBankName(result.bankName);
+    } catch {
+      // verification optional
+    }
+  };
+
+  const handleAdd = async () => {
     if (!bankName || !accountNumber) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
-    Alert.alert('Success', 'Account added successfully!', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    try {
+      setSubmitting(true);
+      await beneficiaryService.create({
+        name: accountName || 'Beneficiary',
+        accountNumber,
+        bankName,
+      });
+      Alert.alert('Success', 'Account added successfully!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to add account');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,6 +111,7 @@ export default function AddAccountScreen() {
             maxLength={10}
             value={accountNumber}
             onChangeText={setAccountNumber}
+            onBlur={handleVerify}
           />
         </View>
 
@@ -100,10 +128,14 @@ export default function AddAccountScreen() {
         </View>
 
         {/* Add Button */}
-        <TouchableOpacity style={styles.addBtn} onPress={handleAdd} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.addBtn} onPress={handleAdd} activeOpacity={0.85} disabled={submitting}>
           <LinearGradient colors={[c.violet, c.primary]} style={styles.addGradient}>
-            <Plus size={20} color="#fff" />
-            <Text style={styles.addText}>Add Account</Text>
+            {submitting ? <ActivityIndicator color="#fff" /> : (
+              <>
+                <Plus size={20} color="#fff" />
+                <Text style={styles.addText}>Add Account</Text>
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>

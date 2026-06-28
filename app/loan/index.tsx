@@ -1,10 +1,11 @@
 ﻿// app/loan/index.tsx
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Shield, Calculator, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { ChevronLeft, Shield, CheckCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { loanService } from '@/services/loans';
 
 const LoanScreen = () => {
   const router = useRouter();
@@ -12,6 +13,7 @@ const LoanScreen = () => {
   const c = theme.colors;
   const [amount, setAmount] = React.useState('');
   const [duration, setDuration] = React.useState('3');
+  const [submitting, setSubmitting] = useState(false);
 
   const calculateMonthlyPayment = () => {
     const principal = parseFloat(amount) || 0;
@@ -24,6 +26,31 @@ const LoanScreen = () => {
   const monthlyPayment = calculateMonthlyPayment();
   const totalPayment = monthlyPayment * parseInt(duration);
   const interest = totalPayment - (parseFloat(amount) || 0);
+
+  const handleApply = async () => {
+    const principal = parseFloat(amount);
+    if (!principal || principal < 1000) {
+      Alert.alert('Invalid amount', 'Minimum loan amount is ₦1,000');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const loan = await loanService.apply({
+        amount: principal,
+        duration: parseInt(duration, 10),
+        purpose: 'Personal loan',
+      });
+      const loanId = (loan as { _id?: string })?._id || (loan as { data?: { _id?: string } })?.data?._id;
+      Alert.alert('Application Submitted', 'Your loan application is being processed.', [
+        { text: 'View History', onPress: () => router.push('/loan/history') },
+        loanId ? { text: 'View Details', onPress: () => router.push(`/loan/${loanId}`) } : { text: 'OK' },
+      ]);
+    } catch (error) {
+      Alert.alert('Application Failed', error instanceof Error ? error.message : 'Unable to submit loan application');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
@@ -90,9 +117,9 @@ const LoanScreen = () => {
             </View>
           )}
 
-          <TouchableOpacity style={styles.applyBtn}>
+          <TouchableOpacity style={styles.applyBtn} onPress={handleApply} disabled={submitting}>
             <LinearGradient colors={[c.mint, c.blue, c.violet]} style={styles.applyGradient}>
-              <Text style={styles.applyText}>Apply for Loan</Text>
+              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.applyText}>Apply for Loan</Text>}
             </LinearGradient>
           </TouchableOpacity>
         </View>

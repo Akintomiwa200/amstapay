@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Gift } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
 
 const GiftCardsScreen = () => {
   const [selectedCard, setSelectedCard] = useState('');
   const [denomination, setDenomination] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const giftCards = [
@@ -19,9 +21,29 @@ const GiftCardsScreen = () => {
     { id: 'sephora', name: 'Sephora', denominations: [25, 50, 100] },
   ];
 
-  const handlePurchase = () => {
-    console.log('Purchasing gift card:', { selectedCard, denomination, quantity, email });
-    router.back();
+  const denominationValue = useMemo(() => Number(denomination), [denomination]);
+  const quantityValue = useMemo(() => Number(quantity) || 1, [quantity]);
+  const isFormValid = !!selectedCard && Number.isFinite(denominationValue) && denominationValue > 0;
+
+  const handlePurchase = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Select a gift card and denomination.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.buyGiftCard({
+        brand: selectedCard,
+        denomination: denominationValue,
+        quantity: quantityValue,
+        email: email || undefined,
+      });
+      handleBillSuccess(router, result, 'Gift card purchased successfully.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -108,11 +130,11 @@ const GiftCardsScreen = () => {
 
         {/* Purchase Button */}
         <TouchableOpacity
-          style={[styles.button, (!selectedCard || !denomination || !email) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handlePurchase}
-          disabled={!selectedCard || !denomination || !email}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Purchase Gift Card</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Purchase Gift Card</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

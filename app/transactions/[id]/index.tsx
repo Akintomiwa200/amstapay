@@ -1,31 +1,62 @@
-// app/transactions/[id].tsx - Transaction Details
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, ArrowUpRight, ArrowDownRight, Calendar, Clock, MapPin, Receipt, Copy, Share2 } from 'lucide-react-native';
+import { ChevronLeft, ArrowUpRight, ArrowDownRight, Calendar, Clock, MapPin, Receipt, Copy } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { transactionService } from '@/services/transactions';
+import * as Clipboard from 'expo-clipboard';
+import type { Transaction } from '@/lib/models';
 
 export default function TransactionDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { theme } = useTheme();
   const c = theme.colors;
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const transaction = {
-    id: id,
-    type: 'Salary Deposit',
-    amount: '+50,000',
-    date: '2024-03-15',
-    time: '10:45 AM',
-    category: 'income',
-    status: 'completed',
-    from: 'Employer Inc.',
-    to: 'Main Account',
-    reference: 'TRX-2024-0315-001',
-    description: 'Monthly salary payment for March 2024',
-    fee: '₦0',
-    balanceAfter: '₦245,800'
+  useEffect(() => {
+    if (!id) return;
+    transactionService.getById(id as string)
+      .then((data) => {
+        const tx = (data as { data?: Transaction })?.data ?? (data as Transaction);
+        setTransaction(tx);
+      })
+      .catch(() => setTransaction(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: c.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={c.primary} />
+      </View>
+    );
+  }
+
+  if (!transaction) {
+    return (
+      <View style={[styles.container, { backgroundColor: c.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: c.text }}>Transaction not found</Text>
+      </View>
+    );
+  }
+
+  const isIncome = transaction.amount > 0;
+  const date = new Date(transaction.createdAt);
+
+  const copyReference = async () => {
+    if (transaction.reference) {
+      await Clipboard.setStringAsync(transaction.reference);
+      Alert.alert('Copied', 'Reference copied');
+    }
+  };
+
+  const shareReceipt = async () => {
+    await Share.share({
+      message: `AmstaPay Receipt\nType: ${transaction.type}\nAmount: ₦${Math.abs(transaction.amount).toLocaleString()}\nReference: ${transaction.reference || 'N/A'}\nStatus: ${transaction.status}`,
+    });
   };
 
   return (
@@ -42,15 +73,12 @@ export default function TransactionDetailScreen() {
 
       <ScrollView style={styles.content}>
         <View style={[styles.amountCard, { backgroundColor: c.bg, borderColor: c.border }]}>
-          <View style={[styles.iconCircle, transaction.category === 'income' ? { backgroundColor: c.success } : { backgroundColor: c.error }]}>
-            {transaction.category === 'income' ? 
-              <ArrowDownRight size={32} color="#fff" /> : 
-              <ArrowUpRight size={32} color="#fff" />
-            }
+          <View style={[styles.iconCircle, { backgroundColor: isIncome ? c.success : c.error }]}>
+            {isIncome ? <ArrowDownRight size={32} color="#fff" /> : <ArrowUpRight size={32} color="#fff" />}
           </View>
           <Text style={[styles.amountLabel, { color: c.textSub }]}>{transaction.type}</Text>
-          <Text style={[styles.amount, transaction.category === 'income' ? { color: c.success } : { color: c.error }]}>
-            {transaction.amount}
+          <Text style={[styles.amount, { color: isIncome ? c.success : c.error }]}>
+            {isIncome ? '+' : '-'}₦{Math.abs(transaction.amount).toLocaleString()}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: c.success + '20' }]}>
             <Text style={[styles.statusText, { color: c.success }]}>{transaction.status}</Text>
@@ -59,76 +87,41 @@ export default function TransactionDetailScreen() {
 
         <View style={[styles.detailsCard, { backgroundColor: c.bg, borderColor: c.border }]}>
           <View style={styles.detailRow}>
-            <View style={styles.detailIcon}>
-              <Calendar size={18} color={c.violet} />
-            </View>
+            <View style={styles.detailIcon}><Calendar size={18} color={c.violet} /></View>
             <View style={styles.detailContent}>
               <Text style={[styles.detailLabel, { color: c.textSub }]}>Date</Text>
-              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.date}</Text>
+              <Text style={[styles.detailValue, { color: c.text }]}>{date.toLocaleDateString()}</Text>
             </View>
           </View>
-
           <View style={styles.detailRow}>
-            <View style={styles.detailIcon}>
-              <Clock size={18} color={c.violet} />
-            </View>
+            <View style={styles.detailIcon}><Clock size={18} color={c.violet} /></View>
             <View style={styles.detailContent}>
               <Text style={[styles.detailLabel, { color: c.textSub }]}>Time</Text>
-              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.time}</Text>
+              <Text style={[styles.detailValue, { color: c.text }]}>{date.toLocaleTimeString()}</Text>
             </View>
           </View>
-
           <View style={styles.detailRow}>
-            <View style={styles.detailIcon}>
-              <MapPin size={18} color={c.violet} />
-            </View>
+            <View style={styles.detailIcon}><MapPin size={18} color={c.violet} /></View>
             <View style={styles.detailContent}>
               <Text style={[styles.detailLabel, { color: c.textSub }]}>From</Text>
-              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.from}</Text>
+              <Text style={[styles.detailValue, { color: c.text }]}>{transaction.sender || 'N/A'}</Text>
             </View>
           </View>
-
           <View style={styles.detailRow}>
-            <View style={styles.detailIcon}>
-              <Receipt size={18} color={c.violet} />
-            </View>
+            <View style={styles.detailIcon}><Receipt size={18} color={c.violet} /></View>
             <View style={styles.detailContent}>
               <Text style={[styles.detailLabel, { color: c.textSub }]}>Reference</Text>
               <View style={styles.referenceRow}>
-                <Text style={[styles.referenceValue, { color: c.text }]}>{transaction.reference}</Text>
-                <TouchableOpacity>
-                  <Copy size={16} color={c.violet} />
-                </TouchableOpacity>
+                <Text style={[styles.referenceValue, { color: c.text }]}>{transaction.reference || 'N/A'}</Text>
+                <TouchableOpacity onPress={copyReference}><Copy size={16} color={c.violet} /></TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
 
-        <View style={[styles.summaryCard, { backgroundColor: c.primaryLight }]}>
-          <Text style={[styles.summaryTitle, { color: c.primary }]}>Summary</Text>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: c.textSub }]}>Amount</Text>
-            <Text style={[styles.summaryValue, { color: c.text }]}>{transaction.amount}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: c.textSub }]}>Fee</Text>
-            <Text style={[styles.summaryValue, { color: c.text }]}>{transaction.fee}</Text>
-          </View>
-          <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: c.border }]}>
-            <Text style={styles.summaryLabel}>Balance After</Text>
-            <Text style={[styles.totalValue, { color: c.primary }]}>{transaction.balanceAfter}</Text>
-          </View>
-        </View>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={[styles.shareBtn, { backgroundColor: c.primaryLight }]}>
-            <Share2 size={18} color={c.violet} />
-            <Text style={[styles.shareText, { color: c.violet }]}>Share Receipt</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.reportBtn, { backgroundColor: c.bg, borderColor: c.border }]}>
-            <Text style={[styles.reportText, { color: c.error }]}>Report Issue</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={[styles.shareBtn, { backgroundColor: c.primaryLight }]} onPress={shareReceipt}>
+          <Text style={[styles.shareText, { color: c.violet }]}>Share Receipt</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -155,16 +148,6 @@ const styles = StyleSheet.create({
   detailValue: { fontSize: 15, fontWeight: '500' },
   referenceRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   referenceValue: { fontSize: 14, flex: 1 },
-  summaryCard: { borderRadius: 20, padding: 20, marginBottom: 20 },
-  summaryTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  summaryLabel: { fontSize: 14 },
-  summaryValue: { fontSize: 14, fontWeight: '500' },
-  totalRow: { marginTop: 8, paddingTop: 12, borderTopWidth: 1 },
-  totalValue: { fontSize: 16, fontWeight: '700' },
-  actionButtons: { flexDirection: 'row', gap: 12, marginBottom: 40 },
-  shareBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
+  shareBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginBottom: 40 },
   shareText: { fontSize: 14, fontWeight: '600' },
-  reportBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
-  reportText: { fontSize: 14, fontWeight: '500' },
 });

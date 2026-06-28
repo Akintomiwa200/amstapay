@@ -8,3 +8,7 @@ export { investmentService } from './investments';
 export { loanService } from './loans';
 export { beneficiaryService } from './beneficiary';
 export { cardService } from './cards';
+export { paymentsService } from './payments';
+export { notificationsService } from './notifications';
+export { budgetService } from './budget';
+export { ocrService } from './ocr';

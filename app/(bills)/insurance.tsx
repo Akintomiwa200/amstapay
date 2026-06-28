@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Shield } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
 
 const InsuranceScreen = () => {
   const [selectedProvider, setSelectedProvider] = useState('');
   const [policyNumber, setPolicyNumber] = useState('');
   const [amount, setAmount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const providers = [
@@ -18,9 +20,27 @@ const InsuranceScreen = () => {
     { id: 'mutual', name: 'Mutual Benefits' },
   ];
 
-  const handlePayPremium = () => {
-    console.log('Paying insurance premium:', { selectedProvider, policyNumber, amount });
-    router.back();
+  const amountValue = useMemo(() => Number(amount), [amount]);
+  const isFormValid = !!selectedProvider && !!policyNumber && Number.isFinite(amountValue) && amountValue >= 100;
+
+  const handlePayPremium = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Select provider, policy number, and amount from ₦100.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.payInsurance({
+        provider: selectedProvider,
+        policyNumber,
+        amount: amountValue,
+      });
+      handleBillSuccess(router, result, 'Insurance premium paid successfully.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -79,11 +99,11 @@ const InsuranceScreen = () => {
 
         {/* Pay Button */}
         <TouchableOpacity
-          style={[styles.button, (!policyNumber || !amount || !selectedProvider) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handlePayPremium}
-          disabled={!policyNumber || !amount || !selectedProvider}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Pay Premium</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Pay Premium</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

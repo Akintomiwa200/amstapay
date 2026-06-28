@@ -1,14 +1,18 @@
 ﻿// app/finance/index.tsx
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { 
   ArrowUpRight, ArrowDownRight, CreditCard, PieChart, 
-  Wallet, Clock, ChevronRight, TrendingUp, Send, 
+  Wallet, ChevronRight, TrendingUp, Send, 
   Receipt, BarChart3, Sparkles, Shield, Plus 
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
+import { savingsService } from '@/services/savings';
+import { investmentService } from '@/services/investments';
+import type { Transaction } from '@/lib/models';
 
 const { width } = Dimensions.get('window');
 
@@ -16,20 +20,45 @@ const Finance = () => {
   const { theme } = useTheme();
   const c = theme.colors;
   const router = useRouter();
+  const { getWalletBalance, getTransactions } = useAuth();
+  const [balance, setBalance] = useState(0);
+  const [savingsTotal, setSavingsTotal] = useState(0);
+  const [investmentTotal, setInvestmentTotal] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [bal, txns, goals, investments] = await Promise.all([
+          getWalletBalance?.().catch(() => ({ balance: 0 })),
+          getTransactions?.().catch(() => []),
+          savingsService.getAll().catch(() => []),
+          investmentService.getAll().catch(() => []),
+        ]);
+        setBalance((bal as { balance?: number })?.balance || 0);
+        const txList = Array.isArray(txns) ? txns : (txns as { data?: Transaction[] })?.data || [];
+        setTransactions(txList);
+        const goalsList = Array.isArray(goals) ? goals : (goals as { data?: { currentAmount: number }[] })?.data || [];
+        setSavingsTotal(goalsList.reduce((s, g) => s + (g.currentAmount || 0), 0));
+        const invList = Array.isArray(investments) ? investments : (investments as { data?: { amount: number }[] })?.data || [];
+        setInvestmentTotal(invList.reduce((s, i) => s + (i.amount || 0), 0));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const accounts = [
-    { id: 1, name: 'Main Account', balance: '245,800', type: 'bank', color: c.violet },
-    { id: 2, name: 'Savings', balance: '150,000', type: 'savings', color: c.mint },
-    { id: 3, name: 'Investment', balance: '89,500', type: 'investment', color: c.blue },
+    { id: 'wallet', name: 'Main Account', balance: balance, type: 'bank', color: c.violet },
+    { id: 'savings', name: 'Savings', balance: savingsTotal, type: 'savings', color: c.mint },
+    { id: 'investment', name: 'Investment', balance: investmentTotal, type: 'investment', color: c.blue },
   ];
 
-  const transactions = [
-    { id: 1, type: 'Salary Deposit', amount: '+50,000', date: 'Today, 10:45 AM', category: 'income', from: 'Employer Inc.' },
-    { id: 2, type: 'Electricity Bill', amount: '-15,000', date: 'Yesterday, 3:20 PM', category: 'bill', from: 'IKEDC' },
-    { id: 3, type: 'Transfer to John', amount: '-25,000', date: 'Mar 12, 9:15 AM', category: 'transfer', from: 'John Doe' },
-    { id: 4, type: 'Airtime Purchase', amount: '-2,500', date: 'Mar 10, 6:30 PM', category: 'bill', from: 'MTN' },
-    { id: 5, type: 'Investment Return', amount: '+8,200', date: 'Mar 8, 11:00 AM', category: 'income', from: 'AmstaWealth' },
-  ];
+  const totalBalance = balance + savingsTotal + investmentTotal;
+  const totalIncome = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
 
   const quickActions = [
     { id: 1, title: 'Transfer', icon: Send, route: '/send-money', color: c.violet },
@@ -38,13 +67,17 @@ const Finance = () => {
     { id: 4, title: 'Loans', icon: Shield, route: '/loan', color: c.pink },
   ];
 
-  const totalBalance = 485300;
-  const totalIncome = 58200;
-  const totalExpenses = 42500;
-
   const navigateTo = (route: string) => {
     router.push(route as any);
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: c.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={c.primary} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: c.bg }]} showsVerticalScrollIndicator={false}>
@@ -59,19 +92,19 @@ const Finance = () => {
         
         <View style={styles.balanceContainer}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>â‚¦{totalBalance.toLocaleString()}</Text>
+          <Text style={styles.balanceAmount}>₦{totalBalance.toLocaleString()}</Text>
           
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <ArrowDownRight size={16} color={c.mint} />
               <Text style={styles.statLabel}>Income</Text>
-              <Text style={styles.statValue}>+â‚¦{totalIncome.toLocaleString()}</Text>
+              <Text style={styles.statValue}>+₦{totalIncome.toLocaleString()}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <ArrowUpRight size={16} color={c.pink} />
               <Text style={styles.statLabel}>Expenses</Text>
-              <Text style={styles.statValue}>-â‚¦{totalExpenses.toLocaleString()}</Text>
+              <Text style={styles.statValue}>-₦{totalExpenses.toLocaleString()}</Text>
             </View>
           </View>
         </View>
@@ -113,7 +146,7 @@ const Finance = () => {
           <TouchableOpacity 
             key={account.id} 
             style={[styles.accountCard, { borderBottomColor: c.border }]}
-            onPress={() => navigateTo(`/account/${account.id}`)}
+            onPress={() => navigateTo('/accounts')}
             activeOpacity={0.7}
           >
             <View style={[styles.accountIcon, { backgroundColor: `${account.color}15` }]}>
@@ -125,7 +158,7 @@ const Finance = () => {
               <Text style={[styles.accountName, { color: c.text }]}>{account.name}</Text>
               <Text style={[styles.accountType, { color: c.textSub }]}>{account.type}</Text>
             </View>
-            <Text style={[styles.accountBalance, { color: c.text }]}>â‚¦{account.balance.toLocaleString()}</Text>
+            <Text style={[styles.accountBalance, { color: c.text }]}>₦{Number(account.balance).toLocaleString()}</Text>
             <ChevronRight size={18} color={c.textSub} />
           </TouchableOpacity>
         ))}
@@ -145,37 +178,40 @@ const Finance = () => {
           </TouchableOpacity>
         </View>
         
-        {transactions.slice(0, 3).map((txn) => (
+        {transactions.slice(0, 3).map((txn) => {
+          const isIncome = txn.amount > 0;
+          const date = new Date(txn.createdAt);
+          return (
           <TouchableOpacity 
-            key={txn.id} 
+            key={txn._id} 
             style={[styles.transactionCard, { borderBottomColor: c.border }]}
-            onPress={() => navigateTo(`/transaction/${txn.id}`)}
+            onPress={() => navigateTo(`/transactions/${txn._id}`)}
             activeOpacity={0.7}
           >
             <View style={[
               styles.transactionIcon,
-              { backgroundColor: txn.category === 'income' ? c.success : c.error }
+              { backgroundColor: isIncome ? c.success : c.error }
             ]}>
-              {txn.category === 'income' ? 
+              {isIncome ? 
                 <ArrowDownRight size={16} color="#fff" /> : 
                 <ArrowUpRight size={16} color="#fff" />
               }
             </View>
             <View style={styles.transactionInfo}>
               <Text style={[styles.transactionType, { color: c.text }]}>{txn.type}</Text>
-              <Text style={[styles.transactionDate, { color: c.textSub }]}>{txn.date}</Text>
-              <Text style={[styles.transactionFrom, { color: c.violet }]}>{txn.from}</Text>
+              <Text style={[styles.transactionDate, { color: c.textSub }]}>{date.toLocaleString()}</Text>
+              <Text style={[styles.transactionFrom, { color: c.violet }]}>{txn.sender || txn.receiverName}</Text>
             </View>
             <Text 
               style={[
                 styles.transactionAmount,
-                { color: txn.category === 'income' ? c.success : c.error }
+                { color: isIncome ? c.success : c.error }
               ]}
             >
-              {txn.amount.startsWith('+') ? `+â‚¦${parseInt(txn.amount).toLocaleString()}` : `-â‚¦${parseInt(txn.amount).toLocaleString()}`}
+              {isIncome ? '+' : '-'}₦{Math.abs(txn.amount).toLocaleString()}
             </Text>
           </TouchableOpacity>
-        ))}
+        );})}
       </View>
 
       {/* Financial Insights */}

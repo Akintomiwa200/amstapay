@@ -6,8 +6,11 @@ import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'rea
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-
+import { usePersonalization } from '@/context/PersonalizationContext';
+import { formatMoney } from '@/lib/format';
 import { useSocket } from '@/context/SocketContext';
+import { savingsService } from '@/services/savings';
+import { transactionService } from '@/services/transactions';
 
 const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(false);
@@ -16,13 +19,28 @@ const BalanceCard = () => {
   const router = useRouter();
   const { getWalletBalance } = useAuth();
   const { theme } = useTheme();
+  const { currency } = usePersonalization();
+  const [lockedSavings, setLockedSavings] = useState(0);
+  const [todaySpend, setTodaySpend] = useState(0);
   const { socket } = useSocket();
 
   const fetchBalance = async () => {
     try {
       setLoading(true);
-      const data = await getWalletBalance?.();
+      const [data, goals, txns] = await Promise.all([
+        getWalletBalance?.(),
+        savingsService.getAll().catch(() => []),
+        transactionService.getAll(1, 50).catch(() => []),
+      ]);
       if (data) setBalance(data.balance);
+      const goalsList = Array.isArray(goals) ? goals : (goals as { data?: { currentAmount: number }[] })?.data || [];
+      setLockedSavings(goalsList.reduce((s, g) => s + (g.currentAmount || 0), 0));
+      const txList = Array.isArray(txns) ? txns : (txns as { data?: { amount: number; createdAt: string }[] })?.data || [];
+      const today = new Date().toDateString();
+      const spend = txList
+        .filter(t => t.amount < 0 && new Date(t.createdAt).toDateString() === today)
+        .reduce((s, t) => s + Math.abs(t.amount), 0);
+      setTodaySpend(spend);
     } catch (err) {
       console.error("Failed to fetch balance", err);
       setBalance(null);
@@ -52,8 +70,8 @@ const BalanceCard = () => {
     ? loading
       ? 'Loading...'
       : balance !== null
-      ? `₦${balance.toLocaleString()}`
-      : '₦0.00'
+      ? formatMoney(balance, currency)
+      : formatMoney(0, currency)
     : '••••••';
 
   return (
@@ -96,13 +114,13 @@ const BalanceCard = () => {
         <View style={styles.statItem}>
           <TrendingUp size={14} color={theme.colors.mint} />
           <Text style={styles.statLabel}>Today's Spend</Text>
-          <Text style={styles.statValue}>₦0.00</Text>
+          <Text style={styles.statValue}>{formatMoney(todaySpend, currency)}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
           <Shield size={14} color={theme.colors.mint} />
           <Text style={styles.statLabel}>Locked Savings</Text>
-          <Text style={styles.statValue}>₦0.00</Text>
+          <Text style={styles.statValue}>{formatMoney(lockedSavings, currency)}</Text>
         </View>
       </View>
     </LinearGradient>

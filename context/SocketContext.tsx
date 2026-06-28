@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { API } from '@/lib/constants';
 import { storage } from '@/lib/storage';
@@ -12,17 +12,21 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType>({ socket: null, connected: false });
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    let socket: Socket | null = null;
+    let activeSocket: Socket | null = null;
 
     const connect = async () => {
       const token = await storage.get<string>(STORAGE_KEYS.TOKEN);
-      if (!token) return;
+      if (!token) {
+        setSocket(null);
+        setConnected(false);
+        return;
+      }
 
-      socket = io(API.BASE_URL, {
+      activeSocket = io(API.BASE_URL, {
         path: '/socket.io',
         auth: { token },
         transports: ['websocket', 'polling'],
@@ -31,28 +35,27 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         reconnectionDelay: 3000,
       });
 
-      socket.on('connect', () => setConnected(true));
-      socket.on('disconnect', () => setConnected(false));
-      socket.on('connect_error', () => setConnected(false));
-
-      socket.on('account:deleted', () => {
-        socket?.disconnect();
+      activeSocket.on('connect', () => setConnected(true));
+      activeSocket.on('disconnect', () => setConnected(false));
+      activeSocket.on('connect_error', () => setConnected(false));
+      activeSocket.on('account:deleted', () => {
+        activeSocket?.disconnect();
       });
 
-      socketRef.current = socket;
+      setSocket(activeSocket);
     };
 
     connect();
 
     return () => {
-      socket?.disconnect();
-      socketRef.current = null;
+      activeSocket?.disconnect();
+      setSocket(null);
       setConnected(false);
     };
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, connected }}>
+    <SocketContext.Provider value={{ socket, connected }}>
       {children}
     </SocketContext.Provider>
   );

@@ -1,12 +1,15 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
 
 const TransportScreen = () => {
   const [serviceType, setServiceType] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
   const [destination, setDestination] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const serviceTypes = [
@@ -21,9 +24,32 @@ const TransportScreen = () => {
     { id: 'van', name: 'Van', price: '₦400/km', estimated: '10 min' },
   ];
 
-  const handleBook = () => {
-    console.log('Booking transport:', { serviceType, pickupLocation, destination, selectedVehicle });
-    router.back();
+  const estimatedAmount = useMemo(() => {
+    const rates: Record<string, number> = { bike: 1500, car: 2500, van: 4000 };
+    return rates[selectedVehicle] || 0;
+  }, [selectedVehicle]);
+
+  const isFormValid = !!serviceType && !!pickupLocation && !!destination && !!selectedVehicle;
+
+  const handleBook = async () => {
+    if (!isFormValid) {
+      Alert.alert('Invalid input', 'Complete all transport booking fields.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.payTransport({
+        amount: estimatedAmount,
+        transportType: serviceType,
+        route: `${pickupLocation} → ${destination}`,
+        bookingReference: `${selectedVehicle}-${Date.now()}`,
+      });
+      handleBillSuccess(router, result, 'Transport booking completed.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -104,11 +130,11 @@ const TransportScreen = () => {
 
         {/* Book Button */}
         <TouchableOpacity
-          style={[styles.button, (!pickupLocation || !destination || !selectedVehicle) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleBook}
-          disabled={!pickupLocation || !destination || !selectedVehicle}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Book Now</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Book Now</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

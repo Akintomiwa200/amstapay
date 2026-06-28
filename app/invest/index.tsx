@@ -1,25 +1,33 @@
 ﻿// app/invest/index.tsx
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, TrendingUp, PiggyBank, BarChart3, Shield, ChevronRight, Plus } from 'lucide-react-native';
+import { ChevronLeft, TrendingUp, ChevronRight, PiggyBank } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { investmentService } from '@/services/investments';
+import type { Investment, InvestmentPlan } from '@/lib/models';
 
 const InvestScreen = () => {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
+  const [plans, setPlans] = useState<InvestmentPlan[]>([]);
+  const [userInvestments, setUserInvestments] = useState<Investment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const investments = [
-    { id: 1, name: 'AmstaWealth Plus', return: '12.5%', minAmount: '10,000', duration: '6 months', risk: 'Low', color: c.mint },
-    { id: 2, name: 'Fixed Savings', return: '9.8%', minAmount: '50,000', duration: '12 months', risk: 'Very Low', color: c.blue },
-    { id: 3, name: 'Growth Fund', return: '18.2%', minAmount: '100,000', duration: '24 months', risk: 'Medium', color: c.violet },
-  ];
+  useEffect(() => {
+    Promise.all([
+      investmentService.getPlans().catch(() => []),
+      investmentService.getAll().catch(() => []),
+    ]).then(([plansData, investmentsData]) => {
+      setPlans(Array.isArray(plansData) ? plansData : (plansData as { data?: InvestmentPlan[] })?.data || []);
+      setUserInvestments(Array.isArray(investmentsData) ? investmentsData : (investmentsData as { data?: Investment[] })?.data || []);
+    }).finally(() => setLoading(false));
+  }, []);
 
-  const userInvestments = [
-    { id: 1, name: 'AmstaWealth Plus', amount: '50,000', returns: '3,125', status: 'active' },
-  ];
+  const totalInvested = userInvestments.reduce((sum, inv) => sum + inv.amount, 0);
+  const totalReturns = userInvestments.reduce((sum, inv) => sum + (inv.expectedReturns || 0), 0);
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
@@ -35,77 +43,87 @@ const InvestScreen = () => {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Invested</Text>
-            <Text style={styles.statValue}>₦50,000</Text>
+            <Text style={styles.statValue}>₦{totalInvested.toLocaleString()}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Returns</Text>
-            <Text style={styles.statValue}>₦3,125</Text>
+            <Text style={styles.statValue}>₦{totalReturns.toLocaleString()}</Text>
           </View>
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content}>
+        {loading ? (
+          <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
+        ) : (
+          <>
         {userInvestments.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: c.primary }]}>Your Investments</Text>
             {userInvestments.map((inv) => (
-              <View key={inv.id} style={[styles.investmentCard, { backgroundColor: c.primaryLight }]}>
+              <TouchableOpacity key={inv._id} style={[styles.investmentCard, { backgroundColor: c.primaryLight }]} onPress={() => router.push(`/invest/${inv._id}`)}>
                 <View style={styles.investmentHeader}>
                   <TrendingUp size={20} color={c.violet} />
-                  <Text style={[styles.investmentName, { color: c.text }]}>{inv.name}</Text>
+                  <Text style={[styles.investmentName, { color: c.text }]}>{inv.plan?.name || 'Investment'}</Text>
                   <View style={[styles.activeBadge, { backgroundColor: c.success }]}>
-                    <Text style={[styles.activeText, { color: c.primary }]}>Active</Text>
+                    <Text style={[styles.activeText, { color: c.primary }]}>{inv.status}</Text>
                   </View>
                 </View>
                 <View style={styles.investmentDetails}>
                   <View>
                     <Text style={[styles.detailLabel, { color: c.textSub }]}>Amount</Text>
-                    <Text style={[styles.detailValue, { color: c.text }]}>₦{parseInt(inv.amount).toLocaleString()}</Text>
+                    <Text style={[styles.detailValue, { color: c.text }]}>₦{inv.amount.toLocaleString()}</Text>
                   </View>
                   <View>
                     <Text style={[styles.detailLabel, { color: c.textSub }]}>Returns</Text>
-                    <Text style={[styles.detailValue, { color: c.success }]}>+₦{parseInt(inv.returns).toLocaleString()}</Text>
+                    <Text style={[styles.detailValue, { color: c.success }]}>+₦{(inv.expectedReturns || 0).toLocaleString()}</Text>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: c.primary }]}>Available Plans</Text>
-          {investments.map((inv) => (
-            <TouchableOpacity key={inv.id} style={styles.planCard}>
+          {plans.map((inv, index) => {
+            const colors = [c.mint, c.blue, c.violet];
+            const color = colors[index % colors.length];
+            return (
+            <TouchableOpacity key={inv._id} style={styles.planCard} onPress={() => router.push({ pathname: '/invest-confirm', params: { planId: inv._id, planName: inv.name, minAmount: String(inv.minInvestment), returns: String(inv.roi), duration: String(inv.durations?.[0] || 12) } })}>
               <LinearGradient
-                colors={[`${inv.color}10`, `${inv.color}05`]}
+                colors={[`${color}10`, `${color}05`]}
                 style={styles.planGradient}
               >
                 <View style={styles.planHeader}>
-                  <PiggyBank size={24} color={inv.color} />
-                  <Text style={[styles.planName, { color: inv.color }]}>{inv.name}</Text>
+                  <PiggyBank size={24} color={color} />
+                  <Text style={[styles.planName, { color }]}>{inv.name}</Text>
                   <ChevronRight size={18} color={c.textSub} />
                 </View>
                 <View style={styles.planStats}>
                   <View>
                     <Text style={[styles.planLabel, { color: c.textSub }]}>Expected Return</Text>
-                    <Text style={[styles.planValue, { color: c.text }]}>{inv.return} p.a</Text>
+                    <Text style={[styles.planValue, { color: c.text }]}>{inv.roi}% p.a</Text>
                   </View>
                   <View>
                     <Text style={[styles.planLabel, { color: c.textSub }]}>Min. Amount</Text>
-                    <Text style={[styles.planValue, { color: c.text }]}>₦{parseInt(inv.minAmount).toLocaleString()}</Text>
+                    <Text style={[styles.planValue, { color: c.text }]}>₦{inv.minInvestment.toLocaleString()}</Text>
                   </View>
                   <View>
-                    <Text style={[styles.planLabel, { color: c.textSub }]}>Duration</Text>
-                    <Text style={[styles.planValue, { color: c.text }]}>{inv.duration}</Text>
+                    <Text style={[styles.planLabel, { color: c.textSub }]}>Risk</Text>
+                    <Text style={[styles.planValue, { color: c.text }]}>{inv.riskLevel}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={[styles.investBtn, { backgroundColor: `${inv.color}20` }]}>
-                  <Text style={[styles.investBtnText, { color: inv.color }]}>Invest Now</Text>
-                </TouchableOpacity>
+                <View style={[styles.investBtn, { backgroundColor: `${color}20` }]}>
+                  <Text style={[styles.investBtnText, { color }]}>Invest Now</Text>
+                </View>
               </LinearGradient>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );

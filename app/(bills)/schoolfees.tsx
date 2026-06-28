@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, BookOpen, GraduationCap, Search, Calendar, DollarSign } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
 
 const SchoolFees = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [studentId, setStudentId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const institutions = [
     {
@@ -37,6 +43,33 @@ const SchoolFees = () => {
       date: '15 Dec 2023'
     },
   ];
+
+  const filtered = institutions.filter(i =>
+    i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    i.code.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const handlePayFees = async () => {
+    const schoolName = selectedSchool || filtered[0]?.name;
+    const amountValue = Number(amount);
+    if (!schoolName || !studentId || !Number.isFinite(amountValue) || amountValue < 100) {
+      Alert.alert('Invalid input', 'Select a school, enter student ID, and amount from ₦100.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.paySchoolFees({
+        studentId,
+        amount: amountValue,
+        schoolName,
+      });
+      handleBillSuccess(router, result, 'School fees payment completed.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -79,8 +112,12 @@ const SchoolFees = () => {
 
         <Text style={styles.sectionTitle}>Recent Institutions</Text>
         
-        {institutions.map((institution, index) => (
-          <TouchableOpacity key={index} style={styles.institutionCard}>
+        {filtered.map((institution, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[styles.institutionCard, selectedSchool === institution.name && { borderColor: '#F97316' }]}
+            onPress={() => setSelectedSchool(institution.name)}
+          >
             <View style={styles.institutionLogo}>
               <Text style={styles.logoText}>{institution.logo}</Text>
             </View>
@@ -92,11 +129,54 @@ const SchoolFees = () => {
               <Text style={styles.paymentAmount}>{institution.recentPayment}</Text>
               <Text style={styles.paymentDate}>{institution.date}</Text>
             </View>
-            <TouchableOpacity style={styles.payButton}>
+            <TouchableOpacity
+              style={styles.payButton}
+              onPress={() => {
+                setSelectedSchool(institution.name);
+                setAmount(institution.recentPayment.replace(/[₦,]/g, ''));
+              }}
+            >
               <Text style={styles.payButtonText}>Pay</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         ))}
+
+        <View style={styles.paymentForm}>
+          <Text style={styles.sectionTitle}>Payment Details</Text>
+          <Text style={styles.formLabel}>School</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Select a school above"
+            value={selectedSchool}
+            onChangeText={setSelectedSchool}
+          />
+          <Text style={styles.formLabel}>Student ID</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Enter student ID"
+            value={studentId}
+            onChangeText={setStudentId}
+          />
+          <Text style={styles.formLabel}>Amount (₦)</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Enter amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity
+            style={[styles.promoButton, submitting && { opacity: 0.7 }]}
+            onPress={handlePayFees}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text style={styles.promoButtonText}>Pay School Fees</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.promoSection}>
           <Text style={styles.promoTitle}>🎉 Special Offer</Text>
@@ -282,5 +362,28 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '600',
     fontSize: 14,
+  },
+  paymentForm: {
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    marginBottom: 24,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  formInput: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
   },
 });

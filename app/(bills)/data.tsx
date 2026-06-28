@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Database } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess, mapNetwork } from '@/lib/billPayment';
+
+type DataPlan = { id: string; name: string; price: number; validity: string; data: string };
 
 const DataScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState<DataPlan | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const providers = [
@@ -23,9 +27,28 @@ const DataScreen = () => {
     { id: '4', name: '2Monthly', price: 3500, validity: '60 days', data: '10GB' },
   ];
 
-  const handleBuyData = () => {
-    console.log('Buying data:', { phoneNumber, selectedProvider, selectedPlan });
-    router.back();
+  const sanitizedPhone = useMemo(() => phoneNumber.replace(/\D/g, ''), [phoneNumber]);
+  const isFormValid = !!selectedProvider && sanitizedPhone.length >= 10 && !!selectedPlan;
+
+  const handleBuyData = async () => {
+    if (!isFormValid || !selectedPlan) {
+      Alert.alert('Invalid input', 'Select a network, phone number, and data plan.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.buyData({
+        network: mapNetwork(selectedProvider) as 'MTN' | 'GLO' | 'AIRTEL' | '9MOBILE',
+        phoneNumber: sanitizedPhone,
+        dataPlanId: selectedPlan.id,
+        amount: selectedPlan.price,
+      });
+      handleBillSuccess(router, result, 'Your data purchase was completed.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -47,6 +70,7 @@ const DataScreen = () => {
                   selectedProvider === provider.id && styles.providerButtonSelected
                 ]}
                 onPress={() => setSelectedProvider(provider.id)}
+                disabled={submitting}
               >
                 <Text style={[
                   styles.providerText,
@@ -68,6 +92,7 @@ const DataScreen = () => {
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
+            editable={!submitting}
           />
         </View>
 
@@ -83,6 +108,7 @@ const DataScreen = () => {
                   selectedPlan?.id === plan.id && styles.planButtonSelected
                 ]}
                 onPress={() => setSelectedPlan(plan)}
+                disabled={submitting}
               >
                 <Text style={styles.planName}>{plan.name}</Text>
                 <Text style={styles.planData}>{plan.data}</Text>
@@ -95,11 +121,15 @@ const DataScreen = () => {
 
         {/* Buy Button */}
         <TouchableOpacity
-          style={[styles.button, (!phoneNumber || !selectedProvider || !selectedPlan) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleBuyData}
-          disabled={!phoneNumber || !selectedProvider || !selectedPlan}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Buy Data</Text>
+          {submitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.buttonText}>Buy Data</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>

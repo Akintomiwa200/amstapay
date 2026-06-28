@@ -2,7 +2,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Download, Share2, QrCode } from 'lucide-react-native';
+import { ChevronLeft, Download, Share2 } from 'lucide-react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -13,13 +14,21 @@ export default function MyQRScreen() {
   const c = theme.colors;
   const { user } = useAuth();
 
+  const qrPayload = JSON.stringify({
+    type: 'amstapay_receive',
+    userId: user?._id,
+    name: user?.fullName || user?.accountName,
+    accountNumber: user?.blupayAccountNumber || user?.accountNumber,
+    bank: 'AmstaPay',
+  });
+
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Pay me via AmstaPay!\nUsername: ${user?.fullName || user?.name || 'Guest'}`,
+        message: `Pay me via AmstaPay!\nAccount: ${user?.blupayAccountNumber || user?.accountNumber || 'N/A'}\nName: ${user?.fullName || 'User'}`,
       });
-    } catch (e) {
-      // Handle error
+    } catch {
+      // ignore
     }
   };
 
@@ -43,9 +52,7 @@ export default function MyQRScreen() {
 
           {/* QR Placeholder */}
           <View style={styles.qrContainer}>
-            <View style={[styles.qrPlaceholder, { borderColor: c.border }]}>
-              <QrCode size={120} color={c.primary} />
-            </View>
+            <QRCode value={qrPayload} size={160} />
           </View>
 
           <Text style={[styles.instruction, { color: c.textSub }]}>Let others scan this code to pay you</Text>

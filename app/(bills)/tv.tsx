@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Tv } from 'lucide-react-native';
+import { billsService } from '@/services/bills';
+import { handleBillError, handleBillSuccess } from '@/lib/billPayment';
+
+type TvPackage = { id: string; name: string; price: number };
 
 const TvServicesScreen = () => {
   const [subscriberId, setSubscriberId] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState<TvPackage | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const providers = [
@@ -15,7 +19,7 @@ const TvServicesScreen = () => {
     { id: 'startimes', name: 'StarTimes' },
   ];
 
-  const packages = {
+  const packages: Record<string, TvPackage[]> = {
     dstv: [
       { id: 'p1', name: 'DStv Yanga', price: 1800 },
       { id: 'p2', name: 'DStv Confam', price: 5400 },
@@ -33,9 +37,28 @@ const TvServicesScreen = () => {
     ],
   };
 
-  const handleSubscribe = () => {
-    console.log('Subscribing to TV:', { subscriberId, selectedProvider, selectedPackage });
-    router.back();
+  const isFormValid = !!subscriberId && !!selectedProvider && !!selectedPackage;
+
+  const handleSubscribe = async () => {
+    if (!isFormValid || !selectedPackage) {
+      Alert.alert('Invalid input', 'Select provider, enter smart card number, and choose a package.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const result = await billsService.payTv({
+        provider: selectedProvider,
+        subscriberId,
+        packageId: selectedPackage.id,
+        packageName: selectedPackage.name,
+        amount: selectedPackage.price,
+      });
+      handleBillSuccess(router, result, 'TV subscription payment completed.');
+    } catch (error) {
+      handleBillError(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -105,11 +128,11 @@ const TvServicesScreen = () => {
 
         {/* Subscribe Button */}
         <TouchableOpacity
-          style={[styles.button, (!subscriberId || !selectedProvider || !selectedPackage) && styles.buttonDisabled]}
+          style={[styles.button, (!isFormValid || submitting) && styles.buttonDisabled]}
           onPress={handleSubscribe}
-          disabled={!subscriberId || !selectedProvider || !selectedPackage}
+          disabled={!isFormValid || submitting}
         >
-          <Text style={styles.buttonText}>Subscribe Now</Text>
+          {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Subscribe Now</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

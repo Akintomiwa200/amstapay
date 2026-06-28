@@ -36,7 +36,14 @@
           "backgroundColor": "#001360"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow AmstaPay to access your photos for Snap & Send.",
+          "cameraPermission": "Allow AmstaPay to use the camera for Snap & Send payments."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

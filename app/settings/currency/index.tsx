@@ -1,16 +1,16 @@
-﻿// app/settings/currency/index.tsx - Currency Settings Screen
-import React, { useState } from 'react';
+﻿import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { usePersonalization } from '@/context/PersonalizationContext';
 
 export default function CurrencyScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
-  const [selected, setSelected] = useState('NGN');
+  const { currency, setCurrency } = usePersonalization();
 
   const currencies = [
     { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
@@ -21,6 +21,11 @@ export default function CurrencyScreen() {
     { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
     { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
   ];
+
+  const handleSelect = async (code: string) => {
+    await setCurrency(code);
+    setTimeout(() => router.back(), 300);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
@@ -36,25 +41,25 @@ export default function CurrencyScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.desc, { color: c.textSub }]}>Select your preferred display currency</Text>
-        {currencies.map((currency) => (
+        {currencies.map((item) => (
           <TouchableOpacity
-            key={currency.code}
+            key={item.code}
             style={[
               styles.currencyRow,
-              selected === currency.code && styles.currencyRowActive,
-              { borderColor: selected === currency.code ? c.violet : c.border },
-              selected === currency.code && { backgroundColor: c.primaryLight }
+              currency === item.code && styles.currencyRowActive,
+              { borderColor: currency === item.code ? c.violet : c.border },
+              currency === item.code && { backgroundColor: c.primaryLight },
             ]}
-            onPress={() => setSelected(currency.code)}
+            onPress={() => handleSelect(item.code)}
           >
             <View style={[styles.currencySymbol, { backgroundColor: c.primaryLight }]}>
-              <Text style={[styles.symbolText, { color: c.primary }]}>{currency.symbol}</Text>
+              <Text style={[styles.symbolText, { color: c.primary }]}>{item.symbol}</Text>
             </View>
             <View style={styles.currencyInfo}>
-              <Text style={[styles.currencyName, { color: c.text }]}>{currency.name}</Text>
-              <Text style={[styles.currencyCode, { color: c.textSub }]}>{currency.code}</Text>
+              <Text style={[styles.currencyName, { color: c.text }]}>{item.name}</Text>
+              <Text style={[styles.currencyCode, { color: c.textSub }]}>{item.code}</Text>
             </View>
-            {selected === currency.code && (
+            {currency === item.code && (
               <View style={[styles.checkIcon, { backgroundColor: c.violet }]}>
                 <Check size={18} color="#fff" />
               </View>

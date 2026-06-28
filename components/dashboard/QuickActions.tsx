@@ -1,8 +1,7 @@
-// components/dashboard/QuickActions.tsx
 import { useRouter } from 'expo-router';
-import { QrCode, Scan, Send, ArrowDownLeft, Camera } from 'lucide-react-native';
+import { QrCode, Send, ArrowDownLeft, Plus, Receipt } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -11,34 +10,44 @@ const QuickActions = () => {
   const { theme } = useTheme();
 
   const actions = [
-    { 
-      icon: Scan, 
-      label: 'Scan & Pay', 
-      onPress: () => router.push('/scan'),
-      gradient: [theme.colors.mint, theme.colors.blue]
+    {
+      icon: Plus,
+      label: 'Add Money',
+      onPress: () => router.push('/add-money'),
+      gradient: [theme.colors.mint, theme.colors.blue],
     },
-    { 
-      icon: Send, 
-      label: 'Send', 
+    {
+      icon: Send,
+      label: 'Transfer',
       onPress: () => router.push('/send-money'),
-      gradient: [theme.colors.violet, theme.colors.pink]
+      gradient: [theme.colors.violet, theme.colors.pink],
     },
-    { 
-      icon: QrCode, 
-      label: 'My QR', 
-      onPress: () => router.push('/my-qr'),
-      gradient: [theme.colors.primary, theme.colors.violet]
+    {
+      icon: Receipt,
+      label: 'Pay Bills',
+      onPress: () => router.push('/data'),
+      gradient: [theme.colors.primary, theme.colors.violet],
     },
-    { 
-      icon: ArrowDownLeft, 
-      label: 'Request', 
+    {
+      icon: QrCode,
+      label: 'Snap & Pay',
+      onPress: () => router.push('/snap-pay'),
+      gradient: [theme.colors.blue, theme.colors.mint],
+    },
+    {
+      icon: ArrowDownLeft,
+      label: 'Request',
       onPress: () => router.push('/request-money'),
-      gradient: [theme.colors.blue, theme.colors.mint]
+      gradient: [theme.colors.pink, theme.colors.violet],
     },
   ];
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.container}
+    >
       {actions.map((action, index) => {
         const Icon = action.icon;
         return (
@@ -49,7 +58,7 @@ const QuickActions = () => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={action.gradient as any}
+              colors={action.gradient as [string, string]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.iconContainer}
@@ -60,18 +69,18 @@ const QuickActions = () => {
           </TouchableOpacity>
         );
       })}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    gap: 16,
     marginBottom: 28,
   },
-  actionWrapper: { alignItems: 'center', gap: 8 },
+  actionWrapper: { alignItems: 'center', gap: 8, width: 72 },
   iconContainer: {
     width: 56,
     height: 56,
@@ -84,7 +93,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  label: { fontSize: 12, fontWeight: '500' },
+  label: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
 });
 
 export default QuickActions;

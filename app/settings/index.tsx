@@ -41,6 +41,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { BiometricAuth } from '@/utils/biometric';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
+import { usePersonalization } from '@/context/PersonalizationContext';
 
 type SettingItemProps = {
   icon: React.ComponentType<{ size: number; color: string }>;
@@ -126,6 +127,26 @@ const Settings: React.FC = () => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const c = theme.colors;
   const { user, logout, deleteAccount } = useAuth();
+  const { currency, locale, notificationPrefs, updateNotificationPrefs } = usePersonalization();
+
+  const currencyLabel = {
+    NGN: 'Nigerian Naira (NGN)',
+    USD: 'US Dollar (USD)',
+    GBP: 'British Pound (GBP)',
+    EUR: 'Euro (EUR)',
+    GHS: 'Ghanaian Cedi (GHS)',
+    KES: 'Kenyan Shilling (KES)',
+    ZAR: 'South African Rand (ZAR)',
+  }[currency] || currency;
+
+  const languageLabel = {
+    en: 'English',
+    ha: 'Hausa',
+    ig: 'Igbo',
+    yo: 'Yoruba',
+    fr: 'French',
+    ar: 'Arabic',
+  }[locale.split('-')[0]] || 'English';
   
   const [expandedSections, setExpandedSections] = useState({
     account: true,
@@ -135,8 +156,10 @@ const Settings: React.FC = () => {
     support: false,
   });
   
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(notificationPrefs.pushEnabled);
+  const [emailEnabled, setEmailEnabled] = useState(notificationPrefs.emailEnabled);
+  const [transactionAlerts, setTransactionAlerts] = useState(notificationPrefs.transactionAlerts);
+  const [securityAlerts, setSecurityAlerts] = useState(notificationPrefs.securityAlerts);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -145,6 +168,13 @@ const Settings: React.FC = () => {
   useEffect(() => {
     checkBiometricStatus();
   }, []);
+
+  useEffect(() => {
+    setNotificationsEnabled(notificationPrefs.pushEnabled);
+    setEmailEnabled(notificationPrefs.emailEnabled);
+    setTransactionAlerts(notificationPrefs.transactionAlerts);
+    setSecurityAlerts(notificationPrefs.securityAlerts);
+  }, [notificationPrefs]);
 
   useFocusEffect(
     useCallback(() => {
@@ -390,13 +420,13 @@ const Settings: React.FC = () => {
                 {
                   icon: Globe,
                   title: "Language",
-                  subtitle: "English",
+                  subtitle: languageLabel,
                   onPress: () => navigateTo('/settings/language'),
                 },
                 {
                   icon: Wallet,
                   title: "Currency",
-                  subtitle: "Nigerian Naira (NGN)",
+                  subtitle: currencyLabel,
                   onPress: () => navigateTo('/settings/currency'),
                   showArrow: true,
                 },
@@ -434,7 +464,10 @@ const Settings: React.FC = () => {
                   subtitle: "Receive alerts on your device",
                   showSwitch: true,
                   switchValue: notificationsEnabled,
-                  onSwitchChange: setNotificationsEnabled,
+                  onSwitchChange: (v) => {
+                    setNotificationsEnabled(v);
+                    updateNotificationPrefs({ pushEnabled: v });
+                  },
                   showArrow: false,
                 },
                 {
@@ -443,7 +476,10 @@ const Settings: React.FC = () => {
                   subtitle: "Get updates via email",
                   showSwitch: true,
                   switchValue: emailEnabled,
-                  onSwitchChange: setEmailEnabled,
+                  onSwitchChange: (v) => {
+                    setEmailEnabled(v);
+                    updateNotificationPrefs({ emailEnabled: v });
+                  },
                   showArrow: false,
                 },
                 {
@@ -451,8 +487,23 @@ const Settings: React.FC = () => {
                   title: "Transaction Alerts",
                   subtitle: "Notify for every transaction",
                   showSwitch: true,
-                  switchValue: true,
-                  onSwitchChange: () => {},
+                  switchValue: transactionAlerts,
+                  onSwitchChange: (v) => {
+                    setTransactionAlerts(v);
+                    updateNotificationPrefs({ transactionAlerts: v });
+                  },
+                  showArrow: false,
+                },
+                {
+                  icon: Shield,
+                  title: "Security Alerts",
+                  subtitle: "Login and PIN change notifications",
+                  showSwitch: true,
+                  switchValue: securityAlerts,
+                  onSwitchChange: (v) => {
+                    setSecurityAlerts(v);
+                    updateNotificationPrefs({ securityAlerts: v });
+                  },
                   showArrow: false,
                 },
               ])}

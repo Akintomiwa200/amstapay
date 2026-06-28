@@ -1,10 +1,13 @@
 ﻿// app/request-money.tsx - Request Money Screen
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Search, User, ArrowRight, Clock, MessageSquare } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { paymentsService } from '@/services/payments';
+import { beneficiaryService } from '@/services/beneficiary';
+import { useEffect } from 'react';
 
 export default function RequestMoneyScreen() {
   const router = useRouter();
@@ -13,21 +16,47 @@ export default function RequestMoneyScreen() {
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [recentContacts, setRecentContacts] = useState<{ id: string; name: string; phone: string }[]>([]);
 
-  const recentContacts = [
-    { id: 1, name: 'John Doe', phone: '+234 801 234 5678' },
-    { id: 2, name: 'Jane Smith', phone: '+234 802 345 6789' },
-    { id: 3, name: 'David Oke', phone: '+234 803 456 7890' },
-  ];
+  useEffect(() => {
+    beneficiaryService.getAll()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data as { data?: { _id: string; name: string; accountNumber: string }[] })?.data || [];
+        setRecentContacts(list.slice(0, 5).map(b => ({
+          id: b._id,
+          name: b.name,
+          phone: b.accountNumber,
+        })));
+      })
+      .catch(() => setRecentContacts([]));
+  }, []);
 
-  const handleRequest = () => {
+  const handleRequest = async () => {
     if (!amount || !recipient) {
       Alert.alert('Error', 'Please enter an amount and select a recipient');
       return;
     }
-    Alert.alert('Request Sent', `Your request for ₦${amount} has been sent to ${recipient}`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    const amountValue = Number(amount);
+    if (!Number.isFinite(amountValue) || amountValue <= 0) {
+      Alert.alert('Error', 'Enter a valid amount');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await paymentsService.requestMoney({
+        amount: amountValue,
+        recipient,
+        note: note || undefined,
+      });
+      Alert.alert('Request Sent', `Your request for ₦${amountValue.toLocaleString()} has been sent to ${recipient}`, [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      Alert.alert('Request Failed', error instanceof Error ? error.message : 'Unable to send money request');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -113,10 +142,14 @@ export default function RequestMoneyScreen() {
 
       {/* Request Button */}
       <View style={[styles.footer, { backgroundColor: c.bg, borderTopColor: c.border }]}>
-        <TouchableOpacity style={styles.requestBtn} onPress={handleRequest} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.requestBtn} onPress={handleRequest} activeOpacity={0.85} disabled={submitting}>
           <LinearGradient colors={[c.violet, c.primary]} style={styles.requestGradient}>
-            <Text style={styles.requestText}>Send Request</Text>
-            <ArrowRight size={20} color="#fff" />
+            {submitting ? <ActivityIndicator color="#fff" /> : (
+              <>
+                <Text style={styles.requestText}>Send Request</Text>
+                <ArrowRight size={20} color="#fff" />
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>

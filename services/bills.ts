@@ -4,6 +4,8 @@ import type {
   AirtimeInput, DataInput, ElectricityInput, Bill,
 } from '@/lib/models';
 
+type BillResponse = { success: boolean; data: Record<string, unknown> };
+
 export const billsService = {
   buyAirtime(input: AirtimeInput) {
     return apiClient.post<{ success: boolean; data: { bill: Bill; balance: number } }>(
@@ -33,5 +35,25 @@ export const billsService = {
     return apiClient.post<{ success: boolean; data: { ticketNumber: string; balance: number } }>(
       ENDPOINTS.BILLS.TRANSPORT, data,
     );
+  },
+
+  fundBetting(data: { provider: string; accountId: string; amount: number }) {
+    return apiClient.post<BillResponse>(ENDPOINTS.BILLS.BETTING, data);
+  },
+
+  payTv(data: { provider: string; subscriberId: string; packageId: string; packageName: string; amount: number }) {
+    return apiClient.post<BillResponse>(ENDPOINTS.BILLS.TV, data);
+  },
+
+  payInsurance(data: { provider: string; policyNumber: string; amount: number }) {
+    return apiClient.post<BillResponse>(ENDPOINTS.BILLS.INSURANCE, data);
+  },
+
+  buyGiftCard(data: { brand: string; denomination: number; quantity: number; email?: string }) {
+    return apiClient.post<BillResponse>(ENDPOINTS.BILLS.GIFTCARD, data);
+  },
+
+  topUpGaming(data: { platform: string; gamerTag: string; amount: number }) {
+    return apiClient.post<BillResponse>(ENDPOINTS.BILLS.GAMING, data);
   },
 };
