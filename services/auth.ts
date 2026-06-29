@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api';
 import { ENDPOINTS } from '@/lib/endpoints';
 import type {
-  AuthResponse, LoginInput, SignupInput,
+  AuthResponse, LoginInput, SignupInput, AuthSession, TwoFactorStatus,
 } from '@/lib/models';
 
 export const authService = {
@@ -60,5 +60,29 @@ export const authService = {
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
+  },
+
+  getSessions() {
+    return apiClient.get<AuthSession[]>(ENDPOINTS.AUTH.SESSIONS);
+  },
+
+  revokeSession(deviceId: string) {
+    return apiClient.delete<{ message: string }>(ENDPOINTS.AUTH.SESSION(deviceId));
+  },
+
+  get2FAStatus() {
+    return apiClient.get<TwoFactorStatus>(ENDPOINTS.AUTH.TWO_FACTOR_STATUS);
+  },
+
+  enable2FA() {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.TWO_FACTOR_ENABLE);
+  },
+
+  verify2FA(code: string) {
+    return apiClient.post<{ message: string; enabled: boolean }>(ENDPOINTS.AUTH.TWO_FACTOR_VERIFY, { code });
+  },
+
+  disable2FA(pin: string) {
+    return apiClient.post<{ message: string }>(ENDPOINTS.AUTH.TWO_FACTOR_DISABLE, { pin });
   },
 };

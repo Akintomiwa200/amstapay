@@ -1,30 +1,81 @@
-﻿// app/insights/reports.tsx - Financial Reports Screen
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+﻿import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Share, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, BarChart3, PieChart, TrendingUp, Calendar, Download, ArrowUpRight, ArrowDownRight } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { ChevronLeft, Download } from 'lucide-react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { usePersonalization } from '@/context/PersonalizationContext';
+import { budgetService } from '@/services/budget';
+import { transactionService } from '@/services/transactions';
+import { reportsService } from '@/services/reports';
+import { parseList } from '@/lib/parse';
+import { formatMoney } from '@/lib/format';
+import type { Transaction } from '@/lib/models';
 
 export default function ReportsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
+  const { currency } = usePersonalization();
   const [period, setPeriod] = useState('monthly');
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<{ name: string; amount: number; percent: number; color: string }[]>([]);
+  const [income, setIncome] = useState(0);
+  const [expense, setExpense] = useState(0);
 
-  const spendingCategories = [
-    { name: 'Bills & Utilities', amount: '₦45,000', percent: 35, color: c.violet },
-    { name: 'Shopping', amount: '₦25,000', percent: 20, color: c.blue },
-    { name: 'Transport', amount: '₦18,000', percent: 14, color: c.mint },
-    { name: 'Food & Dining', amount: '₦22,000', percent: 17, color: c.pink },
-    { name: 'Others', amount: '₦18,000', percent: 14, color: c.warning },
-  ];
+  const load = useCallback(async () => {
+    try {
+      const [insightsRes, txRes] = await Promise.allSettled([
+        budgetService.getInsights(),
+        transactionService.getAll(1, 200),
+      ]);
 
-  const monthlyTrend = [
-    { month: 'Jan', income: 250000, expense: 120000 },
-    { month: 'Feb', income: 260000, expense: 135000 },
-    { month: 'Mar', income: 338200, expense: 128000 },
-  ];
+      const txs = txRes.status === 'fulfilled' ? parseList<Transaction>(txRes.value) : [];
+      const inc = txs.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+      const exp = txs.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+      setIncome(inc);
+      setExpense(exp);
+
+      if (insightsRes.status === 'fulfilled') {
+        const data = (insightsRes.value as { data?: Record<string, unknown> })?.data ?? insightsRes.value;
+        const cats = (data as { categories?: { name: string; spent: number }[] }).categories || [];
+        const total = cats.reduce((s, cat) => s + cat.spent, 0) || exp || 1;
+        setCategories(
+          cats.map((cat, i) => ({
+            name: cat.name,
+            amount: cat.spent,
+            percent: Math.round((cat.spent / total) * 100),
+            color: [c.violet, c.blue, c.mint, c.pink, c.warning][i % 5],
+          })),
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [c]);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const handleExport = async () => {
+    try {
+      const lines = [
+        `AmstaPay Financial Report (${period})`,
+        `Income: ${formatMoney(income, currency)}`,
+        `Expenses: ${formatMoney(expense, currency)}`,
+        '',
+        'Category Breakdown:',
+        ...categories.map((cat) => `${cat.name}: ${formatMoney(cat.amount, currency)} (${cat.percent}%)`),
+      ];
+      try {
+        await reportsService.exportReport(period);
+      } catch {
+        // fallback to local share if export endpoint unavailable
+      }
+      await Share.share({ message: lines.join('\n'), title: 'Financial Report' });
+    } catch {
+      Alert.alert('Export failed', 'Could not export report.');
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
@@ -34,100 +85,48 @@ export default function ReportsScreen() {
             <ChevronLeft size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Financial Reports</Text>
-          <TouchableOpacity style={styles.downloadBtn}>
+          <TouchableOpacity style={styles.downloadBtn} onPress={handleExport}>
             <Download size={20} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Period Tabs */}
         <View style={styles.periodTabs}>
           {['weekly', 'monthly', 'yearly'].map((p) => (
-            <TouchableOpacity
-              key={p}
-              style={[styles.periodTab, period === p && styles.periodTabActive]}
-              onPress={() => setPeriod(p)}
-            >
+            <TouchableOpacity key={p} style={[styles.periodTab, period === p && styles.periodTabActive]} onPress={() => setPeriod(p)}>
               <Text style={[styles.periodText, period === p && [styles.periodTextActive, { color: c.primary }]]}>
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Income</Text>
+            <Text style={styles.summaryValue}>{formatMoney(income, currency)}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Expenses</Text>
+            <Text style={styles.summaryValue}>{formatMoney(expense, currency)}</Text>
+          </View>
+        </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Summary Cards */}
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: c.bg, borderColor: c.border }]}>
-            <ArrowDownRight size={18} color={c.mint} />
-            <Text style={[styles.summaryLabel, { color: c.textSub }]}>Total Income</Text>
-            <Text style={[styles.summaryValue, { color: c.text }]}>₦338,200</Text>
-            <Text style={[styles.summaryChange, { color: c.mint }]}>+12% from last month</Text>
-          </View>
-          <View style={[styles.summaryCard, { backgroundColor: c.bg, borderColor: c.border }]}>
-            <ArrowUpRight size={18} color={c.pink} />
-            <Text style={[styles.summaryLabel, { color: c.textSub }]}>Total Expense</Text>
-            <Text style={[styles.summaryValue, { color: c.text }]}>₦128,000</Text>
-            <Text style={[styles.summaryChange, { color: c.mint }]}>-5% from last month</Text>
-          </View>
-        </View>
-
-        {/* Spending Breakdown */}
-        <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
-          <View style={styles.sectionHeader}>
-            <PieChart size={20} color={c.violet} />
-            <Text style={[styles.sectionTitle, { color: c.primary }]}>Spending Breakdown</Text>
-          </View>
-          {spendingCategories.map((cat, i) => (
-            <View key={i} style={styles.categoryRow}>
-              <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
-              <View style={styles.categoryInfo}>
-                <Text style={[styles.categoryName, { color: c.text }]}>{cat.name}</Text>
-                <View style={[styles.progressBar, { backgroundColor: c.primaryLight }]}>
-                  <View style={[styles.progressFill, { width: `${cat.percent}%`, backgroundColor: cat.color }]} />
-                </View>
-              </View>
-              <View style={styles.categoryRight}>
-                <Text style={[styles.categoryAmount, { color: c.text }]}>{cat.amount}</Text>
-                <Text style={[styles.categoryPercent, { color: c.textSub }]}>{cat.percent}%</Text>
-              </View>
+      <ScrollView style={styles.content}>
+        {loading ? (
+          <ActivityIndicator color={c.violet} style={{ marginTop: 32 }} />
+        ) : categories.length === 0 ? (
+          <Text style={[styles.empty, { color: c.textSub }]}>No report data yet. Complete transactions to see breakdown.</Text>
+        ) : (
+          categories.map((cat) => (
+            <View key={cat.name} style={[styles.catRow, { borderColor: c.border }]}>
+              <View style={[styles.catDot, { backgroundColor: cat.color }]} />
+              <Text style={[styles.catName, { color: c.text }]}>{cat.name}</Text>
+              <Text style={[styles.catAmount, { color: c.text }]}>{formatMoney(cat.amount, currency)}</Text>
+              <Text style={[styles.catPct, { color: c.textSub }]}>{cat.percent}%</Text>
             </View>
-          ))}
-        </View>
-
-        {/* Monthly Trend */}
-        <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
-          <View style={styles.sectionHeader}>
-            <BarChart3 size={20} color={c.violet} />
-            <Text style={[styles.sectionTitle, { color: c.primary }]}>Monthly Trend</Text>
-          </View>
-          {monthlyTrend.map((m, i) => (
-            <View key={i} style={styles.trendRow}>
-              <Text style={[styles.trendMonth, { color: c.text }]}>{m.month}</Text>
-              <View style={styles.trendBars}>
-                <View style={[styles.trendBarContainer, { backgroundColor: c.primaryLight }]}>
-                  <View style={[styles.trendBar, { width: `${(m.income / 400000) * 100}%`, backgroundColor: c.mint }]} />
-                </View>
-                <View style={[styles.trendBarContainer, { backgroundColor: c.primaryLight }]}>
-                  <View style={[styles.trendBar, { width: `${(m.expense / 400000) * 100}%`, backgroundColor: c.pink }]} />
-                </View>
-              </View>
-              <View style={styles.trendValues}>
-                <Text style={[styles.trendIncome, { color: c.mint }]}>+₦{(m.income / 1000).toFixed(0)}k</Text>
-                <Text style={[styles.trendExpense, { color: c.pink }]}>-₦{(m.expense / 1000).toFixed(0)}k</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Tips */}
-        <LinearGradient colors={[c.primaryLight, c.bg]} style={[styles.tipCard, { borderColor: c.border }]}>
-          <TrendingUp size={24} color={c.violet} />
-          <View style={styles.tipContent}>
-            <Text style={[styles.tipTitle, { color: c.primary }]}>Savings Tip</Text>
-            <Text style={[styles.tipText, { color: c.textSub }]}>Your spending on Bills increased by 15%. Consider reviewing your subscriptions.</Text>
-          </View>
-        </LinearGradient>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -135,44 +134,25 @@ export default function ReportsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
+  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
   downloadBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  periodTabs: { flexDirection: 'row', gap: 8 },
-  periodTab: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)' },
+  periodTabs: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  periodTab: { flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center' },
   periodTabActive: { backgroundColor: '#fff' },
-  periodText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
-  periodTextActive: {},
-  content: { paddingHorizontal: 20, paddingTop: 20 },
-  summaryRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  summaryCard: { flex: 1, borderRadius: 16, padding: 16, borderWidth: 1, gap: 4 },
-  summaryLabel: { fontSize: 12 },
-  summaryValue: { fontSize: 20, fontWeight: '800' },
-  summaryChange: { fontSize: 11 },
-  section: { marginBottom: 24, borderRadius: 20, padding: 16, borderWidth: 1 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700' },
-  categoryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  categoryDot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
-  categoryInfo: { flex: 1 },
-  categoryName: { fontSize: 13, fontWeight: '500', marginBottom: 4 },
-  progressBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 3 },
-  categoryRight: { alignItems: 'flex-end', marginLeft: 12 },
-  categoryAmount: { fontSize: 13, fontWeight: '600' },
-  categoryPercent: { fontSize: 11 },
-  trendRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
-  trendMonth: { width: 32, fontSize: 13, fontWeight: '600' },
-  trendBars: { flex: 1, gap: 4 },
-  trendBarContainer: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  trendBar: { height: '100%', borderRadius: 4 },
-  trendValues: { width: 60, alignItems: 'flex-end' },
-  trendIncome: { fontSize: 10, fontWeight: '600' },
-  trendExpense: { fontSize: 10, fontWeight: '600' },
-  tipCard: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 20, borderWidth: 1, gap: 16, marginBottom: 40 },
-  tipContent: { flex: 1 },
-  tipTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  tipText: { fontSize: 13, lineHeight: 20 },
+  periodText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
+  periodTextActive: { fontWeight: '700' },
+  summaryRow: { flexDirection: 'row', gap: 12 },
+  summaryItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: 12 },
+  summaryLabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
+  summaryValue: { fontSize: 16, fontWeight: '800', color: '#fff', marginTop: 4 },
+  content: { padding: 20 },
+  empty: { textAlign: 'center', marginTop: 32, fontSize: 14 },
+  catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, gap: 10 },
+  catDot: { width: 8, height: 8, borderRadius: 4 },
+  catName: { flex: 1, fontSize: 14, fontWeight: '500' },
+  catAmount: { fontSize: 13, fontWeight: '600' },
+  catPct: { fontSize: 12, width: 36, textAlign: 'right' },
 });

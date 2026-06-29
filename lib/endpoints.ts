@@ -13,6 +13,10 @@ export const ENDPOINTS = {
     LOGOUT: '/auth/logout',
     SESSIONS: '/auth/sessions',
     SESSION: (deviceId: string) => `/auth/sessions/${deviceId}`,
+    TWO_FACTOR_STATUS: '/auth/2fa/status',
+    TWO_FACTOR_ENABLE: '/auth/2fa/enable',
+    TWO_FACTOR_VERIFY: '/auth/2fa/verify',
+    TWO_FACTOR_DISABLE: '/auth/2fa/disable',
     UPLOAD_DOCUMENTS: '/auth/upload-documents',
   },
 
@@ -165,6 +169,8 @@ export const ENDPOINTS = {
 
   SUPPORT: {
     TICKETS: '/support/tickets',
+    TICKET: (id: string) => `/support/tickets/${id}`,
+    REPLY: (id: string) => `/support/tickets/${id}/reply`,
   },
 
   NOTIFICATIONS: {
@@ -173,6 +179,15 @@ export const ENDPOINTS = {
 
   CASHBACK: {
     ALL: '/cashback',
+    REDEEM: '/cashback/redeem',
+    HISTORY: '/cashback/history',
+    EARN_WAYS: '/cashback/earn-ways',
+  },
+
+  REFERRAL: {
+    CODE: '/users/referral-code',
+    LIST: '/users/referrals',
+    STATS: '/users/referral-stats',
   },
 
   BUDGET: {
@@ -184,5 +199,14 @@ export const ENDPOINTS = {
   EXPENSES: {
     ALL: '/expenses',
     CATEGORIES: '/expenses/categories',
+  },
+
+  REAL_ESTATE: {
+    LISTINGS: '/realestate/listings',
+    BY_ID: (id: string) => `/realestate/listings/${id}`,
+  },
+
+  FEEDBACK: {
+    SUBMIT: '/feedback',
   },
 };

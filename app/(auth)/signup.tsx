@@ -16,7 +16,8 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { API_BASE_URL } from "@/lib/constants";
+import { API, API_BASE_URL } from "@/lib/constants";
+import { authService } from "@/services/auth";
 import {
   ChevronLeft,
   Mail,
@@ -399,7 +400,6 @@ export default function SignupScreen() {
   const c = theme.colors;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -435,41 +435,31 @@ export default function SignupScreen() {
     if (!validateStep2()) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-          fullName: fullName.trim(),
-          phoneNumber: phoneNumber.trim(),
-          pin,
-          accountType: "personal",
-        }),
+      const response = await authService.signup({
+        email: email.trim(),
+        password,
+        fullName: fullName.trim(),
+        phoneNumber: phoneNumber.trim(),
+        pin,
+        accountType: "personal",
+        termsAgreed: true,
+        infoAccurate: true,
+        verificationConsent: true,
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Signup failed");
+      const data = (response as { verificationCode?: string; data?: { verificationCode?: string } });
+      const code = data?.verificationCode ?? data?.data?.verificationCode ?? '';
       emailService.send(email.trim(), 'welcome-verify', {
         name: fullName.trim(),
-        code: data.verificationCode || '',
-        verifyLink: `${API_BASE_URL}/auth/verify?email=${encodeURIComponent(email.trim())}&code=${data.verificationCode || ''}`,
+        code,
+        verifyLink: `${API_BASE_URL}${API.PREFIX}/auth/verify?email=${encodeURIComponent(email.trim())}&code=${code}`,
       });
-      setSuccess(true);
+      router.replace({ pathname: '/verify', params: { email: email.trim() } });
     } catch (err: any) {
       Alert.alert("Error", err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <View style={{ flex: 1, backgroundColor: c.surface }}>
-        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-        <SuccessScreen onDone={() => router.replace("/login")} c={c} />
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView

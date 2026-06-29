@@ -43,4 +43,8 @@ export const budgetService = {
   getExpenses() {
     return apiClient.get<unknown[]>(ENDPOINTS.EXPENSES.ALL);
   },
+
+  delete(id: string) {
+    return apiClient.delete<{ message: string }>(ENDPOINTS.BUDGET.BY_ID(id));
+  },
 };

@@ -1,30 +1,79 @@
-﻿// app/settings/payment-methods/index.tsx - Payment Methods Settings Screen
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+﻿import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, CreditCard, Building, Plus, Trash2, ChevronRight } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { ChevronLeft, CreditCard, Building, Plus, Trash2 } from 'lucide-react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { cardService } from '@/services/cards';
+import { beneficiaryService } from '@/services/beneficiary';
+import type { VirtualCard, Beneficiary } from '@/lib/models';
+
+function parseList<T>(res: unknown): T[] {
+  const data = (res as { data?: T[] })?.data ?? res;
+  return Array.isArray(data) ? data : [];
+}
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
+  const [cards, setCards] = useState<VirtualCard[]>([]);
+  const [accounts, setAccounts] = useState<Beneficiary[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const cards = [
-    { id: 1, type: 'Visa', last4: '1234', expiry: '12/26', isDefault: true },
-    { id: 2, type: 'Mastercard', last4: '5678', expiry: '08/25', isDefault: false },
-  ];
+  const loadMethods = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [cardsRes, beneficiariesRes] = await Promise.allSettled([
+        cardService.getAll(),
+        beneficiaryService.getAll(),
+      ]);
+      if (cardsRes.status === 'fulfilled') setCards(parseList<VirtualCard>(cardsRes.value));
+      if (beneficiariesRes.status === 'fulfilled') setAccounts(parseList<Beneficiary>(beneficiariesRes.value));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const bankAccounts = [
-    { id: 1, bank: 'GTBank', account: '****9012', name: 'John Doe', isDefault: true },
-    { id: 2, bank: 'Access Bank', account: '****3456', name: 'John Doe', isDefault: false },
-  ];
+  useFocusEffect(
+    useCallback(() => {
+      loadMethods();
+    }, [loadMethods]),
+  );
 
-  const handleDelete = (type: string, id: number) => {
-    Alert.alert('Remove', `Are you sure you want to remove this ${type}?`, [
+  const handleDeleteBeneficiary = (account: Beneficiary) => {
+    Alert.alert('Remove account', `Remove ${account.bankName} •••• ${account.accountNumber.slice(-4)}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => {} },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await beneficiaryService.delete(account._id);
+            await loadMethods();
+          } catch (error) {
+            Alert.alert('Error', error instanceof Error ? error.message : 'Failed to remove account');
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleCancelCard = (card: VirtualCard) => {
+    Alert.alert('Cancel card', `Cancel virtual card ending ${card.last4}?`, [
+      { text: 'Keep', style: 'cancel' },
+      {
+        text: 'Cancel card',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await cardService.cancel(card._id);
+            await loadMethods();
+          } catch (error) {
+            Alert.alert('Error', error instanceof Error ? error.message : 'Failed to cancel card');
+          }
+        },
+      },
     ]);
   };
 
@@ -41,65 +90,83 @@ export default function PaymentMethodsScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Cards */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: c.primary }]}>Cards</Text>
-            <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/add-account' as any)}>
-              <Plus size={16} color={c.violet} />
-              <Text style={[styles.addText, { color: c.violet }]}>Add Card</Text>
-            </TouchableOpacity>
-          </View>
-          {cards.map((card) => (
-            <View key={card.id} style={[styles.methodCard, { backgroundColor: c.bg, borderColor: c.border }]}>
-              <View style={[styles.cardIcon, { backgroundColor: c.primaryLight }]}>
-                <CreditCard size={22} color={c.violet} />
+        {loading ? (
+          <ActivityIndicator color={c.violet} style={{ marginTop: 40 }} />
+        ) : (
+          <>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: c.primary }]}>Cards</Text>
+                <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/(tabs)/card' as any)}>
+                  <Plus size={16} color={c.violet} />
+                  <Text style={[styles.addText, { color: c.violet }]}>Manage</Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.methodInfo}>
-                <Text style={[styles.methodTitle, { color: c.text }]}>{card.type} •••• {card.last4}</Text>
-                <Text style={[styles.methodSub, { color: c.textSub }]}>Expires {card.expiry}</Text>
-              </View>
-              {card.isDefault && (
-                <View style={[styles.defaultBadge, { backgroundColor: c.mint + '20' }]}>
-                  <Text style={[styles.defaultText, { color: c.mint }]}>Default</Text>
-                </View>
+              {cards.length === 0 ? (
+                <Text style={[styles.emptyText, { color: c.textSub }]}>No cards yet. Issue one from the Cards tab.</Text>
+              ) : (
+                cards.map((card) => (
+                  <View key={card._id} style={[styles.methodCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+                    <View style={[styles.cardIcon, { backgroundColor: c.primaryLight }]}>
+                      <CreditCard size={22} color={c.violet} />
+                    </View>
+                    <View style={styles.methodInfo}>
+                      <Text style={[styles.methodTitle, { color: c.text }]}>
+                        {(card.brand || card.cardType || 'Card')} •••• {card.last4}
+                      </Text>
+                      <Text style={[styles.methodSub, { color: c.textSub }]}>
+                        {card.status === 'frozen' ? 'Frozen' : 'Active'} · Expires {card.expiry || 'N/A'}
+                      </Text>
+                    </View>
+                    {card.status === 'active' && (
+                      <View style={[styles.defaultBadge, { backgroundColor: c.mint + '20' }]}>
+                        <Text style={[styles.defaultText, { color: c.mint }]}>Active</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity onPress={() => handleCancelCard(card)} style={styles.deleteBtn}>
+                      <Trash2 size={16} color={c.error} />
+                    </TouchableOpacity>
+                  </View>
+                ))
               )}
-              <TouchableOpacity onPress={() => handleDelete('card', card.id)} style={styles.deleteBtn}>
-                <Trash2 size={16} color={c.error} />
-              </TouchableOpacity>
             </View>
-          ))}
-        </View>
 
-        {/* Bank Accounts */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: c.primary }]}>Bank Accounts</Text>
-            <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/add-account' as any)}>
-              <Plus size={16} color={c.violet} />
-              <Text style={[styles.addText, { color: c.violet }]}>Add Account</Text>
-            </TouchableOpacity>
-          </View>
-          {bankAccounts.map((account) => (
-            <View key={account.id} style={[styles.methodCard, { backgroundColor: c.bg, borderColor: c.border }]}>
-              <View style={[styles.bankIcon, { backgroundColor: c.blue + '15' }]}>
-                <Building size={22} color={c.blue} />
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: c.primary }]}>Bank Accounts</Text>
+                <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/add-account' as any)}>
+                  <Plus size={16} color={c.violet} />
+                  <Text style={[styles.addText, { color: c.violet }]}>Add Account</Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.methodInfo}>
-                <Text style={[styles.methodTitle, { color: c.text }]}>{account.bank}</Text>
-                <Text style={[styles.methodSub, { color: c.textSub }]}>{account.name} • {account.account}</Text>
-              </View>
-              {account.isDefault && (
-                <View style={[styles.defaultBadge, { backgroundColor: c.mint + '20' }]}>
-                  <Text style={[styles.defaultText, { color: c.mint }]}>Default</Text>
-                </View>
+              {accounts.length === 0 ? (
+                <Text style={[styles.emptyText, { color: c.textSub }]}>No saved beneficiaries yet.</Text>
+              ) : (
+                accounts.map((account) => (
+                  <View key={account._id} style={[styles.methodCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+                    <View style={[styles.bankIcon, { backgroundColor: c.blue + '15' }]}>
+                      <Building size={22} color={c.blue} />
+                    </View>
+                    <View style={styles.methodInfo}>
+                      <Text style={[styles.methodTitle, { color: c.text }]}>{account.bankName}</Text>
+                      <Text style={[styles.methodSub, { color: c.textSub }]}>
+                        {account.name} • •••• {account.accountNumber.slice(-4)}
+                      </Text>
+                    </View>
+                    {account.isFavorite && (
+                      <View style={[styles.defaultBadge, { backgroundColor: c.mint + '20' }]}>
+                        <Text style={[styles.defaultText, { color: c.mint }]}>Favorite</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity onPress={() => handleDeleteBeneficiary(account)} style={styles.deleteBtn}>
+                      <Trash2 size={16} color={c.error} />
+                    </TouchableOpacity>
+                  </View>
+                ))
               )}
-              <TouchableOpacity onPress={() => handleDelete('account', account.id)} style={styles.deleteBtn}>
-                <Trash2 size={16} color={c.error} />
-              </TouchableOpacity>
             </View>
-          ))}
-        </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -117,6 +184,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '700' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   addText: { fontSize: 13, fontWeight: '600' },
+  emptyText: { fontSize: 13, marginBottom: 8 },
   methodCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 10 },
   cardIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   bankIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 14 },

@@ -9,12 +9,15 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Camera, User, Mail, Phone, MapPin, Save } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { userService } from '@/services/user';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileSettings() {
   const router = useRouter();
@@ -22,6 +25,7 @@ export default function ProfileSettings() {
   const { theme } = useTheme();
   const c = theme.colors;
   const [loading, setLoading] = useState(false);
+  const [avatarUri, setAvatarUri] = useState<string | null>(user?.passportPhoto || null);
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -39,6 +43,34 @@ export default function ProfileSettings() {
       });
     }
   }, [user]);
+
+  const handlePickAvatar = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permission needed', 'Allow photo access to change your avatar.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setAvatarUri(asset.uri);
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('avatar', {
+        uri: asset.uri,
+        name: 'avatar.jpg',
+        type: asset.mimeType || 'image/jpeg',
+      } as unknown as Blob);
+      await userService.uploadAvatar(formData);
+      await refreshUser();
+      Alert.alert('Success', 'Profile photo updated');
+    } catch (error: unknown) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to upload photo');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!form.fullName || !form.email || !form.phone) {
@@ -99,13 +131,19 @@ export default function ProfileSettings() {
 
       <ScrollView style={styles.content}>
         <View style={styles.avatarSection}>
-          <View style={[styles.avatarContainer, { backgroundColor: getAvatarColor(form.fullName || 'Guest') }]}>
-            <Text style={styles.avatarText}>{getInitials(form.fullName || 'Guest')}</Text>
-          </View>
-          <TouchableOpacity style={[styles.avatarBtn, { backgroundColor: c.violet, borderColor: c.bg }]}>
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+          ) : (
+            <View style={[styles.avatarContainer, { backgroundColor: getAvatarColor(form.fullName || 'Guest') }]}>
+              <Text style={styles.avatarText}>{getInitials(form.fullName || 'Guest')}</Text>
+            </View>
+          )}
+          <TouchableOpacity style={[styles.avatarBtn, { backgroundColor: c.violet, borderColor: c.bg }]} onPress={handlePickAvatar}>
             <Camera size={18} color="#fff" />
           </TouchableOpacity>
-          <Text style={[styles.avatarLabel, { color: c.violet }]}>Change Photo</Text>
+          <TouchableOpacity onPress={handlePickAvatar}>
+            <Text style={[styles.avatarLabel, { color: c.violet }]}>Change Photo</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.form}>
@@ -185,6 +223,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingTop: 20 },
   avatarSection: { alignItems: 'center', marginBottom: 32, position: 'relative' },
   avatarContainer: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  avatarImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 8 },
   avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
   avatarBtn: { position: 'absolute', top: 70, right: '35%', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3 },
   avatarLabel: { fontSize: 14, fontWeight: '500' },

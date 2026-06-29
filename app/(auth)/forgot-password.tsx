@@ -23,9 +23,8 @@ import {
   EyeOff,
   Check,
 } from "lucide-react-native";
-import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { API_BASE_URL } from "@/lib/constants";
+import { authService } from "@/services/auth";
 import { emailService } from "@/services/email";
 
 function GradientButton({
@@ -79,7 +78,6 @@ export default function ForgotPasswordScreen() {
   const { theme } = useTheme();
   const c = theme.colors;
   const router = useRouter();
-  const {} = useAuth();
   const [step, setStep] = useState<"request" | "reset" | "success">("request");
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
@@ -104,23 +102,13 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailOrPhone: email.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to send reset email");
-      }
-
-      setSuccessMsg(data.message || "Reset code sent to your email/phone");
-      setStep("reset");
+      const data = await authService.forgotPassword(email.trim());
+      const payload = data as { message?: string; resetCode?: string };
+      setSuccessMsg(payload.message || 'Reset code sent to your email/phone');
+      setStep('reset');
       emailService.send(email.trim(), 'forgot-password', {
         name: email.trim().split('@')[0],
-        code: data.resetCode || '',
+        code: payload.resetCode || '',
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -143,23 +131,8 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          emailOrPhone: email.trim(),
-          code: token,
-          newPassword: password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to reset password");
-      }
-
-      setStep("success");
+      await authService.resetPassword(email.trim(), token, password);
+      setStep('success');
       emailService.send(email.trim(), 'password-changed', {
         name: email.trim().split('@')[0],
         time: new Date().toLocaleString(),

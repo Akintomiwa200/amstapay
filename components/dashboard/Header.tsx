@@ -1,5 +1,6 @@
 // components/dashboard/Header.tsx
 import { useAuth } from '@/context/AuthContext';
+import { getAccountNumber } from '@/lib/user';
 import { useTheme } from '@/context/ThemeContext';
 import { useSocket } from '@/context/SocketContext';
 import { notificationsService } from '@/services/notifications';
@@ -25,7 +26,7 @@ const Header = () => {
     "Valued Customer";
   const firstName = fullName.split(' ')[0] || "User";
   const userInitial = firstName.charAt(0).toUpperCase();
-  const accountNumber = user?.blupayAccountNumber || user?.accountNumber || "N/A";
+  const accountNumber = getAccountNumber(user) || "N/A";
   const kycLevel = user?.kycLevel || 0;
   const isVerified = user?.isVerified || false;
   const accountType = user?.accountType || "personal";

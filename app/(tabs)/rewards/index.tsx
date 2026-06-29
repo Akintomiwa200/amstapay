@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Gift, Star, Zap, TrendingUp, Award, Clock } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -76,6 +76,20 @@ export default function RewardsScreen() {
     return () => socket.off('cashback:update', onUpdate);
   }, [socket, loadRewards]);
 
+  const handleRedeem = async (reward: RewardItem) => {
+    if (totalPoints < reward.points) {
+      Alert.alert('Insufficient points', 'Earn more points to redeem this reward.');
+      return;
+    }
+    try {
+      await cashbackService.redeem(reward.id, reward.points);
+      Alert.alert('Redeemed!', `${reward.title} has been added to your account.`);
+      loadRewards();
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Redemption failed');
+    }
+  };
+
   const achievements = [
     { id: 1, title: 'Welcome Bonus', desc: 'Create your account', points: 50, icon: Star, achieved: totalPoints >= 50 },
     { id: 2, title: 'First Transaction', desc: 'Complete your first transaction', points: 100, icon: Zap, achieved: totalPoints >= 100 },
@@ -124,7 +138,7 @@ export default function RewardsScreen() {
               </View>
             </View>
             {reward.available && totalPoints >= reward.points ? (
-              <TouchableOpacity style={[styles.redeemBtn, { backgroundColor: c.violet }]}>
+              <TouchableOpacity style={[styles.redeemBtn, { backgroundColor: c.violet }]} onPress={() => handleRedeem(reward)}>
                 <Text style={styles.redeemText}>Redeem</Text>
               </TouchableOpacity>
             ) : (

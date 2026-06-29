@@ -54,6 +54,10 @@ import { transactionService } from "@/services/transactions";
 import { cashbackService } from "@/services/cashback";
 import { beneficiaryService } from "@/services/beneficiary";
 import { cardService } from "@/services/cards";
+import { referralService } from "@/services/referral";
+import { parseList } from "@/lib/parse";
+import { authService } from "@/services/auth";
+import { storage } from "@/lib/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BiometricAuth } from "@/utils/biometric";
@@ -64,7 +68,7 @@ const { width } = Dimensions.get("window");
 const Me = () => {
   const { user, logout, getWalletBalance, getTransactions } = useAuth();
   const { theme, isDarkMode, toggleTheme } = useTheme();
-  const { currency } = usePersonalization();
+  const { currency, notificationPrefs, updateNotificationPrefs } = usePersonalization();
   const { socket } = useSocket();
   const c = theme.colors;
   const router = useRouter();
@@ -85,8 +89,8 @@ const Me = () => {
 
   // Settings states
   const [darkMode, setDarkMode] = useState(isDarkMode);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(notificationPrefs.pushEnabled);
+  const [emailNotifications, setEmailNotifications] = useState(notificationPrefs.emailEnabled);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
 
   const profileUser = {
@@ -161,6 +165,14 @@ const Me = () => {
           );
         }
       }
+
+      try {
+        const refRes = await referralService.getList();
+        const refs = parseList<{ status?: string }>(refRes);
+        setReferralCount(refs.filter((r) => r.status === 'completed').length || refs.length);
+      } catch {
+        // keep count
+      }
     } catch {
       // keep cached values
     }
@@ -170,6 +182,11 @@ const Me = () => {
     checkBiometricAndLoadSettings();
     loadProfileStats();
   }, []);
+
+  useEffect(() => {
+    setPushNotifications(notificationPrefs.pushEnabled);
+    setEmailNotifications(notificationPrefs.emailEnabled);
+  }, [notificationPrefs]);
 
   useEffect(() => {
     if (!socket) return;
@@ -198,8 +215,17 @@ const Me = () => {
     }
 
     // Load other settings
-    const twoFactor = await AsyncStorage.getItem("twoFactorEnabled");
-    if (twoFactor) setTwoFactorAuth(twoFactor === "true");
+    const twoFactor = await storage.get<boolean | string>("twoFactorEnabled");
+    setTwoFactorAuth(twoFactor === true || twoFactor === "true");
+    try {
+      const res = await authService.get2FAStatus();
+      const data = (res as { data?: { enabled: boolean } })?.data ?? res;
+      const enabled = (data as { enabled?: boolean })?.enabled ?? false;
+      setTwoFactorAuth(enabled);
+      await storage.set("twoFactorEnabled", enabled);
+    } catch {
+      // keep cached value
+    }
   };
 
   const getInitials = (name: string) => {
@@ -642,14 +668,20 @@ const Me = () => {
                 icon={Bell}
                 type="switch"
                 value={pushNotifications}
-                onValueChange={setPushNotifications}
+                onValueChange={(v) => {
+                  setPushNotifications(v);
+                  updateNotificationPrefs({ pushEnabled: v });
+                }}
               />
               <SettingsItem
                 label="Email Notifications"
                 icon={Mail}
                 type="switch"
                 value={emailNotifications}
-                onValueChange={setEmailNotifications}
+                onValueChange={(v) => {
+                  setEmailNotifications(v);
+                  updateNotificationPrefs({ emailEnabled: v });
+                }}
               />
             </SettingsSection>
 
@@ -658,22 +690,13 @@ const Me = () => {
               <SettingsItem
                 label="Two-Factor Authentication"
                 icon={Lock}
-                type="switch"
-                value={twoFactorAuth}
-                onValueChange={async (value: boolean) => {
-                  setTwoFactorAuth(value);
-                  await AsyncStorage.setItem(
-                    "twoFactorEnabled",
-                    value.toString(),
-                  );
-                }}
+                value={twoFactorAuth ? "Enabled" : "Disabled"}
+                onPress={() => handleNavigateToSettings("/settings/two-factor")}
               />
               <SettingsItem
-                label="Change Password"
-                icon={Lock}
-                onPress={() =>
-                  handleNavigateToSettings("/settings/change-password")
-                }
+                label="Active Sessions"
+                icon={Smartphone}
+                onPress={() => handleNavigateToSettings("/settings/sessions")}
               />
               <SettingsItem
                 label="Change PIN"
@@ -717,7 +740,11 @@ const Me = () => {
                 icon={Gift}
                 onPress={() => handleNavigateToSettings("/settings/referral")}
               />
-              <SettingsItem label="Rate Us" icon={Star} onPress={() => {}} />
+              <SettingsItem
+                label="Rate Us"
+                icon={Star}
+                onPress={() => handleNavigateToSettings('/settings/rate-us')}
+              />
             </SettingsSection>
 
             {/* About */}

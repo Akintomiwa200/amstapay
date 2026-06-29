@@ -85,7 +85,7 @@ const Wallet = () => {
           <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/add-money')}>
             <Text style={styles.actionText}>Add Money</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/register-account')}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/add-account')}>
             <Text style={styles.actionText}>Withdraw</Text>
           </TouchableOpacity>
         </View>

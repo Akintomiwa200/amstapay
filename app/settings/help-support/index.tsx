@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { supportService } from '@/services/support';
 
 export default function HelpSupport() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function HelpSupport() {
   const c = theme.colors;
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
   const faqs = [
     { id: 1, question: 'How do I reset my PIN?', answer: 'Go to Settings > Security > Change PIN. You will need your current PIN to set a new one.' },
@@ -43,10 +45,22 @@ export default function HelpSupport() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    try {
+      setSending(true);
+      await supportService.createTicket({
+        subject: 'Support request',
+        category: 'general',
+        message: message.trim(),
+      });
       Alert.alert('Message Sent', 'Our support team will respond within 24 hours.');
       setMessage('');
+      router.push('/live-chat');
+    } catch (e) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to send message');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -123,7 +137,9 @@ export default function HelpSupport() {
               multiline
               numberOfLines={4}
             />
-            <TouchableOpacity style={[styles.sendButton, { backgroundColor: c.violet }]} onPress={handleSendMessage}>
+            <TouchableOpacity style={[styles.sendButton, { backgroundColor: c.violet }]} onPress={handleSendMessage} disabled={sending}>
+              <Send size={18} color="#fff" />
+              <Text style={styles.sendText}>{sending ? 'Sending...' : 'Send'}</Text>
               <Send size={20} color="#fff" />
             </TouchableOpacity>
           </View>

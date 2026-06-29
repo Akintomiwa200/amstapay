@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
+import { getAccountNumber } from '@/lib/user';
 import * as Clipboard from 'expo-clipboard'; // <-- better than deprecated react-native Clipboard
 import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
@@ -14,7 +15,7 @@ const AddViaBankScreen = () => {
   // Replace dummy with real data
   const bankDetails = {
     bankName: 'Amstapay',
-    accountNumber: user?.blupayAccountNumber || '----------',
+    accountNumber: getAccountNumber(user) || '----------',
     accountName: user?.fullName || user?.accountName || '----------',
   };
 

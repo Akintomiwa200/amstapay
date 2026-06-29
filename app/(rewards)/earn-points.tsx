@@ -1,30 +1,58 @@
-﻿// app/earn-points.tsx - Earn Points Screen
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+﻿import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Gift, Star, Zap, Users, CreditCard, Shield, Smartphone, TrendingUp, ChevronRight } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { cashbackService } from '@/services/cashback';
+import { parseList } from '@/lib/parse';
+
+const ICONS: Record<string, typeof CreditCard> = {
+  transaction: CreditCard,
+  referral: Users,
+  profile: Shield,
+  bills: Smartphone,
+  rate: Star,
+  invest: TrendingUp,
+  default: Gift,
+};
 
 export default function EarnPointsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.colors;
+  const [ways, setWays] = useState<{ icon: typeof CreditCard; title: string; desc: string; points: string; color: string; route?: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const ways = [
-    { icon: CreditCard, title: 'Make Transactions', desc: 'Earn 1 point for every ₦100 spent', points: '1pt/₦100', color: c.violet },
-    { icon: Users, title: 'Refer Friends', desc: 'Earn 100 points per referral', points: '100pts', color: c.blue },
-    { icon: Shield, title: 'Complete Profile', desc: 'Verify your identity for bonus points', points: '200pts', color: c.mint },
-    { icon: Smartphone, title: 'Bill Payments', desc: 'Pay bills and earn extra points', points: '2x pts', color: c.pink },
-    { icon: Star, title: 'Rate the App', desc: 'Leave a review and earn points', points: '50pts', color: c.warning },
-    { icon: TrendingUp, title: 'Save with AmstaWealth', desc: 'Earn bonus points on investments', points: '3x pts', color: c.violet },
-  ];
+  const load = useCallback(async () => {
+    try {
+      const res = await cashbackService.getEarnWays();
+      const list = parseList<{ title: string; desc?: string; description?: string; points: string; type?: string; route?: string }>(res);
+      if (list.length) {
+        setWays(list.map((item, i) => ({
+          icon: ICONS[item.type || 'default'] || Gift,
+          title: item.title,
+          desc: item.desc || item.description || '',
+          points: item.points,
+          color: [c.violet, c.blue, c.mint, c.pink, c.warning][i % 5],
+          route: item.route,
+        })));
+      } else {
+        setWays([
+          { icon: CreditCard, title: 'Make Transactions', desc: 'Earn 1 point for every ₦100 spent', points: '1pt/₦100', color: c.violet, route: '/send-money' },
+          { icon: Users, title: 'Refer Friends', desc: 'Earn 100 points per referral', points: '100pts', color: c.blue, route: '/settings/referral' },
+          { icon: Shield, title: 'Complete Profile', desc: 'Verify your identity for bonus points', points: '200pts', color: c.mint, route: '/settings/profile' },
+          { icon: Smartphone, title: 'Bill Payments', desc: 'Pay bills and earn extra points', points: '2x pts', color: c.pink, route: '/data' },
+          { icon: Star, title: 'Rate the App', desc: 'Leave a review and earn points', points: '50pts', color: c.warning, route: '/settings/rate-us' },
+          { icon: TrendingUp, title: 'Save with AmstaWealth', desc: 'Earn bonus points on investments', points: '3x pts', color: c.violet, route: '/amsta-wealth' },
+        ]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [c]);
 
-  const dailyChallenges = [
-    { title: 'Send money to a friend', points: 10, completed: true },
-    { title: 'Pay a bill', points: 15, completed: false },
-    { title: 'Check your budget', points: 5, completed: false },
-  ];
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
@@ -36,47 +64,35 @@ export default function EarnPointsScreen() {
           <Text style={styles.headerTitle}>Earn Points</Text>
           <View style={{ width: 40 }} />
         </View>
-        <Text style={styles.headerSub}>Complete activities to earn reward points</Text>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Daily Challenges */}
-        <View style={[styles.section, { backgroundColor: c.primaryLight }]}>
-          <View style={styles.sectionHeader}>
-            <Zap size={18} color={c.violet} />
-            <Text style={[styles.sectionTitle, { color: c.primary }]}>Daily Challenges</Text>
-          </View>
-          {dailyChallenges.map((ch, i) => (
-            <View key={i} style={styles.challengeRow}>
-              <View style={[styles.challengeCheck, ch.completed && styles.challengeCheckDone, { borderColor: ch.completed ? c.mint : c.border }, ch.completed && { backgroundColor: c.mint }]}>
-                {ch.completed && <Text style={styles.checkMark}>✓</Text>}
-              </View>
-              <Text style={[styles.challengeText, { color: ch.completed ? c.textSub : c.text }, ch.completed && { textDecorationLine: 'line-through' }]}>{ch.title}</Text>
-              <Text style={[styles.challengePoints, { color: c.violet }]}>+{ch.points}pts</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Ways to Earn */}
-        <Text style={[styles.sectionTitle, { color: c.primary }]}>Ways to Earn</Text>
-        {ways.map((way, i) => {
-          const Icon = way.icon;
-          return (
-            <TouchableOpacity key={i} style={[styles.wayCard, { borderBottomColor: c.border }]}>
-              <View style={[styles.wayIcon, { backgroundColor: `${way.color}15` }]}>
-                <Icon size={22} color={way.color} />
-              </View>
-              <View style={styles.wayInfo}>
-                <Text style={[styles.wayTitle, { color: c.text }]}>{way.title}</Text>
-                <Text style={[styles.wayDesc, { color: c.textSub }]}>{way.desc}</Text>
-              </View>
-              <View style={styles.wayRight}>
-                <Text style={[styles.wayPoints, { color: c.violet }]}>{way.points}</Text>
-                <ChevronRight size={16} color={c.textSub} />
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+      <ScrollView style={styles.content}>
+        {loading ? (
+          <ActivityIndicator color={c.violet} style={{ marginTop: 32 }} />
+        ) : (
+          ways.map((way, i) => {
+            const Icon = way.icon;
+            return (
+              <TouchableOpacity
+                key={i}
+                style={[styles.wayCard, { backgroundColor: c.bg, borderColor: c.border }]}
+                onPress={() => way.route && router.push(way.route as never)}
+              >
+                <View style={[styles.wayIcon, { backgroundColor: `${way.color}18` }]}>
+                  <Icon size={22} color={way.color} />
+                </View>
+                <View style={styles.wayInfo}>
+                  <Text style={[styles.wayTitle, { color: c.text }]}>{way.title}</Text>
+                  <Text style={[styles.wayDesc, { color: c.textSub }]}>{way.desc}</Text>
+                </View>
+                <View style={styles.wayRight}>
+                  <Text style={[styles.wayPoints, { color: way.color }]}>{way.points}</Text>
+                  <ChevronRight size={16} color={c.textSub} />
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )}
       </ScrollView>
     </View>
   );
@@ -84,26 +100,16 @@ export default function EarnPointsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  headerSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center' },
-  content: { paddingHorizontal: 20, paddingTop: 20 },
-  section: { borderRadius: 18, padding: 16, marginBottom: 24 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 14 },
-  challengeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  challengeCheck: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, marginRight: 12, alignItems: 'center', justifyContent: 'center' },
-  challengeCheckDone: {},
-  checkMark: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  challengeText: { flex: 1, fontSize: 14 },
-  challengePoints: { fontSize: 13, fontWeight: '600' },
-  wayCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
-  wayIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  content: { padding: 20 },
+  wayCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10 },
+  wayIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   wayInfo: { flex: 1 },
-  wayTitle: { fontSize: 15, fontWeight: '600' },
+  wayTitle: { fontSize: 14, fontWeight: '600' },
   wayDesc: { fontSize: 12, marginTop: 2 },
-  wayRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  wayPoints: { fontSize: 13, fontWeight: '700' },
+  wayRight: { alignItems: 'flex-end', gap: 4 },
+  wayPoints: { fontSize: 12, fontWeight: '700' },
 });

@@ -1,10 +1,4 @@
-import { Platform } from 'react-native';
-
-const DEV_API_URL = Platform.select({
-  android: 'https://amstapay-backend.onrender.com',
-  ios: 'http://localhost:3000',
-  default: 'https://amstapay-backend.onrender.com',
-});
+const DEV_API_URL = 'https://amstapay-backend.onrender.com';
 
 const PROD_API_URL = 'https://amstapay-backend.onrender.com';
 

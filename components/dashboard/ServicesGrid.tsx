@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import {
   Smartphone, Wifi, DollarSign, Tv, PiggyBank, Banknote, Mail,
   Zap, Shield, CreditCard, Gift, Car, Home, Gamepad2, GraduationCap,
-  MoreHorizontal, ChevronUp, Scan, Camera, Send, QrCode
+  MoreHorizontal, ChevronUp, Scan, Camera, Send, QrCode, Globe, Coins,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -36,7 +36,9 @@ const ServicesGrid: React.FC = () => {
       AmstaWealth: '/amsta-wealth',
       Loan: '/loan',
       Electricity: '/electricity',
-      'Bank Transfer': '/register-account',
+      'Bank Transfer': '/send-money',
+      Web3: '/web3',
+      International: '/international',
       'Gift Cards': '/giftcard',
       'School Fees': '/schoolfees',
       Insurance: '/insurance',
@@ -72,6 +74,8 @@ const ServicesGrid: React.FC = () => {
     { icon: Zap, label: 'Electricity' },
     { icon: Shield, label: 'Insurance' },
     { icon: CreditCard, label: 'Bank Transfer' },
+    { icon: Coins, label: 'Web3', badge: 'New', route: '/web3' },
+    { icon: Globe, label: 'International', route: '/international' },
     { icon: Gift, label: 'Gift Cards' },
     { icon: Car, label: 'Transport' },
     { icon: Home, label: 'Real Estate' },

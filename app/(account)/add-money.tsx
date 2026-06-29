@@ -39,7 +39,7 @@ export default function AddMoneyScreen() {
 
   const handleNavigate = (method: string) => {
     if (method === 'qr') {
-      router.push('/qr-code');
+      router.push('/my-qr');
     } else if (method === 'bank') {
       router.push('/add-via-bank');
     }

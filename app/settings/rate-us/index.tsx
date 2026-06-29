@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Star, Send } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { reportsService } from '@/services/reports';
 
 export default function RateUsScreen() {
   const router = useRouter();
@@ -12,15 +13,24 @@ export default function RateUsScreen() {
   const c = theme.colors;
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rating === 0) {
       Alert.alert('Error', 'Please select a rating');
       return;
     }
-    Alert.alert('Thank You!', 'Your feedback has been submitted. We appreciate your support!', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    try {
+      setSubmitting(true);
+      await reportsService.submitFeedback({ rating, feedback: feedback.trim() || undefined });
+      Alert.alert('Thank You!', 'Your feedback has been submitted. We appreciate your support!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error: unknown) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to submit feedback');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
@@ -71,10 +81,10 @@ export default function RateUsScreen() {
         </View>
 
         {/* Submit */}
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.85} disabled={submitting}>
           <LinearGradient colors={[c.violet, c.primary]} style={styles.submitGradient}>
             <Send size={20} color="#fff" />
-            <Text style={styles.submitText}>Submit Review</Text>
+            <Text style={styles.submitText}>{submitting ? 'Submitting...' : 'Submit Review'}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>

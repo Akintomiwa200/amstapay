@@ -21,8 +21,8 @@ import {
   Fingerprint,
   Eye,
   RefreshCw,
-  Trash2,
-  Settings as SettingsIcon,
+  Smartphone,
+  Award,
 } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -39,9 +39,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/context/ThemeContext';
 import { BiometricAuth } from '@/utils/biometric';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { usePersonalization } from '@/context/PersonalizationContext';
+import { authService } from '@/services/auth';
+import { storage } from '@/lib/storage';
 
 type SettingItemProps = {
   icon: React.ComponentType<{ size: number; color: string }>;
@@ -194,10 +195,14 @@ const Settings: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const twoFactor = await AsyncStorage.getItem('twoFactorEnabled');
-      if (twoFactor) setTwoFactorEnabled(twoFactor === 'true');
-    } catch (error) {
-      console.error('Error loading settings:', error);
+      const res = await authService.get2FAStatus();
+      const data = (res as { data?: { enabled: boolean } })?.data ?? res;
+      const enabled = (data as { enabled?: boolean })?.enabled ?? false;
+      setTwoFactorEnabled(enabled);
+      await storage.set('twoFactorEnabled', enabled);
+    } catch {
+      const cached = await storage.get<boolean | string>('twoFactorEnabled');
+      setTwoFactorEnabled(cached === true || cached === 'true');
     }
   };
 
@@ -220,13 +225,8 @@ const Settings: React.FC = () => {
     setBiometricEnabled(value);
   };
 
-  const handleTwoFactorToggle = async (value: boolean) => {
-    setTwoFactorEnabled(value);
-    await AsyncStorage.setItem('twoFactorEnabled', value.toString());
-    Alert.alert(
-      'Two-Factor Authentication',
-      value ? '2FA has been enabled' : '2FA has been disabled'
-    );
+  const handleTwoFactorPress = () => {
+    navigateTo('/settings/two-factor');
   };
 
   const navigateTo = (route: string) => {
@@ -547,6 +547,12 @@ const Settings: React.FC = () => {
                   onPress: () => navigateTo('/settings/change-password'),
                 },
                 {
+                  icon: Award,
+                  title: "KYC Verification",
+                  subtitle: user?.kycLevel && user.kycLevel >= 2 ? 'Identity verified' : 'Upload ID to verify your account',
+                  onPress: () => navigateTo('/settings/kyc'),
+                },
+                {
                   icon: Fingerprint,
                   title: "Biometric Authentication",
                   subtitle: !biometricAvailable ? 'Not available on this device' : biometricEnabled ? 'Fingerprint or Face ID enabled' : 'Use fingerprint or face ID',
@@ -559,10 +565,13 @@ const Settings: React.FC = () => {
                   icon: Shield,
                   title: "Two-Factor Authentication",
                   subtitle: twoFactorEnabled ? 'Extra security layer active' : 'Add extra security layer',
-                  showSwitch: true,
-                  switchValue: twoFactorEnabled,
-                  onSwitchChange: handleTwoFactorToggle,
-                  showArrow: false,
+                  onPress: handleTwoFactorPress,
+                },
+                {
+                  icon: Smartphone,
+                  title: "Active Sessions",
+                  subtitle: "Manage devices signed in to your account",
+                  onPress: () => navigateTo('/settings/sessions'),
                 },
                 {
                   icon: Eye,

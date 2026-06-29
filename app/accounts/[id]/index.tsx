@@ -1,38 +1,61 @@
-// app/accounts/[id].tsx - Account Details
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Copy, Eye, EyeOff, ArrowUpRight, ArrowDownRight, QrCode, MoreVertical } from 'lucide-react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ChevronLeft, Eye, EyeOff, ArrowUpRight, ArrowDownRight, QrCode } from 'lucide-react-native';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { usePersonalization } from '@/context/PersonalizationContext';
+import { useAuth } from '@/context/AuthContext';
+import { walletService } from '@/services/wallet';
+import { savingsService } from '@/services/savings';
+import { investmentService } from '@/services/investments';
+import { transactionService } from '@/services/transactions';
+import { parseList } from '@/lib/parse';
+import { formatMoney } from '@/lib/format';
+import { getAccountNumber } from '@/lib/user';
+import type { Transaction } from '@/lib/models';
 
 export default function AccountDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [showBalance, setShowBalance] = useState(true);
   const { theme } = useTheme();
   const c = theme.colors;
+  const { currency } = usePersonalization();
+  const { user, getWalletBalance } = useAuth();
+  const [name, setName] = useState('Account');
+  const [balance, setBalance] = useState(0);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const account = {
-    id: id,
-    name: 'Main Account',
-    balance: '245,800',
-    type: 'bank',
-    number: '0123456789',
-    bankName: 'Amsta Bank',
-    color: c.violet
-  };
+  const load = useCallback(async () => {
+    const accountId = id || 'wallet';
+    try {
+      if (accountId === 'wallet' || accountId === 'main') {
+        setName('Main Wallet');
+        const bal = await (getWalletBalance?.() ?? walletService.getBalance());
+        const b = (bal as { balance?: number; data?: { balance: number } })?.balance
+          ?? (bal as { data?: { balance: number } })?.data?.balance ?? 0;
+        setBalance(b);
+        setAccountNumber(getAccountNumber(user) || '');
+      } else if (accountId === 'savings') {
+        setName('Savings');
+        const goals = parseList(await savingsService.getAll());
+        setBalance(goals.reduce((s, g) => s + (g.currentAmount || 0), 0));
+      } else if (accountId === 'investments') {
+        setName('Investments');
+        const inv = parseList(await investmentService.getAll());
+        setBalance(inv.reduce((s, i) => s + (i.amount || 0), 0));
+      }
+      const txs = parseList<Transaction>(await transactionService.getAll(1, 20));
+      setTransactions(txs);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, user, getWalletBalance]);
 
-  const recentTransactions = [
-    { id: 1, type: 'Salary Deposit', amount: '+50,000', date: 'Today', category: 'income' },
-    { id: 2, type: 'Electricity Bill', amount: '-15,000', date: 'Yesterday', category: 'expense' },
-    { id: 3, type: 'Transfer to John', amount: '-25,000', date: 'Mar 12', category: 'expense' },
-  ];
-
-  const copyToClipboard = (text: string) => {
-    // Implement copy functionality
-    alert('Copied to clipboard!');
-  };
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
@@ -41,76 +64,53 @@ export default function AccountDetailScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{account.name}</Text>
-          <TouchableOpacity>
-            <MoreVertical size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Available Balance</Text>
-          <TouchableOpacity style={styles.balanceRow} onPress={() => setShowBalance(!showBalance)}>
-            <Text style={styles.balanceAmount}>
-              {showBalance ? `₦${parseInt(account.balance).toLocaleString()}` : '•••••••'}
-            </Text>
+          <Text style={styles.headerTitle}>{name}</Text>
+          <TouchableOpacity onPress={() => setShowBalance(!showBalance)}>
             {showBalance ? <EyeOff size={20} color="#fff" /> : <Eye size={20} color="#fff" />}
           </TouchableOpacity>
         </View>
-
-        <View style={styles.accountInfo}>
-          <View style={styles.accountNumberRow}>
-            <Text style={styles.accountNumber}>{account.number}</Text>
-            <TouchableOpacity onPress={() => copyToClipboard(account.number)}>
-              <Copy size={16} color="rgba(255,255,255,0.7)" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.bankName}>{account.bankName}</Text>
-        </View>
-
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/send-money')}>
-            <ArrowUpRight size={20} color="#fff" />
-            <Text style={styles.actionText}>Send</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/receive-money')}>
-            <ArrowDownRight size={20} color="#fff" />
-            <Text style={styles.actionText}>Receive</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/my-qr')}>
-            <QrCode size={20} color="#fff" />
-            <Text style={styles.actionText}>My QR</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.balanceLabel}>Available Balance</Text>
+        <Text style={styles.balanceValue}>
+          {loading ? '...' : showBalance ? formatMoney(balance, currency) : '•••••••'}
+        </Text>
+        {accountNumber ? <Text style={styles.accountNum}>Acct: {accountNumber}</Text> : null}
       </LinearGradient>
 
-      <ScrollView style={styles.content}>
-        <View style={[styles.section, { backgroundColor: c.bg, borderColor: c.border }]}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: c.primary }]}>Recent Transactions</Text>
-            <TouchableOpacity onPress={() => router.push('/transactions')}>
-              <Text style={[styles.seeAll, { color: c.violet }]}>See All</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.actions}>
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: c.primaryLight }]} onPress={() => router.push('/send-money')}>
+          <ArrowUpRight size={20} color={c.violet} />
+          <Text style={[styles.actionText, { color: c.text }]}>Send</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: c.primaryLight }]} onPress={() => router.push('/my-qr')}>
+          <ArrowDownRight size={20} color={c.mint} />
+          <Text style={[styles.actionText, { color: c.text }]}>Receive</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: c.primaryLight }]} onPress={() => router.push('/my-qr')}>
+          <QrCode size={20} color={c.blue} />
+          <Text style={[styles.actionText, { color: c.text }]}>QR</Text>
+        </TouchableOpacity>
+      </View>
 
-          {recentTransactions.map((txn) => (
-            <TouchableOpacity key={txn.id} style={[styles.transactionCard, { borderBottomColor: c.border }]}>
-              <View style={[styles.transactionIcon, txn.category === 'income' ? { backgroundColor: c.success } : { backgroundColor: c.error }]}>
-                {txn.category === 'income' ? <ArrowDownRight size={16} color="#fff" /> : <ArrowUpRight size={16} color="#fff" />}
-              </View>
-              <View style={styles.transactionInfo}>
-                <Text style={[styles.transactionType, { color: c.text }]}>{txn.type}</Text>
-                <Text style={[styles.transactionDate, { color: c.textSub }]}>{txn.date}</Text>
-              </View>
-              <Text style={[styles.transactionAmount, txn.category === 'income' ? { color: c.success } : { color: c.error }]}>
-                {txn.amount}
+      <ScrollView style={styles.content}>
+        <Text style={[styles.sectionTitle, { color: c.primary }]}>Recent Transactions</Text>
+        {loading ? (
+          <ActivityIndicator color={c.violet} />
+        ) : transactions.length === 0 ? (
+          <Text style={[styles.empty, { color: c.textSub }]}>No transactions yet.</Text>
+        ) : (
+          transactions.map((txn) => (
+            <TouchableOpacity
+              key={txn._id}
+              style={[styles.txnRow, { borderBottomColor: c.border }]}
+              onPress={() => router.push(`/transactions/${txn._id}`)}
+            >
+              <Text style={[styles.txnName, { color: c.text }]}>{txn.description || txn.type}</Text>
+              <Text style={[styles.txnAmount, { color: txn.amount < 0 ? c.error : c.mint }]}>
+                {formatMoney(txn.amount, currency)}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity style={[styles.statementBtn, { backgroundColor: c.primaryLight }]} onPress={() => router.push('/accounts/statements')}>
-          <Text style={[styles.statementText, { color: c.violet }]}>View Account Statement</Text>
-        </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -118,32 +118,20 @@ export default function AccountDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 32 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
+  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  balanceContainer: { marginBottom: 24 },
-  balanceLabel: { fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 8 },
-  balanceRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  balanceAmount: { fontSize: 34, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  accountInfo: { marginBottom: 24 },
-  accountNumberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
-  accountNumber: { fontSize: 16, color: 'rgba(255,255,255,0.9)', fontWeight: '500' },
-  bankName: { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
-  quickActions: { flexDirection: 'row', gap: 16 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.15)', paddingVertical: 12, borderRadius: 12 },
-  actionText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  content: { paddingHorizontal: 20, paddingTop: 20 },
-  section: { borderRadius: 20, padding: 16, borderWidth: 1, marginBottom: 20 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '700' },
-  seeAll: { fontSize: 13, fontWeight: '600' },
-  transactionCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
-  transactionIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  transactionInfo: { flex: 1 },
-  transactionType: { fontSize: 15, fontWeight: '500', marginBottom: 2 },
-  transactionDate: { fontSize: 12 },
-  transactionAmount: { fontSize: 15, fontWeight: '600' },
-  statementBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginBottom: 40 },
-  statementText: { fontSize: 15, fontWeight: '600' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  balanceLabel: { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
+  balanceValue: { fontSize: 32, fontWeight: '800', color: '#fff', marginTop: 4 },
+  accountNum: { fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 6 },
+  actions: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, marginTop: -20, marginBottom: 16 },
+  actionBtn: { flex: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center', gap: 6 },
+  actionText: { fontSize: 12, fontWeight: '600' },
+  content: { paddingHorizontal: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  empty: { fontSize: 13 },
+  txnRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1 },
+  txnName: { fontSize: 14, fontWeight: '500', flex: 1 },
+  txnAmount: { fontSize: 14, fontWeight: '700' },
 });

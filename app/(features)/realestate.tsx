@@ -1,106 +1,87 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Home } from 'lucide-react-native';
+import { useTheme } from '@/context/ThemeContext';
+import { usePersonalization } from '@/context/PersonalizationContext';
+import { realEstateService, type PropertyListing } from '@/services/realestate';
+import { parseList } from '@/lib/parse';
+import { formatMoney } from '@/lib/format';
 
-const RealEstateScreen = () => {
-  const [selectedProperty, setSelectedProperty] = useState(null);
+export default function RealEstateScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const c = theme.colors;
+  const { currency } = usePersonalization();
+  const [properties, setProperties] = useState<PropertyListing[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const properties = [
-    {
-      id: '1',
-      title: '3-Bedroom Apartment',
-      location: 'Lekki Phase 1, Lagos',
-      price: '₦25,000,000',
-      image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
-      features: ['3 Bedrooms', '2 Bathrooms', 'Parking']
-    },
-    {
-      id: '2',
-      title: 'Office Space',
-      location: 'Victoria Island, Lagos',
-      price: '₦15,000,000',
-      image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400',
-      features: ['200 sqm', 'Fully Furnished', '24/7 Security']
-    },
-    {
-      id: '3',
-      title: 'Land Plot',
-      location: 'Epe, Lagos',
-      price: '₦8,000,000',
-      image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400',
-      features: ['500 sqm', 'Dry Land', 'Good Road Access']
+  const load = useCallback(async () => {
+    try {
+      const res = await realEstateService.getListings();
+      setProperties(parseList<PropertyListing>(res));
+    } catch {
+      setProperties([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  }, []);
 
-  const handleViewDetails = (property) => {
-    setSelectedProperty(property);
-    router.push('/property-details');
-  };
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Real Estate</Text>
-        <Text style={styles.subtitle}>Find your dream property</Text>
+    <ScrollView style={[styles.container, { backgroundColor: c.bg }]}>
+      <View style={[styles.header, { backgroundColor: c.primaryLight }]}>
+        <Text style={[styles.headerTitle, { color: c.primary }]}>Real Estate</Text>
+        <Text style={[styles.subtitle, { color: c.textSub }]}>Find your dream property</Text>
       </View>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.sectionTitle}>Available Properties</Text>
-        
-        {properties.map(property => (
-          <View key={property.id} style={styles.propertyCard}>
-            <Image source={{ uri: property.image }} style={styles.propertyImage} />
-            
-            <View style={styles.propertyDetails}>
-              <Text style={styles.propertyTitle}>{property.title}</Text>
-              <Text style={styles.propertyLocation}>{property.location}</Text>
-              
-              <View style={styles.featuresContainer}>
-                {property.features.map((feature, index) => (
-                  <View key={index} style={styles.featureTag}>
-                    <Text style={styles.featureText}>{feature}</Text>
-                  </View>
-                ))}
+      <View style={styles.content}>
+        {loading ? (
+          <ActivityIndicator color={c.violet} style={{ marginTop: 32 }} />
+        ) : properties.length === 0 ? (
+          <Text style={[styles.empty, { color: c.textSub }]}>No listings available right now.</Text>
+        ) : (
+          properties.map((property) => (
+            <TouchableOpacity
+              key={property._id}
+              style={[styles.propertyCard, { backgroundColor: c.bg, borderColor: c.border }]}
+              onPress={() => router.push({ pathname: '/property-details', params: { id: property._id } })}
+            >
+              {property.image || property.images?.[0] ? (
+                <Image source={{ uri: property.image || property.images?.[0] }} style={styles.propertyImage} />
+              ) : (
+                <View style={[styles.imagePlaceholder, { backgroundColor: c.primaryLight }]}>
+                  <Home size={32} color={c.violet} />
+                </View>
+              )}
+              <View style={styles.propertyDetails}>
+                <Text style={[styles.propertyTitle, { color: c.text }]}>{property.title}</Text>
+                <Text style={[styles.propertyLocation, { color: c.textSub }]}>{property.location}</Text>
+                <Text style={[styles.propertyPrice, { color: c.violet }]}>
+                  {formatMoney(property.price, property.currency || currency)}
+                </Text>
               </View>
-              
-              <View style={styles.priceContainer}>
-                <Text style={styles.propertyPrice}>{property.price}</Text>
-                <TouchableOpacity
-                  style={styles.viewButton}
-                  onPress={() => handleViewDetails(property)}
-                >
-                  <Text style={styles.viewButtonText}>View Details</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        ))}
+            </TouchableOpacity>
+          ))
+        )}
       </View>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  header: { backgroundColor: '#FFFFFF', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e9ecef' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1F2937' },
-  subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-  formContainer: { padding: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 16 },
-  propertyCard: { backgroundColor: '#FFFFFF', borderRadius: 12, marginBottom: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#e5e7eb' },
-  propertyImage: { width: '100%', height: 200 },
-  propertyDetails: { padding: 16 },
-  propertyTitle: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
-  propertyLocation: { fontSize: 14, color: '#6B7280', marginBottom: 12 },
-  featuresContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  featureTag: { backgroundColor: '#FFEDD5', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-  featureText: { fontSize: 12, color: '#F97316' },
-  priceContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  propertyPrice: { fontSize: 18, fontWeight: 'bold', color: '#F97316' },
-  viewButton: { backgroundColor: '#F97316', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 },
-  viewButtonText: { color: '#FFFFFF', fontWeight: '500' },
+  container: { flex: 1 },
+  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
+  headerTitle: { fontSize: 24, fontWeight: '800' },
+  subtitle: { fontSize: 14, marginTop: 4 },
+  content: { padding: 16 },
+  empty: { textAlign: 'center', marginTop: 32 },
+  propertyCard: { borderRadius: 16, borderWidth: 1, marginBottom: 14, overflow: 'hidden' },
+  propertyImage: { width: '100%', height: 160 },
+  imagePlaceholder: { width: '100%', height: 160, alignItems: 'center', justifyContent: 'center' },
+  propertyDetails: { padding: 14 },
+  propertyTitle: { fontSize: 16, fontWeight: '700' },
+  propertyLocation: { fontSize: 13, marginTop: 4 },
+  propertyPrice: { fontSize: 18, fontWeight: '800', marginTop: 8 },
 });
-
-export default RealEstateScreen;

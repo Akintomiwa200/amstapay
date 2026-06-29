@@ -8,6 +8,7 @@ export interface User {
   isOtpVerified?: boolean;
   role?: string;
   blupayAccountNumber?: string;
+  amstaAccountNumber?: string;
   kycLevel?: number;
   dateOfBirth?: string;
   gender?: string;
@@ -145,7 +146,26 @@ export interface VirtualCard {
   status: 'active' | 'frozen' | 'cancelled';
   balance: number;
   currency: string;
+  brand?: string;
+  expiry?: string;
+  cardholderName?: string;
   createdAt: string;
+}
+
+export interface AuthSession {
+  deviceId: string;
+  deviceName?: string;
+  platform?: string;
+  location?: string;
+  ipAddress?: string;
+  lastActive?: string;
+  createdAt?: string;
+  current?: boolean;
+}
+
+export interface TwoFactorStatus {
+  enabled: boolean;
+  method?: 'email' | 'sms' | 'authenticator';
 }
 
 export interface Notification {

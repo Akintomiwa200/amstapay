@@ -1,117 +1,109 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, Download, Share2, ArrowLeft, Home } from 'lucide-react-native';
-import React from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  ScrollView,
-  StatusBar 
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, ScrollView, StatusBar, Share, ActivityIndicator } from 'react-native';
+import { useTheme } from '@/context/ThemeContext';
+import { usePersonalization } from '@/context/PersonalizationContext';
+import { useAuth } from '@/context/AuthContext';
+import { transactionService } from '@/services/transactions';
+import { parseData } from '@/lib/parse';
+import { formatMoney } from '@/lib/format';
+import type { Transaction } from '@/lib/models';
 
 const PaymentSuccess: React.FC = () => {
   const router = useRouter();
+  const params = useLocalSearchParams<{ transactionId?: string; amount?: string; recipient?: string }>();
+  const { theme, isDarkMode } = useTheme();
+  const c = theme.colors;
+  const { currency } = usePersonalization();
+  const { getTransaction } = useAuth();
+  const [txn, setTxn] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(!!params.transactionId);
 
-  const handleGoHome = () => {
-    router.push('/dashboard');
-  };
+  useEffect(() => {
+    if (!params.transactionId) return;
+    (async () => {
+      try {
+        const res = await getTransaction?.(params.transactionId) ?? transactionService.getById(params.transactionId);
+        setTxn(parseData<Transaction>(res));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [params.transactionId]);
 
-  const handleGoBack = () => {
-    router.back();
+  const amount = txn?.amount ?? Number(params.amount) ?? 0;
+  const recipient = txn?.receiverName || params.recipient || 'Recipient';
+  const transactionId = txn?._id || params.transactionId || 'N/A';
+  const date = txn?.createdAt
+    ? new Date(txn.createdAt).toLocaleString('en-NG')
+    : new Date().toLocaleString('en-NG');
+
+  const receiptText = `AmstaPay Receipt\nAmount: ${formatMoney(Math.abs(amount), currency)}\nTo: ${recipient}\nID: ${transactionId}\nDate: ${date}\nStatus: Successful`;
+
+  const handleShareReceipt = async () => {
+    await Share.share({ message: receiptText, title: 'AmstaPay Receipt' });
   };
 
   const handleDownloadReceipt = () => {
-    // Handle receipt download
-    console.log('Download receipt');
-  };
-
-  const handleShareReceipt = () => {
-    // Handle receipt sharing
-    console.log('Share receipt');
-  };
-
-  const transactionDetails = {
-    amount: '₦5,000.00',
-    recipient: 'John Doe',
-    transactionId: 'TXN123456789',
-    date: new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }),
-    type: 'Bank Transfer',
-    status: 'Successful'
+    if (params.transactionId) {
+      router.push(`/receipt/${params.transactionId}`);
+    } else {
+      handleShareReceipt();
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-          <ArrowLeft size={24} color="#000000" />
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <View style={[styles.header, { borderBottomColor: c.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transaction Status</Text>
+        <Text style={[styles.headerTitle, { color: c.text }]}>Transaction Status</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-        {/* Success Icon and Message */}
         <View style={styles.successSection}>
-          <View style={styles.successIconContainer}>
-            <CheckCircle size={80} color="#FF8C00" />
+          <View style={[styles.successIconContainer, { borderColor: c.mint }]}>
+            <CheckCircle size={80} color={c.mint} />
           </View>
-          
-          <Text style={styles.successTitle}>Payment Successful!</Text>
-          <Text style={styles.successSubtitle}>
-            Your transaction has been completed successfully
-          </Text>
+          <Text style={[styles.successTitle, { color: c.text }]}>Payment Successful!</Text>
+          <Text style={[styles.successSubtitle, { color: c.textSub }]}>Your transaction has been completed</Text>
         </View>
 
-        {/* Transaction Details Card */}
-        <View style={styles.detailsCard}>
-          <View style={styles.amountSection}>
-            <Text style={styles.amountLabel}>Amount Sent</Text>
-            <Text style={styles.amountValue}>{transactionDetails.amount}</Text>
+        {loading ? (
+          <ActivityIndicator color={c.violet} style={{ marginVertical: 24 }} />
+        ) : (
+          <View style={[styles.detailsCard, { borderColor: c.violet, backgroundColor: c.bg }]}>
+            <View style={styles.amountSection}>
+              <Text style={[styles.amountLabel, { color: c.textSub }]}>Amount</Text>
+              <Text style={[styles.amountValue, { color: c.text }]}>{formatMoney(Math.abs(amount), currency)}</Text>
+            </View>
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
+            <DetailRow label="Recipient" value={recipient} c={c} />
+            <DetailRow label="Transaction ID" value={transactionId} c={c} />
+            <DetailRow label="Date & Time" value={date} c={c} />
+            <DetailRow label="Status" value="Successful" valueColor={c.mint} c={c} />
           </View>
+        )}
 
-          <View style={styles.divider} />
-
-          <View style={styles.detailsSection}>
-            <DetailRow label="Recipient" value={transactionDetails.recipient} />
-            <DetailRow label="Transaction ID" value={transactionDetails.transactionId} />
-            <DetailRow label="Date & Time" value={transactionDetails.date} />
-            <DetailRow label="Transaction Type" value={transactionDetails.type} />
-            <DetailRow 
-              label="Status" 
-              value={transactionDetails.status} 
-              valueStyle={styles.successStatus}
-            />
-          </View>
-        </View>
-
-        {/* Action Buttons */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleDownloadReceipt}>
-            <Download size={20} color="#000000" />
-            <Text style={styles.secondaryButtonText}>Download Receipt</Text>
+          <TouchableOpacity style={[styles.secondaryButton, { borderColor: c.violet }]} onPress={handleDownloadReceipt}>
+            <Download size={20} color={c.text} />
+            <Text style={[styles.secondaryButtonText, { color: c.text }]}>View Receipt</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleShareReceipt}>
-            <Share2 size={20} color="#000000" />
-            <Text style={styles.secondaryButtonText}>Share Receipt</Text>
+          <TouchableOpacity style={[styles.secondaryButton, { borderColor: c.violet }]} onPress={handleShareReceipt}>
+            <Share2 size={20} color={c.text} />
+            <Text style={[styles.secondaryButtonText, { color: c.text }]}>Share</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Bottom Button */}
-      <View style={styles.bottomSection}>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleGoHome}>
-          <Home size={20} color="#FFFFFF" />
+      <View style={[styles.bottomSection, { borderTopColor: c.border, backgroundColor: c.bg }]}>
+        <TouchableOpacity style={[styles.primaryButton, { backgroundColor: c.violet }]} onPress={() => router.replace('/dashboard')}>
+          <Home size={20} color="#fff" />
           <Text style={styles.primaryButtonText}>Back to Home</Text>
         </TouchableOpacity>
       </View>
@@ -119,185 +111,40 @@ const PaymentSuccess: React.FC = () => {
   );
 };
 
-// Helper component for detail rows
-interface DetailRowProps {
-  label: string;
-  value: string;
-  valueStyle?: any;
+function DetailRow({ label, value, valueColor, c }: { label: string; value: string; valueColor?: string; c: { text: string; textSub: string } }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={[styles.detailLabel, { color: c.textSub }]}>{label}</Text>
+      <Text style={[styles.detailValue, { color: valueColor || c.text }]}>{value}</Text>
+    </View>
+  );
 }
-
-const DetailRow: React.FC<DetailRowProps> = ({ label, value, valueStyle }) => (
-  <View style={styles.detailRow}>
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text style={[styles.detailValue, valueStyle]}>{value}</Text>
-  </View>
-);
 
 export default PaymentSuccess;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  successSection: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 16,
-  },
-  successIconContainer: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    borderWidth: 4,
-    borderColor: '#FF8C00',
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  successSubtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  detailsCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: '#FF8C00',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  amountSection: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  amountLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
-  },
-  amountValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#FF8C00',
-    marginBottom: 20,
-  },
-  detailsSection: {
-    gap: 16,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#666666',
-    flex: 1,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000000',
-    flex: 1,
-    textAlign: 'right',
-  },
-  successStatus: {
-    color: '#22C55E',
-    fontWeight: '600',
-  },
-  actionsSection: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  secondaryButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#FF8C00',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  bottomSection: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F5F5F5',
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF8C00',
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-    borderWidth: 2,
-    borderColor: '#000000',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 16, borderBottomWidth: 1 },
+  backButton: { padding: 8 },
+  headerTitle: { fontSize: 18, fontWeight: '600' },
+  placeholder: { width: 40 },
+  scrollView: { flex: 1 },
+  successSection: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
+  successIconContainer: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 4 },
+  successTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' },
+  successSubtitle: { fontSize: 16, textAlign: 'center', lineHeight: 22 },
+  detailsCard: { marginHorizontal: 16, borderRadius: 16, padding: 20, marginBottom: 24, borderWidth: 2 },
+  amountSection: { alignItems: 'center', marginBottom: 20 },
+  amountLabel: { fontSize: 14, marginBottom: 4 },
+  amountValue: { fontSize: 32, fontWeight: 'bold' },
+  divider: { height: 1, marginBottom: 20 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  detailLabel: { fontSize: 14, flex: 1 },
+  detailValue: { fontSize: 14, fontWeight: '500', flex: 1, textAlign: 'right' },
+  actionsSection: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, marginBottom: 24 },
+  secondaryButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, gap: 8 },
+  secondaryButtonText: { fontSize: 14, fontWeight: '600' },
+  bottomSection: { padding: 16, borderTopWidth: 1 },
+  primaryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 16, gap: 8 },
+  primaryButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
 });

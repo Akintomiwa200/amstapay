@@ -43,6 +43,13 @@
           "photosPermission": "Allow AmstaPay to access your photos for Snap & Send.",
           "cameraPermission": "Allow AmstaPay to use the camera for Snap & Send payments."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/splash.jpeg",
+          "color": "#6C5CE7"
+        }
       ]
     ],
     "experiments": {

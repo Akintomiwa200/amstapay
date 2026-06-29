@@ -91,7 +91,7 @@ export default function ReceiveMoneyScreen() {
         </View>
 
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: c.primaryLight }]} onPress={() => router.push('/qr-code')}>
+          <TouchableOpacity style={[styles.actionCard, { backgroundColor: c.primaryLight }]} onPress={() => router.push('/my-qr')}>
             <QrCode size={24} color={c.violet} />
             <Text style={[styles.actionText, { color: c.text }]}>Show QR Code</Text>
           </TouchableOpacity>

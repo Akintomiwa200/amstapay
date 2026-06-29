@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Plus, Calendar, ChevronDown } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
+import { budgetService } from '@/services/budget';
 
 export default function CreateBudgetScreen() {
   const router = useRouter();
@@ -13,20 +14,34 @@ export default function CreateBudgetScreen() {
   const [period, setPeriod] = useState('monthly');
   const { theme } = useTheme();
   const c = theme.colors;
+  const [submitting, setSubmitting] = useState(false);
 
   const categories = [
     'Food & Dining', 'Transportation', 'Shopping', 'Entertainment',
     'Bills & Utilities', 'Health', 'Education', 'Savings',
   ];
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!category || !amount) {
       Alert.alert('Error', 'Please select a category and enter an amount');
       return;
     }
-    Alert.alert('Budget Created', `₦${parseInt(amount).toLocaleString()} ${period} budget for ${category}`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    try {
+      setSubmitting(true);
+      await budgetService.create({
+        name: category,
+        amount: parseInt(amount, 10),
+        period,
+        categories: [category],
+      });
+      Alert.alert('Budget Created', `${period} budget for ${category} saved.`, [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create budget');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -112,10 +127,10 @@ export default function CreateBudgetScreen() {
 
       {/* Create Button */}
       <View style={[styles.footer, { borderTopColor: c.border }]}>
-        <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.85} disabled={submitting}>
           <LinearGradient colors={[c.violet, c.primary]} style={styles.createGradient}>
             <Plus size={20} color="#fff" />
-            <Text style={styles.createText}>Create Budget</Text>
+            <Text style={styles.createText}>{submitting ? 'Creating...' : 'Create Budget'}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>

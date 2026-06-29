@@ -13,6 +13,7 @@ import { AppProvider } from "../context/AppContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 import { useEffect } from "react";
+import { registerPushToken } from "../utils/pushNotifications";
 
 export default function RootLayout() {
   return (
@@ -58,6 +59,10 @@ function AppContent() {
       router.replace('/dashboard');
     }
   }, [user, loading, segments]);
+
+  useEffect(() => {
+    if (user) registerPushToken();
+  }, [user]);
 
   const navigationTheme = {
     ...(isDarkMode ? DarkTheme : DefaultTheme),
